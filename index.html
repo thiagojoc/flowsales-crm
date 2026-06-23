@@ -498,6 +498,7 @@ if(window._fbResolve) window._fbResolve();
       <div class="sb-foot">
         <div class="uav" id="uav" onclick="openProfile()">TC</div>
         <div class="ui"><div class="un" id="un">Thiago</div><div class="ur" id="ur">Admin</div></div>
+        <button class="lout" onclick="openProfile()" title="Editar perfil" style="margin-right:2px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
         <button class="lout" onclick="doLogout()" title="Sair"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
       </div>
     </div>
@@ -890,6 +891,7 @@ const CLOUD = true;
 // ── FIRMS PERSISTENCE ─────────────────────────────────────────
 function _saveFirms(){
   localStorage.setItem('fs_firms', JSON.stringify(FIRMS));
+  if(!FIRMS.length) return; // não sobrescreve Firebase com array vazio
   _waitFB().then(()=>{
     window._fbSetDoc(window._fbDoc(window._fbDB,'flowsales_crm','__config'),{firms:FIRMS,__ts:Date.now()},{merge:true})
     .catch(e=>console.error('[FB] firms save err:',e));
@@ -1071,19 +1073,24 @@ function saveCredsOverride(origEmail,email,pass){
   }).catch(()=>{});
 }
 function resolveUser(em,pw){
-  const direct=USERS.find(x=>x.email===em&&x.pass===pw);
-  if(direct)return direct;
-  // usuários criados via formulário de onboarding
-  const dyn=_fbDynUsers.find(x=>x.email===em&&x.pass===pw);
-  if(dyn)return dyn;
-  // overrides de credencial
   const overrides=getCredsOverrides();
+  // Overrides têm prioridade: se o usuário trocou senha, a antiga não funciona mais
   for(const origEmail of Object.keys(overrides)){
     const o=overrides[origEmail];
-    if(o.email===em&&o.pass===pw){
-      return USERS.find(x=>x.email===origEmail)||null;
-    }
+    if(o.email===em&&o.pass===pw){ return USERS.find(x=>x.email===origEmail)||null; }
+    // se o email bate com o original mas a senha não bate com o override → bloqueia
+    if(origEmail===em && o.pass && o.pass!==pw && !USERS.find(x=>x.email===origEmail&&x.pass===pw)) continue;
   }
+  // Credenciais hardcoded — só funciona se NÃO houver override de senha para este email
+  const hasOverride = Object.values(overrides).some(o=>o.email===em) ||
+                      Object.keys(overrides).includes(em);
+  if(!hasOverride){
+    const direct=USERS.find(x=>x.email===em&&x.pass===pw);
+    if(direct)return direct;
+  }
+  // Usuários dinâmicos (criados via formulário)
+  const dyn=_fbDynUsers.find(x=>x.email===em&&x.pass===pw);
+  if(dyn)return dyn;
   return null;
 }
 function doLogin(){
@@ -1110,7 +1117,8 @@ function _migrateRemoveDemo(){
     if(filtered.length!==arr.length){
       localStorage.setItem('fs_firms',JSON.stringify(filtered));
       FIRMS.splice(0);filtered.forEach(f=>FIRMS.push(f));
-      _saveFirms();
+      // Não chama _saveFirms() aqui — migração é só limpeza local
+      // Firebase será atualizado por _startFirmsSync quando carregar
     }
   }catch(e){}
 }
