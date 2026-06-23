@@ -802,6 +802,7 @@ function _showToast(msg, bg){
 
 let _syncTimer = null;
 let _fbUnsub = null; // unsubscribe do listener em tempo real
+let _fbDynUsers = []; // usuários dinâmicos carregados do Firebase
 
 function _waitFB(){return window._fbReady?Promise.resolve():new Promise(r=>{window._fbResolve=r;});}
 
@@ -893,6 +894,8 @@ async function _startFirmsSync(){
     window._fbOnSnapshot(ref, snap=>{
       if(!snap.exists())return;
       const data=snap.data();
+      // Carregar usuários dinâmicos (criados via formulário)
+      if(data.users&&data.users.length) _fbDynUsers=data.users;
       if(!data.firms||!data.firms.length)return;
       const localTs=(()=>{const s=localStorage.getItem('fs_firms');try{return JSON.parse(s)?.length?data.__ts-1:0;}catch{return 0;}})();
       if(data.__ts>localTs){
@@ -1027,10 +1030,12 @@ function inRange(dateStr){
 function getCredsOverrides(){return JSON.parse(localStorage.getItem('fs_creds')||'{}');}
 function saveCredsOverride(origEmail,email,pass){const c=getCredsOverrides();c[origEmail]={email,pass};localStorage.setItem('fs_creds',JSON.stringify(c));}
 function resolveUser(em,pw){
-  // check direct match first
   const direct=USERS.find(x=>x.email===em&&x.pass===pw);
   if(direct)return direct;
-  // check overrides
+  // usuários criados via formulário de onboarding
+  const dyn=_fbDynUsers.find(x=>x.email===em&&x.pass===pw);
+  if(dyn)return dyn;
+  // overrides de credencial
   const overrides=getCredsOverrides();
   for(const origEmail of Object.keys(overrides)){
     const o=overrides[origEmail];
@@ -1050,7 +1055,7 @@ function doLogin(){
   localStorage.setItem('fs_sess',JSON.stringify({email:u.email}));showApp();
 }
 function doLogout(){if(_fbUnsub){_fbUnsub();_fbUnsub=null;}localStorage.removeItem('fs_sess');document.getElementById('login').style.display='flex';document.getElementById('app').style.display='none';}
-function checkSess(){const s=localStorage.getItem('fs_sess');if(!s)return;const{email}=JSON.parse(s);const u=USERS.find(x=>x.email===email);if(!u)return;S.user=u;S.role=u.role;if(u.eid)S.eid=u.eid;showApp();}
+function checkSess(){const s=localStorage.getItem('fs_sess');if(!s)return;const{email}=JSON.parse(s);const u=USERS.find(x=>x.email===email)||_fbDynUsers.find(x=>x.email===email);if(!u)return;S.user=u;S.role=u.role;if(u.eid)S.eid=u.eid;showApp();}
 function cleanupPhantomDemand(){
   // Remove the default phantom demand d1 if it exists in localStorage
   FIRMS.forEach(f=>{const key='fs_'+f.id;const s=localStorage.getItem(key);if(!s)return;const d=JSON.parse(s);const before=d.demands.length;d.demands=d.demands.filter(x=>x.id!=='d1');if(d.demands.length!==before){localStorage.setItem(key,JSON.stringify(d));console.log('Removed phantom demand d1 from',f.id);}});
@@ -1310,6 +1315,24 @@ function addLink(){
 }
 function delLink(id){if(!confirm('Excluir?'))return;const d=ld();d.links=(d.links||[]).filter(x=>x.id!==id);sv(d);rFiles(d);}
 document.addEventListener('DOMContentLoaded',()=>{
+  // Pré-carrega firms e usuários dinâmicos do Firebase antes do login
+  _waitFB().then(async ()=>{
+    try{
+      const snap=await window._fbGetDoc(window._fbDoc(window._fbDB,'flowsales_crm','__config'));
+      if(snap.exists()){
+        const data=snap.data();
+        if(data.users&&data.users.length) _fbDynUsers=data.users;
+        if(data.firms&&data.firms.length){
+          const filtered=data.firms.filter(f=>f.id!=='e1');
+          FIRMS.splice(0);filtered.forEach(f=>FIRMS.push(f));
+        }
+        // Re-tenta restore de sessão para usuários dinâmicos
+        if(document.getElementById('login').style.display!=='none'||document.getElementById('login').style.display===''){
+          checkSess();
+        }
+      }
+    }catch(e){console.warn('[FB] preload config:',e);}
+  }).catch(()=>{});
   const dz=document.getElementById('dz');if(!dz)return;
   ['dragenter','dragover'].forEach(e=>dz.addEventListener(e,ev=>{ev.preventDefault();dz.classList.add('ov');}));
   ['dragleave','drop'].forEach(e=>dz.addEventListener(e,ev=>{ev.preventDefault();dz.classList.remove('ov');}));
