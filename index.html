@@ -840,6 +840,8 @@ async function _startRealtimeSync(){
           // Local mais novo que Firebase — sobe os dados imediatamente
           _fbSave(S.eid, ld());
         }
+        // Notificações só depois que dados reais (Firebase) estão em localStorage
+        autoNotif();
         _setSyncDot('ok');
       } else {
         // Nenhum dado no Firebase ainda — sobe os dados locais
@@ -1128,7 +1130,7 @@ function showApp(){
   else{document.querySelectorAll('.admin-only').forEach(el=>el.style.display='');}
   cleanupPhantomDemand();
   _loadFirms();
-  setupFirmSelect();loadFirm();renderAll();autoNotif();populateWkFilter();
+  setupFirmSelect();loadFirm();renderAll();populateWkFilter();
   _startRealtimeSync();
   if(S.role==='admin')_startFirmsSync();
 }
