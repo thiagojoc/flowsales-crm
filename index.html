@@ -1896,10 +1896,9 @@ window.addEventListener('DOMContentLoaded',()=>{
   if(_lpw)_lpw.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
   const _lem=document.getElementById('l-em');
   if(_lem)_lem.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
-  const _fd=document.getElementById('firm-drop');
-  if(_fd)_fd.addEventListener('click',e=>e.stopPropagation());
-  document.addEventListener('click',()=>{const fd=document.getElementById('firm-drop');if(fd)fd.classList.remove('on');});
+  document.addEventListener('click',e=>{if(!e.target.closest('#sfirm')){const fd=document.getElementById('firm-drop');if(fd)fd.classList.remove('on');}});
 });
 </script>
 </body>
 </html>
+                                                                                 
