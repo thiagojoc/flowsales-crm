@@ -1171,10 +1171,12 @@ function toggleFirmDrop(){if(S.role==='admin')document.getElementById('firm-drop
 function selectFirm(id){
   S.eid=id;
   document.getElementById('firm-drop').classList.remove('on');
-  document.querySelectorAll('.firm-opt').forEach(o=>{
-    o.classList.toggle('active',o.dataset.fid===id);
-  });
-  loadFirm();nav('ov');renderAll();populateWkFilter();
+  loadFirm();
+  setupFirmSelect(); // garante dropdown atualizado após troca
+  nav('ov');
+  renderAll();
+  populateWkFilter();
+  _startRealtimeSync(); // reinicia sync para o novo escritório
 }
 function loadFirm(){
   const isFS = S.eid==='flowsales';
