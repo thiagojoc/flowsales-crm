@@ -1473,9 +1473,12 @@ function toggleNotif(){document.getElementById('np').classList.toggle('on');}
 function markRead(){const d=ld();d.notifs.forEach(n=>n.read=true);sv(d);rNotif(d);document.getElementById('ndot').style.display='none';document.getElementById('np').classList.remove('on');}
 function autoNotif(){
   const d=ld();
+  const before=d.notifs.length;
   d.tasks.filter(t=>t.status==='late').forEach(t=>{if(!d.notifs.find(n=>n.id==='nt_'+t.id))d.notifs.unshift({id:'nt_'+t.id,title:'Task atrasada: '+t.title,sub:'Prazo era '+fd(t.due),read:false});});
   d.demands.filter(dm=>dm.status==='open'&&dm.pri==='high').forEach(dm=>{if(!d.notifs.find(n=>n.id==='nd_'+dm.id))d.notifs.unshift({id:'nd_'+dm.id,title:'Demanda urgente: '+dm.title,sub:'Alta prioridade',read:false});});
-  sv(d);rNotif(d);rBadges(d);
+  // Só persiste se adicionou notificações novas — evita sobrescrever Firebase ao abrir
+  if(d.notifs.length > before) sv(d);
+  rNotif(d);rBadges(d);
 }
 function rBadges(d){
   const pt=d.tasks.filter(t=>t.status==='pending'||t.status==='late').length;const bt=document.getElementById('bdgt');bt.textContent=pt;bt.style.display=pt?'flex':'none';
