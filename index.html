@@ -1401,6 +1401,9 @@ document.addEventListener('DOMContentLoaded',()=>{
         if(data.firms&&data.firms.length){
           const filtered=data.firms.filter(f=>f.id!=='e1');
           FIRMS.splice(0);filtered.forEach(f=>FIRMS.push(f));
+          localStorage.setItem('fs_firms',JSON.stringify(FIRMS));
+          // Atualizar dropdown mesmo se o app já estava aberto
+          if(document.getElementById('app').style.display!=='none') setupFirmSelect();
         }
         // Re-tenta restore de sessão para usuários dinâmicos
         if(document.getElementById('login').style.display!=='none'||document.getElementById('login').style.display===''){
@@ -1634,10 +1637,21 @@ function openM(type,data){
       save:()=>{const d=ld();const t={id:data?data.id:'t'+Date.now(),title:v('m-ttl'),desc:v('m-dsc'),resp:v('m-rsp'),assign:v('m-asg'),week:+v('m-wk'),due:v('m-due'),status:v('m-sta'),urgent:document.getElementById('m-urg').checked};if(data){const i=d.tasks.findIndex(x=>x.id===data.id);if(i>=0)d.tasks[i]=t;}else{d.tasks.push(t);activ(d,'Nova task: '+t.title,'var(--gold)');}sv(d);renderAll();populateWkFilter();cModal(null,1);}
     },
     meet:{title:data?'Editar reunião':'Nova reunião',
-      body:(()=>{const isPast=data&&data.date&&data.date<new Date().toISOString().slice(0,10);return`<div class="fg"><label>Título</label><input class="fi" id="m-ttl" value="${data?data.title:''}"></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px"><div class="fg"><label>Data</label><input class="fi" id="m-dt" type="date" value="${data?data.date:new Date().toISOString().split('T')[0]}"></div><div class="fg"><label>Horário</label><input class="fi" id="m-hr" type="time" value="${data?data.time||'10:00':'10:00'}"></div><div class="fg"><label>Duração</label><select class="fi" id="m-dur"><option value="30"${data&&data.duration==='30'?' selected':''}>30 min</option><option value="60"${!data||data.duration==='60'||!data.duration?' selected':''}>1 hora</option><option value="90"${data&&data.duration==='90'?' selected':''}>1h30</option><option value="120"${data&&data.duration==='120'?' selected':''}>2 horas</option></select></div></div><div class="fg"><label>Tipo</label><select class="fi" id="m-tp"><option${!data||data.type==='Check semanal'?' selected':''}>Check semanal</option><option${data&&data.type==='Onboarding'?' selected':''}>Onboarding</option><option${data&&data.type==='Revisão quinzenal'?' selected':''}>Revisão quinzenal</option><option${data&&data.type==='Alinhamento'?' selected':''}>Alinhamento</option><option${data&&data.type==='Treinamento'?' selected':''}>Treinamento</option><option${data&&data.type==='Emergência'?' selected':''}>Emergência</option></select></div><div class="fg"><label>Convidados (e-mails separados por vírgula)</label><input class="fi" id="m-guests" placeholder="cliente@email.com, outro@email.com" value="${data?data.guests||'':''}"></div><div class="fg"><label>Notas</label><textarea id="m-nt" style="min-height:60px">${data?data.notes||'':''}</textarea></div><div class="fg"><label>Próximos passos (um por linha)</label><textarea id="m-ac">${data&&data.actions?data.actions.join('\n'):''}</textarea></div>${isPast?`<div class="fg"><label>URL da gravação</label><input class="fi" id="m-rec" type="url" placeholder="https://drive.google.com/..." value="${data?data.recording||'':''}"></div><div class="fg"><label>Resumo gerado</label><textarea id="m-sum" placeholder="Cole aqui o resumo automático da reunião...">${data?data.summary||'':''}</textarea></div>`:''}`})(),
-      save:()=>{const d=ld();const ac=v('m-ac').split('\n').filter(x=>x.trim());const isPast=v('m-dt')<new Date().toISOString().slice(0,10);const m={id:data?data.id:'m'+Date.now(),title:v('m-ttl'),date:v('m-dt'),time:v('m-hr'),duration:v('m-dur'),type:v('m-tp'),guests:v('m-guests'),notes:v('m-nt'),actions:ac,tags:[v('m-tp'),v('m-hr')],recording:isPast?v('m-rec')||data?.recording||'':data?.recording||'',summary:isPast?v('m-sum')||data?.summary||'':data?.summary||''};if(data){const i=d.meetings.findIndex(x=>x.id===data.id);if(i>=0)d.meetings[i]=m;}else{d.meetings.push(m);activ(d,'Reunião agendada: '+m.title,'var(--blue)');// notificar todos sobre nova reunião agendada
-const notifId='nmeet_'+m.id;if(!d.notifs.find(n=>n.id===notifId)){d.notifs.unshift({id:notifId,title:'📅 Reunião agendada',sub:m.title+' · '+fd(m.date)+(m.time?' às '+m.time:''),read:false});}// abrir Google Agenda automaticamente
-setTimeout(()=>window.open(gcalUrl(m),'_blank'),300);}sv(d);renderAll();cModal(null,1);}
+      body:(()=>{const isPast=data!=null;return`<div class="fg"><label>Título</label><input class="fi" id="m-ttl" value="${data?data.title:''}"></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px"><div class="fg"><label>Data</label><input class="fi" id="m-dt" type="date" value="${data?data.date:new Date().toISOString().split('T')[0]}"></div><div class="fg"><label>Horário</label><input class="fi" id="m-hr" type="time" value="${data?data.time||'10:00':'10:00'}"></div><div class="fg"><label>Duração</label><select class="fi" id="m-dur"><option value="30"${data&&data.duration==='30'?' selected':''}>30 min</option><option value="60"${!data||data.duration==='60'||!data.duration?' selected':''}>1 hora</option><option value="90"${data&&data.duration==='90'?' selected':''}>1h30</option><option value="120"${data&&data.duration==='120'?' selected':''}>2 horas</option></select></div></div><div class="fg"><label>Tipo</label><select class="fi" id="m-tp"><option${!data||data.type==='Check semanal'?' selected':''}>Check semanal</option><option${data&&data.type==='Onboarding'?' selected':''}>Onboarding</option><option${data&&data.type==='Revisão quinzenal'?' selected':''}>Revisão quinzenal</option><option${data&&data.type==='Alinhamento'?' selected':''}>Alinhamento</option><option${data&&data.type==='Treinamento'?' selected':''}>Treinamento</option><option${data&&data.type==='Emergência'?' selected':''}>Emergência</option></select></div><div class="fg"><label>Convidados</label><div id="m-guests-chips" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px">${(data&&data.guests?data.guests.split(',').map(g=>g.trim()).filter(Boolean):[]).map(g=>`<span class="guest-chip" style="display:flex;align-items:center;gap:4px;background:var(--gb);border:0.5px solid var(--bdr);border-radius:6px;padding:3px 8px;font-size:11px">${g}<button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:var(--t2);font-size:12px;line-height:1;padding:0 0 0 2px">×</button></span>`).join('')}</div><div style="display:flex;gap:6px"><input class="fi" id="m-guest-inp" placeholder="email@convidado.com" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();_addGuest();}"><button type="button" class="ca" onclick="_addGuest()" style="flex-shrink:0;padding:0 12px">+</button></div></div><div class="fg"><label>Notas</label><textarea id="m-nt" style="min-height:60px">${data?data.notes||'':''}</textarea></div><div class="fg"><label>Próximos passos (um por linha)</label><textarea id="m-ac">${data&&data.actions?data.actions.join('\n'):''}</textarea></div>${isPast?`<div class="fg"><label>URL da gravação</label><input class="fi" id="m-rec" type="url" placeholder="https://drive.google.com/..." value="${data?data.recording||'':''}"></div><div class="fg"><label>Resumo gerado</label><textarea id="m-sum" placeholder="Cole aqui o resumo automático da reunião...">${data?data.summary||'':''}</textarea></div>`:''}`})(),
+      save:()=>{const d=ld();const ac=v('m-ac').split('\n').filter(x=>x.trim());const m={id:data?data.id:'m'+Date.now(),title:v('m-ttl'),date:v('m-dt'),time:v('m-hr'),duration:v('m-dur'),type:v('m-tp'),guests:_getGuests(),notes:v('m-nt'),actions:ac,tags:[v('m-tp'),v('m-hr')],recording:v('m-rec')||'',summary:v('m-sum')||''};if(data){const i=d.meetings.findIndex(x=>x.id===data.id);if(i>=0)d.meetings[i]=m;}else{d.meetings.push(m);activ(d,'Reunião agendada: '+m.title,'var(--blue)');// notificar só os envolvidos (convidados + admins)
+const notifId='nmeet_'+m.id;
+const guestEmails=(m.guests||'').split(',').map(g=>g.trim().toLowerCase()).filter(Boolean);
+const admins=USERS.filter(u=>u.role==='admin').map(u=>u.email);
+const notifTargets=[...new Set([...admins,...guestEmails])];
+if(!d.notifs.find(n=>n.id===notifId)&&notifTargets.includes(S.user.email)){
+  d.notifs.unshift({id:notifId,title:'📅 Reunião agendada',sub:m.title+' · '+fd(m.date)+(m.time?' às '+m.time:''),read:false,targets:notifTargets});
+}
+// Notif desktop só para o usuário atual se for convidado/admin
+if(notifTargets.includes(S.user.email)){
+  _desktopNotif('📅 Reunião agendada',m.title+' · '+fd(m.date)+(m.time?' às '+m.time:''));
+}
+// abrir Google Agenda automaticamente
+setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=200,top=100'),300);}sv(d);renderAll();cModal(null,1);}
     },
     dem:{title:data?'Editar demanda':'Nova demanda',
       body:`<div class="fg"><label>Título</label><input class="fi" id="m-ttl" value="${data?data.title:''}" placeholder="Descreva a demanda..."></div><div class="fg"><label>Detalhes</label><textarea id="m-dsc" placeholder="Contexto, impacto, urgência...">${data?data.desc||'':''}</textarea></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Prioridade</label><select class="fi" id="m-pri"><option value="high"${!data||data.pri==='high'?' selected':''}>Alta - Bloqueia o progresso</option><option value="med"${data&&data.pri==='med'?' selected':''}>Média</option><option value="low"${data&&data.pri==='low'?' selected':''}>Baixa</option></select></div><div class="fg"><label>Atribuída a</label><select class="fi" id="m-asg">${asgOpts}</select></div></div>`,
@@ -1833,6 +1847,29 @@ function tgFSGoal(id){const d=ldFS();const g=d.goals.find(x=>x.id===id);if(g){g.
 function delFSGoal(id){const d=ldFS();d.goals=d.goals.filter(x=>x.id!==id);svFS(d);rFlow();}
 function activ(d,txt,col){d.activity=d.activity||[];d.activity.unshift({txt,col,time:new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})});if(d.activity.length>30)d.activity.length=30;}
 function fd(s){if(!s)return '';const [y,m,d]=s.split('-');if(!y||!m||!d)return s;return `${d}/${m}/${y}`;}
+// ── GUEST HELPERS ─────────────────────────────────────────────
+function _addGuest(){
+  const inp=document.getElementById('m-guest-inp');
+  if(!inp)return;
+  const val=inp.value.trim();
+  if(!val)return;
+  const chips=document.getElementById('m-guests-chips');
+  if(!chips)return;
+  // evitar duplicata
+  const existing=[...chips.querySelectorAll('.guest-chip')].map(c=>c.textContent.replace('×','').trim());
+  if(existing.includes(val)){inp.value='';return;}
+  const chip=document.createElement('span');
+  chip.className='guest-chip';
+  chip.style.cssText='display:flex;align-items:center;gap:4px;background:var(--gb);border:0.5px solid var(--bdr);border-radius:6px;padding:3px 8px;font-size:11px';
+  chip.innerHTML=`${val}<button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:var(--t2);font-size:12px;line-height:1;padding:0 0 0 2px">×</button>`;
+  chips.appendChild(chip);
+  inp.value='';inp.focus();
+}
+function _getGuests(){
+  const chips=document.getElementById('m-guests-chips');
+  if(!chips)return '';
+  return [...chips.querySelectorAll('.guest-chip')].map(c=>c.textContent.replace('×','').trim()).filter(Boolean).join(',');
+}
 // ── INIT ────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded',()=>{
   checkSess();
