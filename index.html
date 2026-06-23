@@ -494,8 +494,6 @@ if(window._fbResolve) window._fbResolve();
       <div class="ni client-nav" onclick="nav('dem')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Demandas<span class="nb g" id="bdgd" style="display:none">0</span></div>
       <div class="sb-sec">Gestão</div>
       <div class="ni client-nav" onclick="nav('perfil')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Perfil do cliente</div>
-      <div class="sb-sec admin-only" id="sb-sec-fs">Flow Sales</div>
-      <div class="ni admin-only" id="ni-flow" onclick="nav('flow')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>Painel interno<span class="nb g" id="bdgf" style="display:none">!</span></div>
       <div class="ni admin-only" id="ni-firms" onclick="nav('firms')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Escritórios</div>
       <div class="sb-foot">
         <div class="uav" id="uav" onclick="openProfile()">TC</div>
@@ -915,78 +913,17 @@ async function _startFirmsSync(){
 const USERS = [
   { email:'tcaetano1706@gmail.com', pass:'flow2024', name:'Thiago Caetano', role:'admin', init:'TC' },
   { email:'carlos@flowsales.com',   pass:'flow2024', name:'Carlos',         role:'admin', init:'CA' },
-  { email:'parceiro@pacheco.adv.br',pass:'pp2024',   name:'Pacheco & Portela', role:'client', eid:'e1', init:'PP' },
 ];
 
-const FIRMS = [
-  { id:'e1', name:'Pacheco & Portela', area:'Advocacia', city:'São José dos Campos', week:2, total:26, contact:'Dr. Carlos Portela', phone:'(12) 99123-4567', email:'parceiro@pacheco.adv.br', fee:3500, start:'2026-06-09', address:'Rua das Flores, 100 - Centro, SJC/SP', website:'', oab:'SP-123456', due:'2026-07-09' }
-];
+const FIRMS = [];
 
 // ── STATE ─────────────────────────────────────────────────────
-let S = { user:null, role:null, eid:'e1', sec:'ov', tf:'all', ff:'all', wkf:'all', datef:'',
+let S = { user:null, role:null, eid:'flowsales', sec:'ov', tf:'all', ff:'all', wkf:'all', datef:'',
           calFrom:null, calTo:null, calPreset:'all', calMo:new Date().getMonth(), calYr:new Date().getFullYear(),
           selTasks:new Set() };
 
 // ── DEFAULT DATA ──────────────────────────────────────────────
-function dfl() {
-  return {
-    tasks:[
-      {id:'t1',title:'Configurar formulário de captação no GHL',week:1,resp:'Flow Sales',status:'done',due:'2026-06-16',desc:'',urgent:false,assign:'Thiago'},
-      {id:'t2',title:'Criar página de captura otimizada',week:1,resp:'Flow Sales',status:'done',due:'2026-06-17',desc:'Landing page para os anúncios.',urgent:false,assign:'Thiago'},
-      {id:'t3',title:'Configurar workflow de nutrição de leads',week:1,resp:'Flow Sales',status:'done',due:'2026-06-18',desc:'',urgent:false,assign:'Carlos'},
-      {id:'t4',title:'Definir script de atendimento do escritório',week:1,resp:'Escritório',status:'done',due:'2026-06-19',desc:'',urgent:false,assign:'Escritório'},
-      {id:'t5',title:'Aprovação dos materiais da semana 1',week:1,resp:'Ambos',status:'done',due:'2026-06-20',desc:'',urgent:false,assign:'Ambos'},
-      {id:'t6',title:'Ativar campanha Meta Ads',week:2,resp:'Flow Sales',status:'pending',due:'2026-06-23',desc:'',urgent:true,assign:'Carlos'},
-      {id:'t7',title:'Revisão do script de atendimento',week:2,resp:'Ambos',status:'late',due:'2026-06-21',desc:'',urgent:false,assign:'Thiago'},
-      {id:'t8',title:'Configurar relatório semanal de leads',week:2,resp:'Flow Sales',status:'pending',due:'2026-06-24',desc:'',urgent:false,assign:'Thiago'},
-      {id:'t9',title:'Treinar equipe no GHL',week:2,resp:'Flow Sales',status:'pending',due:'2026-06-25',desc:'',urgent:false,assign:'Carlos'},
-      {id:'t10',title:'Enviar relatório semanal 1',week:2,resp:'Flow Sales',status:'pending',due:'2026-06-27',desc:'',urgent:false,assign:'Thiago'},
-    ],
-    kpis:{ leads:18,leadsG:30, reunAgd:7,reunAgdG:12, reunReal:5,reunRealG:10,
-           vendas:2,vendasG:5, rev:12000,revG:15000, invest:3500,investG:3500,
-           impressoes:4200,cliques:312,cpl:194,conv:39,convG:45 },
-    implementations:[
-      {id:'i1',title:'Formulário de captação no GHL',done:true,week:1},
-      {id:'i2',title:'Página de captura otimizada',done:true,week:1},
-      {id:'i3',title:'Workflow de nutrição automática',done:true,week:1},
-      {id:'i4',title:'Script de atendimento aprovado',done:true,week:1},
-      {id:'i5',title:'Campanha Meta Ads ativa',done:false,week:2},
-      {id:'i6',title:'Relatório semanal automático',done:false,week:2},
-      {id:'i7',title:'Treinamento da equipe no GHL',done:false,week:2},
-    ],
-    meetings:[
-      {id:'m1',date:'2026-06-18',title:'Call de onboarding',type:'Onboarding',notes:'Alinhamento inicial do programa.',actions:['Configurar formulário no GHL','Criar landing page'],tags:['Funil definido','GHL configurado'],recording:'',summary:''},
-      {id:'m2',date:'2026-06-22',title:'Check semanal - semana 1',type:'Check semanal',notes:'Revisão dos resultados. Script ajustado.',actions:['Ajustar script','Publicar anúncios'],tags:['Script ajustado'],recording:'',summary:''},
-      {id:'m3',date:'2026-06-30',title:'Revisão quinzenal',type:'Revisão quinzenal',notes:'',actions:[],tags:['Agendada'],recording:'',summary:''},
-    ],
-    files:[
-      {id:'f1',name:'Entregáveis - Pacheco Portela.pdf',type:'pdf',size:'1.2 MB',date:'2026-06-18',by:'Flow Sales',desc:'',cat:'doc'},
-      {id:'f2',name:'Script de atendimento v1.docx',type:'doc',size:'45 KB',date:'2026-06-19',by:'Flow Sales',desc:'',cat:'script'},
-    ],
-    links:[
-      {id:'lk1',title:'GHL - Painel de leads',url:'https://app.gohighlevel.com',desc:'Acesso ao CRM',date:'2026-06-18',by:'Flow Sales'},
-    ],
-    msgs:[
-      {id:'msg1',text:'Carlos, configuramos o formulário de captação. Pode testar pelo link e confirmar se chegou no GHL.',from:'Flow Sales',role:'admin',time:'2026-06-19T10:22:00'},
-      {id:'msg2',text:'Testei e chegou sim!',from:'Carlos Portela',role:'client',time:'2026-06-19T10:45:00'},
-    ],
-    demands:[],
-    metas:{ day:[{id:'md1',title:'Ligar para 5 leads que não responderam',done:false}],
-             wk:[{id:'mw1',title:'Publicar campanha Meta Ads',done:false}],
-             mo:[{id:'mm1',title:'30 leads gerados',done:false,kpiKey:'leads',kpiGoal:30},
-                 {id:'mm2',title:'Reuniões agendadas: 12',done:false,kpiKey:'reunAgd',kpiGoal:12},
-                 {id:'mm3',title:'5 vendas fechadas',done:false,kpiKey:'vendas',kpiGoal:5}] },
-    notifs:[
-      {id:'n1',title:'Task atrasada: Revisão do script',sub:'Prazo era 21/06.',read:false},
-    ],
-    activity:[],
-    note:'',
-    unreadChat:0,
-    partners:[],
-    payments:[],
-    firmExtra:{ address:'Rua das Flores, 100 - Centro, SJC/SP', website:'', instagram:'' },
-  };
-}
+function dfl() { return dflEmpty(); }
 
 // Empty baseline for new firms (no demo data)
 function dflEmpty(){
@@ -1118,6 +1055,19 @@ function cleanupPhantomDemand(){
   // Remove the default phantom demand d1 if it exists in localStorage
   FIRMS.forEach(f=>{const key='fs_'+f.id;const s=localStorage.getItem(key);if(!s)return;const d=JSON.parse(s);const before=d.demands.length;d.demands=d.demands.filter(x=>x.id!=='d1');if(d.demands.length!==before){localStorage.setItem(key,JSON.stringify(d));console.log('Removed phantom demand d1 from',f.id);}});
 }
+function _migrateRemoveDemo(){
+  try{
+    const saved=localStorage.getItem('fs_firms');
+    if(!saved)return;
+    const arr=JSON.parse(saved);
+    const filtered=arr.filter(f=>f.id!=='e1');
+    if(filtered.length!==arr.length){
+      localStorage.setItem('fs_firms',JSON.stringify(filtered));
+      FIRMS.splice(0);filtered.forEach(f=>FIRMS.push(f));
+      _saveFirms();
+    }
+  }catch(e){}
+}
 function showApp(){
   document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';
   const u=S.user;
@@ -1129,10 +1079,11 @@ function showApp(){
   if(S.role==='client'){document.getElementById('sharebtn').style.display='none';document.querySelectorAll('.admin-only').forEach(el=>el.style.display='none');}
   else{document.querySelectorAll('.admin-only').forEach(el=>el.style.display='');}
   cleanupPhantomDemand();
+  _migrateRemoveDemo();
   _loadFirms();
   setupFirmSelect();loadFirm();renderAll();populateWkFilter();
   _startRealtimeSync();
-  if(S.role==='admin')_startFirmsSync();
+  if(S.role==='admin'){document.getElementById('ni-firms').style.display='flex';_startFirmsSync();}
 }
 
 function setupFirmSelect(){
@@ -1153,22 +1104,15 @@ function selectFirm(id){
   document.querySelectorAll('.firm-opt').forEach(o=>{
     o.classList.toggle('active',o.dataset.fid===id);
   });
-  if(id==='flowsales'){
-    document.getElementById('sfn').textContent='Flow Sales';
-    document.getElementById('sfs').textContent='Painel interno';
-    document.getElementById('sbdg').textContent='Admin · Thiago & Carlos';
-    document.body.classList.add('fs-mode');
-    // Garantir que itens admin-only estejam visíveis
-    document.getElementById('ni-flow').style.display='flex';
-    document.getElementById('ni-firms').style.display='flex';
-    document.getElementById('sb-sec-fs').style.display='block';
-    nav('flow');
-    return;
-  }
-  document.body.classList.remove('fs-mode');
-  loadFirm();renderAll();populateWkFilter();
+  loadFirm();nav('ov');renderAll();populateWkFilter();
 }
 function loadFirm(){
+  if(S.eid==='flowsales'){
+    document.getElementById('sfn').textContent='Flow Sales';
+    document.getElementById('sfs').textContent='Painel interno';
+    document.getElementById('sbdg').textContent='Thiago & Carlos';
+    return;
+  }
   const f=FIRMS.find(x=>x.id===S.eid);
   if(!f)return;
   document.getElementById('sfn').textContent=f.name;
@@ -1206,9 +1150,11 @@ function toggleSb(){document.getElementById('sb').classList.toggle('on');}
 function closeSb(){document.getElementById('sb').classList.remove('on');}
 
 // ── RENDER ALL ────────────────────────────────────────────────
-function renderAll(){const d=ld();rOv(d);rKpis(d);rMetas(d);rTasks(d);rMeet(d);rFiles(d);rChat(d);rDem(d);rPerfil(d);rNotif(d);rBadges(d);rFlow();rFirms();}
+function renderAll(){const d=ld();const _td=new Date().toISOString().slice(0,10);d.tasks.forEach(t=>{if(t.status==='pending'&&t.due&&t.due<_td)t.status='late';});rOv(d);rKpis(d);rMetas(d);rTasks(d);rMeet(d);rFiles(d);rChat(d);rDem(d);rPerfil(d);rNotif(d);rBadges(d);rFlow();rFirms();}
 
 // ── OVERVIEW ──────────────────────────────────────────────────
+
+function delActiv(i){const d=ld();d.activity.splice(i,1);sv(d);rOv(d);}
 function rOv(d){
   const k=d.kpis||{};
   const safe=(v)=>v||0;
@@ -1475,11 +1421,14 @@ function toggleNotif(){document.getElementById('np').classList.toggle('on');}
 function markRead(){const d=ld();d.notifs.forEach(n=>n.read=true);sv(d);rNotif(d);document.getElementById('ndot').style.display='none';document.getElementById('np').classList.remove('on');}
 function autoNotif(){
   const d=ld();
+  const _td=new Date().toISOString().slice(0,10);
+  let lateChanged=false;
+  // Marca tasks com prazo vencido como atrasadas e persiste
+  d.tasks.forEach(t=>{if(t.status==='pending'&&t.due&&t.due<_td){t.status='late';lateChanged=true;}});
   const before=d.notifs.length;
   d.tasks.filter(t=>t.status==='late').forEach(t=>{if(!d.notifs.find(n=>n.id==='nt_'+t.id))d.notifs.unshift({id:'nt_'+t.id,title:'Task atrasada: '+t.title,sub:'Prazo era '+fd(t.due),read:false});});
   d.demands.filter(dm=>dm.status==='open'&&dm.pri==='high').forEach(dm=>{if(!d.notifs.find(n=>n.id==='nd_'+dm.id))d.notifs.unshift({id:'nd_'+dm.id,title:'Demanda urgente: '+dm.title,sub:'Alta prioridade',read:false});});
-  // Só persiste se adicionou notificações novas — evita sobrescrever Firebase ao abrir
-  if(d.notifs.length > before) sv(d);
+  if(lateChanged||d.notifs.length>before){sv(d);rTasks(d);}
   rNotif(d);rBadges(d);
 }
 function rBadges(d){
