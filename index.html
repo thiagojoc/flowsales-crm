@@ -832,7 +832,18 @@ async function _startRealtimeSync(){
         const localTs = (localRaw?JSON.parse(localRaw):{}).__ts||0;
         const remoteTs = remote.__ts||0;
         if(remoteTs > localTs){
+          // Verificar se chegou mensagem nova com menção ao usuário atual
+          const prevMsgs=(localRaw?JSON.parse(localRaw):{}). msgs||[];
           localStorage.setItem('fs_'+S.eid, JSON.stringify(remote));
+          const newMsgs=(remote.msgs||[]).filter(m=>!prevMsgs.find(p=>p.id===m.id));
+          newMsgs.forEach(m=>{
+            if(m.from!==S.user.name){
+              const myName=S.user.name.split(' ')[0];
+              if(m.text.toLowerCase().includes('@'+myName.toLowerCase())||m.text.includes('@'+S.user.name)){
+                _desktopNotif('📩 '+m.from+' mencionou você',m.text.slice(0,80));
+              }
+            }
+          });
           renderAll();
           _showToast('✅ Dados sincronizados','var(--green)');
         } else if(localTs > remoteTs){
@@ -1088,6 +1099,10 @@ function showApp(){
   _migrateRemoveDemo();
   _loadFirms();
   setupFirmSelect();loadFirm();renderAll();populateWkFilter();
+  // Pedir permissão de notificação desktop
+  if('Notification' in window && Notification.permission==='default'){
+    Notification.requestPermission();
+  }
   _startRealtimeSync();
   if(S.role==='admin'){document.getElementById('ni-firms').style.display='flex';_startFirmsSync();}
 }
@@ -1394,8 +1409,27 @@ function delMsg(id){
 }
 function sendMsg(){
   const inp=document.getElementById('cin');const txt=inp.value.trim();if(!txt)return;
-  const d=ld();d.msgs.push({id:'msg'+Date.now(),text:txt,from:S.user.name,role:S.role,time:new Date().toISOString()});
+  const d=ld();
+  const msgId='msg'+Date.now();
+  d.msgs.push({id:msgId,text:txt,from:S.user.name,role:S.role,time:new Date().toISOString()});
+  // Detectar @menções e notificar
+  const mentions=[...new Set((txt.match(/@(\w[\w\s]*?)(?=\s|$|[^a-zA-Z\s])/g)||[]).map(m=>m.slice(1).trim()))];
+  mentions.forEach(name=>{
+    const notifId='nm_'+msgId+'_'+name.replace(/\s/g,'');
+    if(!d.notifs.find(n=>n.id===notifId)){
+      d.notifs.unshift({id:notifId,title:'Você foi mencionado no chat',sub:S.user.name+': '+txt.slice(0,60),read:false,mention:name});
+    }
+    _desktopNotif('@'+name+' mencionado por '+S.user.name, txt.slice(0,80));
+  });
   activ(d,'Mensagem no chat de '+S.user.name,'var(--blue)');sv(d);inp.value='';inp.style.height='';rChat(d);closeMentionDrop();
+}
+function _desktopNotif(title, body){
+  if(!('Notification' in window))return;
+  if(Notification.permission==='granted'){
+    new Notification(title,{body,icon:'icon-192.png',badge:'icon-192.png'});
+  }else if(Notification.permission!=='denied'){
+    Notification.requestPermission().then(p=>{if(p==='granted')new Notification(title,{body,icon:'icon-192.png'});});
+  }
 }
 function ckd(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}}
 let mentionQ='';
@@ -1404,7 +1438,7 @@ function checkMention(e){
   if(m){mentionQ=m[1];showMentionDrop(mentionQ);}else{closeMentionDrop();}
 }
 function showMentionDrop(q){
-  const list=USERS.filter(u=>u.name.toLowerCase().includes(q.toLowerCase()));
+  const list=[...USERS,..._fbDynUsers].filter(u=>u.name.toLowerCase().includes(q.toLowerCase()));
   const drop=document.getElementById('mention-drop');
   if(!list.length){drop.classList.remove('on');return;}
   drop.innerHTML=list.map(u=>`<div class="mention-opt" onmousedown="insertMention('${u.name}')"><div class="mention-av">${u.init}</div>${u.name}</div>`).join('');
