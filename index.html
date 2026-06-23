@@ -1167,16 +1167,26 @@ function setupFirmSelect(){
     drop.innerHTML=html;
   }
 }
-function toggleFirmDrop(){if(S.role==='admin')document.getElementById('firm-drop').classList.toggle('on');}
+function toggleFirmDrop(){
+  if(S.role!=='admin') return;
+  const drop=document.getElementById('firm-drop');
+  if(!drop) return;
+  const isOpen=drop.classList.contains('on');
+  if(!isOpen){
+    // Rebuild antes de abrir — garante Flow Sales + todas firmas sempre visíveis
+    setupFirmSelect();
+  }
+  drop.classList.toggle('on');
+}
 function selectFirm(id){
   S.eid=id;
   document.getElementById('firm-drop').classList.remove('on');
   loadFirm();
-  setupFirmSelect(); // garante dropdown atualizado após troca
   nav('ov');
   renderAll();
   populateWkFilter();
   _startRealtimeSync(); // reinicia sync para o novo escritório
+  // setupFirmSelect é chamado dentro de toggleFirmDrop ao abrir — não precisa aqui
 }
 function loadFirm(){
   const isFS = S.eid==='flowsales';
