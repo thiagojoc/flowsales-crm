@@ -803,6 +803,8 @@ function _showToast(msg, bg){
 let _syncTimer = null;
 let _fbUnsub = null; // unsubscribe do listener em tempo real
 let _fbDynUsers = []; // usuários dinâmicos carregados do Firebase
+let _fbCreds    = {}; // overrides de senha sincronizados via Firebase
+let _fbProfiles = {}; // fotos/nomes sincronizados via Firebase
 
 function _waitFB(){return window._fbReady?Promise.resolve():new Promise(r=>{window._fbResolve=r;});}
 
@@ -905,8 +907,24 @@ async function _startFirmsSync(){
     window._fbOnSnapshot(ref, snap=>{
       if(!snap.exists())return;
       const data=snap.data();
-      // Carregar usuários dinâmicos (criados via formulário)
+      // Carregar usuários dinâmicos, credenciais e perfis do Firebase
       if(data.users&&data.users.length) _fbDynUsers=data.users;
+      if(data.creds) { _fbCreds=data.creds; localStorage.setItem('fs_creds',JSON.stringify(data.creds)); }
+      if(data.profiles) {
+        _fbProfiles=data.profiles;
+        // Atualizar cache local de cada perfil
+        Object.entries(data.profiles).forEach(([email,p])=>{
+          localStorage.setItem('fs_upf_'+email,JSON.stringify(p));
+        });
+        // Re-aplicar foto se for o usuário atual
+        if(S.user&&data.profiles[S.user.email]){
+          const p=data.profiles[S.user.email];
+          const av=document.getElementById('uav');
+          if(av&&p.photo) av.innerHTML=`<img src="${p.photo}" alt="">`;
+          const unEl=document.getElementById('un');
+          if(unEl&&p.name) unEl.textContent=p.name;
+        }
+      }
       if(!data.firms||!data.firms.length)return;
       const localTs=(()=>{const s=localStorage.getItem('fs_firms');try{return JSON.parse(s)?.length?data.__ts-1:0;}catch{return 0;}})();
       if(data.__ts>localTs){
@@ -1039,8 +1057,22 @@ function inRange(dateStr){
 }
 
 // ── AUTH ──────────────────────────────────────────────────────
-function getCredsOverrides(){return JSON.parse(localStorage.getItem('fs_creds')||'{}');}
-function saveCredsOverride(origEmail,email,pass){const c=getCredsOverrides();c[origEmail]={email,pass};localStorage.setItem('fs_creds',JSON.stringify(c));}
+function getCredsOverrides(){
+  const local=JSON.parse(localStorage.getItem('fs_creds')||'{}');
+  return Object.keys(_fbCreds).length ? Object.assign({},local,_fbCreds) : local;
+}
+function saveCredsOverride(origEmail,email,pass){
+  const c=getCredsOverrides();c[origEmail]={email,pass};localStorage.setItem('fs_creds',JSON.stringify(c));
+  _fbCreds=c;
+  // Sobe pro Firebase para funcionar em qualquer browser
+  _waitFB().then(()=>{
+    const ref=window._fbDoc(window._fbDB,'flowsales_crm','__config');
+    window._fbGetDoc(ref).then(snap=>{
+      const data=snap.exists()?snap.data():{};
+      window._fbSetDoc(ref,{...data,creds:c,__ts:Date.now()});
+    });
+  }).catch(()=>{});
+}
 function resolveUser(em,pw){
   const direct=USERS.find(x=>x.email===em&&x.pass===pw);
   if(direct)return direct;
@@ -1088,7 +1120,9 @@ function _migrateRemoveDemo(){
 function showApp(){
   document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';
   const u=S.user;
-  const saved=JSON.parse(localStorage.getItem('fs_upf_'+u.email)||'{}');
+  const _localP=JSON.parse(localStorage.getItem('fs_upf_'+u.email)||'{}');
+  const saved=Object.assign({},_localP,_fbProfiles[u.email]||{});
+  if(saved.photo)localStorage.setItem('fs_upf_'+u.email,JSON.stringify(saved));
   const av=document.getElementById('uav');
   if(saved.photo){av.innerHTML=`<img src="${saved.photo}" alt="">`;}else{av.textContent=u.init;}
   document.getElementById('un').textContent=saved.name||u.name;
@@ -1343,6 +1377,8 @@ document.addEventListener('DOMContentLoaded',()=>{
       if(snap.exists()){
         const data=snap.data();
         if(data.users&&data.users.length) _fbDynUsers=data.users;
+        if(data.creds){ _fbCreds=data.creds; localStorage.setItem('fs_creds',JSON.stringify(data.creds)); }
+        if(data.profiles) _fbProfiles=data.profiles;
         if(data.firms&&data.firms.length){
           const filtered=data.firms.filter(f=>f.id!=='e1');
           FIRMS.splice(0);filtered.forEach(f=>FIRMS.push(f));
@@ -1550,10 +1586,22 @@ function saveProfile(){
   const finalPass=newPass||(existing.pass||u.pass);
   if(finalEmail!==u.email||finalPass!==u.pass){saveCredsOverride(u.email,finalEmail,finalPass);}
   localStorage.setItem('fs_upf_'+u.email,JSON.stringify(saved));
+  _fbProfiles[u.email]=saved;
+  // Sobe foto e perfil pro Firebase
+  _waitFB().then(()=>{
+    const ref=window._fbDoc(window._fbDB,'flowsales_crm','__config');
+    window._fbGetDoc(ref).then(snap=>{
+      const data=snap.exists()?snap.data():{};
+      const profiles=data.profiles||{};
+      profiles[u.email]=saved;
+      window._fbSetDoc(ref,{...data,profiles,__ts:Date.now()});
+    });
+  }).catch(()=>{});
   const av=document.getElementById('uav');if(saved.photo)av.innerHTML=`<img src="${saved.photo}" alt="">`;else av.textContent=u.init;
   document.getElementById('un').textContent=saved.name||u.name;
   document.getElementById('prof-ov').classList.remove('on');
-  if(newEmail&&newEmail!==u.email||newPass)alert('Credenciais atualizadas com sucesso! Novo e-mail: '+finalEmail);
+  _showToast('✅ Perfil salvo','var(--green)');
+  if(newEmail&&newEmail!==u.email||newPass)_showToast('✅ Credenciais atualizadas — novo e-mail: '+finalEmail,'var(--green)');
 }
 function closeProfOv(e){if(e.target===document.getElementById('prof-ov'))document.getElementById('prof-ov').classList.remove('on');}
 
