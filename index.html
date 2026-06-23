@@ -474,7 +474,7 @@ if(window._fbResolve) window._fbResolve();
         </div>
       </div>
       <div class="sb-firm-wrap" id="firm-wrap">
-        <div class="sb-firm" id="sfirm" onclick="toggleFirmDrop()">
+        <div class="sb-firm" id="sfirm" onclick="toggleFirmDrop(event)">
           <div class="sb-fn"><span id="sfn">Carregando...</span><svg id="firm-arr" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;color:var(--t2);display:none"><polyline points="6 9 12 15 18 9"/></svg></div>
           <div class="sb-fs" id="sfs"></div>
           <div class="sb-badge" id="sbdg"></div>
@@ -587,6 +587,10 @@ if(window._fbResolve) window._fbResolve();
           </div>
           <div class="kpi-hero" id="kpi-hero"></div>
           <div class="kpi-g6" id="kpi-g6"></div>
+          <div class="card" id="vendas-breakdown-card">
+            <div class="ch"><div class="ct">Discriminação de vendas</div><div id="vendas-add-btn"></div></div>
+            <div id="kpi-vendas-breakdown"></div>
+          </div>
           <div class="card">
             <div class="ch"><div class="ct">Funil de resultados</div></div>
             <div class="funnel-wrap" id="kpi-funnel"></div>
@@ -690,6 +694,7 @@ if(window._fbResolve) window._fbResolve();
             <div class="kpi-hero-main"><div class="kpi-hero-lbl">MRR — Receita recorrente mensal</div><div class="kpi-hero-val" id="fs-mrr">R$ 0</div><div class="kpi-hero-sub" id="fs-mrr-sub"></div></div>
             <div class="kpi-hero-roi"><div class="kpi-hero-roi-lbl">Clientes ativos</div><div class="kpi-hero-roi-val" id="fs-clients">0</div><div style="font-size:11px;color:var(--t2)">escritórios</div></div>
           </div>
+          <div id="fs-firm-dash"></div>
           <div class="g2">
             <div class="card"><div class="ch"><div class="ct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Pipeline de prospecção</div><button class="ca" onclick="openM('fspipe')">+ Lead</button></div><div id="fs-pipeline"></div></div>
             <div class="card"><div class="ch"><div class="ct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Metas da Flow Sales</div><button class="ca" onclick="addFSGoal()">+ Meta</button></div><div id="fs-goals"></div></div>
@@ -973,6 +978,7 @@ function dflEmpty(){
     payments:[],
     firmExtra:{address:'',website:'',instagram:''},
     kpiHistory:[],
+    vendasItems:[],
   };
 }
 function ld() { const s=localStorage.getItem('fs_'+S.eid); return s?JSON.parse(s):dfl(); }
@@ -1167,7 +1173,7 @@ function setupFirmSelect(){
     drop.innerHTML=html;
   }
 }
-function toggleFirmDrop(){if(S.role==='admin')document.getElementById('firm-drop').classList.toggle('on');}
+function toggleFirmDrop(e){if(e)e.stopPropagation();if(S.role==='admin')document.getElementById('firm-drop').classList.toggle('on');}
 function selectFirm(id){
   S.eid=id;
   document.getElementById('firm-drop').classList.remove('on');
@@ -1257,6 +1263,8 @@ function rKpis(d){
   const roi=k.invest?((k.rev/k.invest)).toFixed(1)+'x':'--';
   const mp=k.revG?Math.min(Math.round(k.rev/k.revG*100),100):0;
   document.getElementById('kpi-hero').innerHTML=`<div class="kpi-hero-main"><div class="kpi-hero-lbl">Faturamento atribuído ao período</div><div class="kpi-hero-val">R$ ${k.rev.toLocaleString('pt-BR')}</div><div class="kpi-hero-sub">Meta: R$ ${k.revG.toLocaleString('pt-BR')} &nbsp;·&nbsp; ${mp}% atingido</div></div><div class="kpi-hero-roi"><div class="kpi-hero-roi-lbl">ROI estimado</div><div class="kpi-hero-roi-val" style="color:var(--green)">${roi}</div><div style="font-size:11px;color:var(--t2)">sobre o investimento</div></div>`;
+  const cac=k.vendas?'R$ '+Math.round(k.invest/k.vendas).toLocaleString('pt-BR'):'--';
+  const roas=k.invest?(k.rev/k.invest).toFixed(2)+'x':'--';
   const metrics=[
     {l:'Investimento tráfego',v:`R$ ${k.invest.toLocaleString('pt-BR')}`,sub:'Período atual',c:'var(--t2)',bar:false},
     {l:'Leads gerados',v:k.leads,g:k.leadsG,c:'var(--blue)',sub:`vs meta ${k.leadsG}`},
@@ -1264,7 +1272,15 @@ function rKpis(d){
     {l:'Reuniões realizadas',v:k.reunReal,g:k.reunRealG,c:'var(--green)',sub:`${k.reunAgd?Math.round(k.reunReal/k.reunAgd*100):0}% das agendadas`},
     {l:'Vendas fechadas',v:k.vendas,g:k.vendasG,c:'var(--green)',sub:`Conv. ${k.reunReal?Math.round(k.vendas/k.reunReal*100):0}% (reun. → venda)`},
     {l:'Custo por lead',v:`R$ ${k.cpl}`,sub:'Por lead gerado',c:'var(--t2)',bar:false},
+    {l:'CAC',v:cac,sub:'Custo de aquisição por cliente',c:'var(--gold)',bar:false},
+    {l:'ROAS',v:roas,sub:'Retorno sobre verba de tráfego',c:roas!=='--'&&parseFloat(roas)>=2?'var(--green)':roas!=='--'&&parseFloat(roas)>=1?'var(--gold)':'var(--red)',bar:false},
   ];
+  // Discriminação de vendas
+  const vendasItems=d.vendasItems||[];
+  const vbEl=document.getElementById('kpi-vendas-breakdown');
+  const vbBtn=document.getElementById('vendas-add-btn');
+  if(vbBtn)vbBtn.innerHTML=S.role==='admin'?`<button class="ca" onclick="openM('vendasItem')">+ Tipo</button>`:'';
+  if(vbEl){if(!vendasItems.length){vbEl.innerHTML='<div class="empty">Nenhuma venda registrada por tipo.</div>';}else{const tot=vendasItems.reduce((s,x)=>s+x.qty,0);vbEl.innerHTML=vendasItems.map(vi=>`<div class="traf-row"><span class="traf-lbl">${vi.tipo}</span><span class="traf-val" style="display:flex;align-items:center;gap:8px"><span>${vi.qty} venda${vi.qty!==1?'s':''}</span><span style="font-size:10px;color:var(--t2)">${tot?Math.round(vi.qty/tot*100):0}%</span>${S.role==='admin'?`<button class="ib" onclick="delVendasItem('${vi.id}')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>`:''}`,`</span></div>`].join('')).join('')+`<div class="traf-row" style="border-top:0.5px solid var(--bdr);margin-top:4px;padding-top:8px"><span class="traf-lbl" style="font-weight:600">Total</span><span class="traf-val" style="font-weight:600">${tot} vendas</span></div>`;}}
   document.getElementById('kpi-g6').innerHTML=metrics.map(i=>{
     if(i.bar===false)return`<div class="kpi-mc"><div class="kpi-lbl">${i.l}</div><div class="kpi-val">${i.v}</div><div class="kpi-sub kpi-nt">${i.sub}</div></div>`;
     const p=i.g?Math.min(Math.round(i.v/i.g*100),100):0;const gc=p>=100?'var(--green)':p>=60?'var(--gold)':'var(--red)';
@@ -1751,6 +1767,10 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
       body:`<div class="fg"><label>Título</label><input class="fi" id="m-ttl" placeholder="O que precisa ser feito?"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Atribuída a</label><select class="fi" id="m-asg"><option>Thiago</option><option>Carlos</option><option>Ambos</option></select></div><div class="fg"><label>Prazo</label><input class="fi" id="m-due" type="date"></div></div>`,
       save:()=>{const d=ldFS();d.tasks=d.tasks||[];d.tasks.push({id:'ft'+Date.now(),title:v('m-ttl'),assign:v('m-asg'),due:v('m-due'),done:false});svFS(d);rFlow();cModal(null,1);}
     },
+    vendasItem:{title:'Registrar tipo de venda',
+      body:`<div class="fg"><label>Produto / Serviço</label><input class="fi" id="vi-tipo" placeholder="Planejamento previdenciário, Auxílio maternidade..."></div><div class="fg"><label>Quantidade vendida</label><input class="fi" id="vi-qty" type="number" min="1" value="1"></div>`,
+      save:()=>{const tipo=v('vi-tipo').trim();const qty=+v('vi-qty');if(!tipo||!qty){alert('Preencha tipo e quantidade.');return;}const d=ld();d.vendasItems=d.vendasItems||[];const ex=d.vendasItems.find(x=>x.tipo.toLowerCase()===tipo.toLowerCase());if(ex){ex.qty+=qty;}else{d.vendasItems.push({id:'vi'+Date.now(),tipo,qty});}sv(d);renderAll();cModal(null,1);}
+    },
     fspipe:{title:'Novo lead no pipeline',
       body:`<div class="fg"><label>Nome do escritório</label><input class="fi" id="m-ttl" placeholder="Escritório XYZ Advogados"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Cidade</label><input class="fi" id="m-city" placeholder="São José dos Campos"></div><div class="fg"><label>Temperatura</label><select class="fi" id="m-stage"><option value="hot">Quente</option><option value="warm">Morno</option><option value="cold">Frio</option></select></div></div><div class="fg"><label>Observações</label><textarea id="m-dsc" placeholder="Contexto do lead..."></textarea></div>`,
       save:()=>{const d=ldFS();d.pipeline=d.pipeline||[];d.pipeline.push({id:'fp'+Date.now(),name:v('m-ttl'),city:v('m-city'),stage:v('m-stage'),notes:v('m-dsc'),done:false});svFS(d);rFlow();cModal(null,1);}
@@ -1807,98 +1827,65 @@ function rFlow(){
   const mrrEl=document.getElementById('fs-mrr');if(mrrEl)mrrEl.textContent='R$ '+mrr.toLocaleString('pt-BR');
   const mrrSub=document.getElementById('fs-mrr-sub');if(mrrSub)mrrSub.textContent=`${FIRMS.length} cliente${FIRMS.length!==1?'s':''} ativo${FIRMS.length!==1?'s':''}  ·  Projeção anual: R$ ${(mrr*12).toLocaleString('pt-BR')}`;
   const cEl=document.getElementById('fs-clients');if(cEl)cEl.textContent=FIRMS.length;
-  const pipe=document.getElementById('fs-pipeline');
-  if(pipe)pipe.innerHTML=(d.pipeline||[]).map(p=>`<div class="trow"><div class="tck${p.done?' on':''}" onclick="tgFSPipe('${p.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tb2"><div class="tt${p.done?' dn':''}">${p.name}</div><div class="ti"><span class="b ${p.stage==='hot'?'br':p.stage==='warm'?'bgo':'bgr'}">${p.stage==='hot'?'Quente':p.stage==='warm'?'Morno':'Frio'}</span><span>${p.city||''}</span></div></div><button class="ib" onclick="delFSPipe('${p.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div>`).join('')||'<div class="empty">Sem leads no pipeline.</div>';
-  const goals=document.getElementById('fs-goals');
-  if(goals)goals.innerHTML=(d.goals||[]).map(g=>`<div class="trow"><div class="tck${g.done?' on':''}" onclick="tgFSGoal('${g.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tb2"><div class="tt${g.done?' dn':''}">${g.title}</div></div></div>`).join('')||'<div class="empty">Sem metas.</div>';
-  const cl=document.getElementById('fs-clients-list');
-  if(cl){
-    if(!FIRMS.length){cl.innerHTML='<div class="empty">Nenhum cliente cadastrado.</div>';}
+  // ── Firm health dashboard
+  const dash=document.getElementById('fs-firm-dash');
+  if(dash){
+    if(!FIRMS.length){dash.innerHTML='';}
     else{
-      const rows=FIRMS.map(f=>{
-        let fdata={};try{fdata=JSON.parse(localStorage.getItem('fs_'+f.id)||'{}');}catch(e){}
-        const pays=(fdata.payments||[]).filter(p=>p&&p.date).sort((a,b)=>b.date.localeCompare(a.date));
-        const lastPay=pays[0]||null;
-        let nextPayStr='';
-        if(lastPay&&lastPay.date){
-          try{const d=new Date(lastPay.date+'T12:00:00');d.setMonth(d.getMonth()+1);nextPayStr=d.toLocaleDateString('pt-BR');}catch(e){}
-        } else if(f.due){nextPayStr=fd(f.due);}
-        const allFiles=pays.flatMap(p=>Array.isArray(p.files)?p.files:[]);
-        return '<div class="traf-row" style="flex-direction:column;align-items:stretch;gap:6px;padding:10px 0">'
-          +'<div style="display:flex;justify-content:space-between;align-items:center">'
-          +'<div><div style="font-size:12px;font-weight:500">'+f.name+'</div>'
-          +'<div style="font-size:10px;color:var(--t2)">'+f.city+' · Sem. '+f.week+'/'+f.total+'</div></div>'
-          +'<div style="display:flex;align-items:center;gap:6px">'
-          +'<span class="b bg" style="font-size:10px;color:var(--green)">Ativo</span>'
-          +'<span class="b bg">R$ '+(f.fee||0).toLocaleString('pt-BR')+'</span>'
-          +'</div></div>'
-          +'<div style="display:flex;gap:12px;font-size:10px;color:var(--t2);flex-wrap:wrap">'
-          +(lastPay?'<span style="color:var(--green)">Último pag.: '+fd(lastPay.date)+'</span>':'<span style="color:var(--gold)">Sem pagamentos</span>')
-          +(nextPayStr?'<span>Próximo: '+nextPayStr+'</span>':'')
-          +'</div>'
-          +(allFiles.length?'<div style="display:flex;flex-wrap:wrap;gap:4px">'+allFiles.map(fi=>'<a href="'+fi.data+'" download="'+fi.name+'" style="font-size:10px;color:var(--blue);display:flex;align-items:center;gap:3px;padding:2px 7px;background:var(--gb);border-radius:4px">📎 '+fi.name+'</a>').join('')+'</div>':'')
-          +'</div>';
+      const today=new Date();
+      let totHealth=0,hCount=0,expiring=0,critical=0;
+      const cards=FIRMS.map(f=>{
+        let fd={};try{fd=JSON.parse(localStorage.getItem('fs_'+f.id)||'{}');}catch(e){}
+        const k=fd.kpis||{};
+        const hm=[{v:k.leads||0,g:k.leadsG||0},{v:k.reunReal||0,g:k.reunRealG||0},{v:k.vendas||0,g:k.vendasG||0}];
+        const hs=hm.filter(x=>x.g>0);
+        const health=hs.length?Math.round(hs.reduce((s,x)=>s+Math.min(x.v/x.g,1),0)/hs.length*100):null;
+        if(health!==null){totHealth+=health;hCount++;}
+        const hc=health===null?'var(--t2)':health>=70?'var(--green)':health>=40?'var(--gold)':'var(--red)';
+        const hl=health===null?'Sem metas':health>=70?'Saudável':health>=40?'Atenção':'Crítico';
+        if(health!==null&&health<40)critical++;
+        const wkPct=f.total?Math.min(Math.round((f.week||1)/f.total*100),100):0;
+        const wkLeft=(f.total||52)-(f.week||1);
+        let dLeft=null;
+        if(f.start){try{const s=new Date(f.start+'T12:00:00');const e2=new Date(s);e2.setDate(e2.getDate()+(f.total||52)*7);dLeft=Math.round((e2-today)/(864e5));}catch(e){}}
+        if(dLeft!==null&&dLeft<=60)expiring++;
+        const dc=dLeft===null?'var(--t2)':dLeft>90?'var(--green)':dLeft>30?'var(--gold)':'var(--red)';
+        const rev=k.rev||0;const revG=k.revG||0;
+        const revPct=revG?Math.min(Math.round(rev/revG*100),100):null;
+        return `<div class="card" style="padding:13px 15px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px">
+            <div><div style="font-size:12px;font-weight:600">${f.name}</div><div style="font-size:10px;color:var(--t2)">${f.area||''} · ${f.city||''}</div></div>
+            <div style="display:flex;gap:5px;align-items:center">
+              <span style="font-size:9px;font-weight:700;color:${hc};background:${hc}22;border:0.5px solid ${hc}44;border-radius:4px;padding:2px 6px">${hl}${health!==null?' '+health+'%':''}</span>
+              <button class="ib" onclick="selectFirm('${f.id}')" title="Acessar painel" style="padding:3px 8px;font-size:10px">▶</button>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px">
+            <div style="background:var(--s2);border-radius:5px;padding:6px 8px">
+              <div style="font-size:8px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em">Faturamento</div>
+              <div style="font-size:12px;font-weight:600;margin-top:2px">R$ ${rev.toLocaleString('pt-BR')}</div>
+              <div style="font-size:9px;color:${revPct!==null?(revPct>=100?'var(--green)':revPct>=60?'var(--gold)':'var(--red)'):'var(--t2)'}">${revPct!==null?revPct+'% meta':'sem meta'}</div>
+            </div>
+            <div style="background:var(--s2);border-radius:5px;padding:6px 8px">
+              <div style="font-size:8px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em">Semana</div>
+              <div style="font-size:12px;font-weight:600;margin-top:2px">${f.week||1}/${f.total||52}</div>
+              <div style="font-size:9px;color:var(--t2)">${wkLeft} restantes</div>
+            </div>
+            <div style="background:var(--s2);border-radius:5px;padding:6px 8px">
+              <div style="font-size:8px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em">Vence em</div>
+              <div style="font-size:12px;font-weight:600;margin-top:2px;color:${dc}">${dLeft!==null?dLeft+'d':'--'}</div>
+              <div style="font-size:9px;color:var(--t2)">${dLeft!==null?'dias':'não definido'}</div>
+            </div>
+          </div>
+          <div style="margin-bottom:${health!==null?'6px':'0'}">
+            <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--t2);margin-bottom:2px"><span>Contrato</span><span>${wkPct}%</span></div>
+            <div style="height:3px;background:var(--s3);border-radius:2px"><div style="height:100%;width:${wkPct}%;background:${wkPct>=85?'var(--green)':wkPct>=50?'var(--blue)':'var(--gold)'};border-radius:2px;transition:width .4s"></div></div>
+          </div>
+          ${health!==null?`<div><div style="display:flex;justify-content:space-between;font-size:9px;color:var(--t2);margin-bottom:2px"><span>Saúde</span><span style="color:${hc}">${health}%</span></div><div style="height:3px;background:var(--s3);border-radius:2px"><div style="height:100%;width:${health}%;background:${hc};border-radius:2px;transition:width .4s"></div></div></div>`:''}
+        </div>`;
       });
-      cl.innerHTML=rows.join('');
-    }
-  }
-  const ftasks=document.getElementById('fs-tasks');
-  if(ftasks)ftasks.innerHTML=(d.tasks||[]).map(t=>`<div class="trow"><div class="tck${t.done?' on':''}" onclick="tgFSTask('${t.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tb2"><div class="tt${t.done?' dn':''}">${t.title}</div><div class="ti"><span>${t.assign||''}</span></div></div><button class="ib" onclick="delFSTask('${t.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div>`).join('')||'<div class="empty">Sem tasks internas.</div>';
-  rFSChat(d);
-}
-function rFSChat(d){
-  const el=document.getElementById('fs-chat');if(!el)return;
-  const msgs=d.msgs||[];
-  el.innerHTML=msgs.map(m=>{
-    const out=m.from===S.user.name;const dt=new Date(m.time);
-    const t=dt.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    return`<div class="mrow ${out?'out':'in'}"><div class="bbl ${out?'out':'in'}">${m.text}</div><div class="mmeta">${m.from} - ${t}</div></div>`;
-  }).join('')||'<div class="empty">Chat interno Flow Sales.</div>';
-  el.scrollTop=el.scrollHeight;
-}
-function fsSendMsg(){const inp=document.getElementById('fs-cin');const txt=inp.value.trim();if(!txt)return;const d=ldFS();d.msgs=d.msgs||[];d.msgs.push({id:'fm'+Date.now(),text:txt,from:S.user.name,time:new Date().toISOString()});svFS(d);inp.value='';rFSChat(d);}
-function fsCkd(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();fsSendMsg();}}
-function tgFSTask(id){const d=ldFS();const t=d.tasks.find(x=>x.id===id);if(t){t.done=!t.done;svFS(d);rFlow();}}
-function delFSTask(id){const d=ldFS();d.tasks=d.tasks.filter(x=>x.id!==id);svFS(d);rFlow();}
-function tgFSPipe(id){const d=ldFS();const p=d.pipeline.find(x=>x.id===id);if(p){p.done=!p.done;svFS(d);rFlow();}}
-function delFSPipe(id){const d=ldFS();d.pipeline=d.pipeline.filter(x=>x.id!==id);svFS(d);rFlow();}
-function tgFSGoal(id){const d=ldFS();const g=d.goals.find(x=>x.id===id);if(g){g.done=!g.done;svFS(d);rFlow();}}
-function delFSGoal(id){const d=ldFS();d.goals=d.goals.filter(x=>x.id!==id);svFS(d);rFlow();}
-function activ(d,txt,col){d.activity=d.activity||[];d.activity.unshift({txt,col,time:new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})});if(d.activity.length>30)d.activity.length=30;}
-function fd(s){if(!s)return '';const [y,m,d]=s.split('-');if(!y||!m||!d)return s;return `${d}/${m}/${y}`;}
-// ── GUEST HELPERS ─────────────────────────────────────────────
-function _addGuest(){
-  const inp=document.getElementById('m-guest-inp');
-  if(!inp)return;
-  const val=inp.value.trim();
-  if(!val)return;
-  const chips=document.getElementById('m-guests-chips');
-  if(!chips)return;
-  // evitar duplicata
-  const existing=[...chips.querySelectorAll('.guest-chip')].map(c=>c.textContent.replace('×','').trim());
-  if(existing.includes(val)){inp.value='';return;}
-  const chip=document.createElement('span');
-  chip.className='guest-chip';
-  chip.style.cssText='display:flex;align-items:center;gap:4px;background:var(--gb);border:0.5px solid var(--bdr);border-radius:6px;padding:3px 8px;font-size:11px';
-  chip.innerHTML=`${val}<button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:var(--t2);font-size:12px;line-height:1;padding:0 0 0 2px">×</button>`;
-  chips.appendChild(chip);
-  inp.value='';inp.focus();
-}
-function _getGuests(){
-  const chips=document.getElementById('m-guests-chips');
-  if(!chips)return '';
-  return [...chips.querySelectorAll('.guest-chip')].map(c=>c.textContent.replace('×','').trim()).filter(Boolean).join(',');
-}
-// ── INIT ────────────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded',()=>{
-  checkSess();
-  const _lpw=document.getElementById('l-pw');
-  if(_lpw)_lpw.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
-  const _lem=document.getElementById('l-em');
-  if(_lem)_lem.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
-  document.addEventListener('click',e=>{if(!e.target.closest('#sfirm')){const fd=document.getElementById('firm-drop');if(fd)fd.classList.remove('on');}});
-});
-</script>
-</body>
-</html>
-                                                                                               
+      const avg=hCount?Math.round(totHealth/hCount):null;
+      const ac=avg===null?'var(--t2)':avg>=70?'var(--green)':avg>=40?'var(--gold)':'var(--red)';
+      dash.innerHTML=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px">
+        <div class="card" style="padding:10px 12px;text-align:center"><div style="font-size:22px;font-weight:700;color:var(--gold)">${FIRMS.length}</div><div style="font-size:9px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;margin-top:2px">Ativos</div></div>
+        <div class="card" style="padding:10px 12px;text-align:center"><div style="font-size:22px;font-weight:70
