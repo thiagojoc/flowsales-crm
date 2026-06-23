@@ -517,7 +517,7 @@ async function submitForm(){
       firms: [...existingFirms, novaFirma],
       users: [...existingUsers, novoUsuario],
       __ts: Date.now()
-    });
+    }, {merge:true});
 
     console.log('[Flow Sales] Firma criada:', firmId);
   } catch(e){

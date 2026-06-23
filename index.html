@@ -393,7 +393,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 </style>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, updateDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 const _app = initializeApp({
   apiKey:"AIzaSyBTqzj-9-AOI181sPCKvRsVGDujkWogIGI",
   authDomain:"flowbody-30162.firebaseapp.com",
@@ -406,7 +406,7 @@ const _db = getFirestore(_app);
 window._fbReady = true;
 window._fbDB = _db;
 window._fbDoc = doc;
-window._fbSetDoc = setDoc;
+window._fbSetDoc = setDoc; window._fbUpdateDoc = updateDoc;
 window._fbGetDoc = getDoc;
 window._fbOnSnapshot = onSnapshot;
 if(window._fbResolve) window._fbResolve();
@@ -891,7 +891,7 @@ const CLOUD = true;
 function _saveFirms(){
   localStorage.setItem('fs_firms', JSON.stringify(FIRMS));
   _waitFB().then(()=>{
-    window._fbSetDoc(window._fbDoc(window._fbDB,'flowsales_crm','__config'),{firms:FIRMS,__ts:Date.now()})
+    window._fbSetDoc(window._fbDoc(window._fbDB,'flowsales_crm','__config'),{firms:FIRMS,__ts:Date.now()},{merge:true})
     .catch(e=>console.error('[FB] firms save err:',e));
   }).catch(()=>{});
 }
@@ -1067,10 +1067,7 @@ function saveCredsOverride(origEmail,email,pass){
   // Sobe pro Firebase para funcionar em qualquer browser
   _waitFB().then(()=>{
     const ref=window._fbDoc(window._fbDB,'flowsales_crm','__config');
-    window._fbGetDoc(ref).then(snap=>{
-      const data=snap.exists()?snap.data():{};
-      window._fbSetDoc(ref,{...data,creds:c,__ts:Date.now()});
-    });
+    window._fbSetDoc(ref,{creds:c,__ts:Date.now()},{merge:true}).catch(e=>console.error('[FB] creds save:',e));
   }).catch(()=>{});
 }
 function resolveUser(em,pw){
@@ -1590,12 +1587,10 @@ function saveProfile(){
   // Sobe foto e perfil pro Firebase
   _waitFB().then(()=>{
     const ref=window._fbDoc(window._fbDB,'flowsales_crm','__config');
-    window._fbGetDoc(ref).then(snap=>{
-      const data=snap.exists()?snap.data():{};
-      const profiles=data.profiles||{};
-      profiles[u.email]=saved;
-      window._fbSetDoc(ref,{...data,profiles,__ts:Date.now()});
-    });
+    const profiles=Object.assign({},_fbProfiles);
+    profiles[u.email]=saved;
+    window._fbSetDoc(ref,{profiles,__ts:Date.now()},{merge:true}).catch(e=>console.error('[FB] profile save:',e));
+    _fbProfiles=profiles;
   }).catch(()=>{});
   const av=document.getElementById('uav');if(saved.photo)av.innerHTML=`<img src="${saved.photo}" alt="">`;else av.textContent=u.init;
   document.getElementById('un').textContent=saved.name||u.name;
