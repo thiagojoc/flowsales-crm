@@ -927,18 +927,12 @@ async function _startFirmsSync(){
           if(unEl&&p.name) unEl.textContent=p.name;
         }
       }
-      if(!data.firms||!data.firms.length)return;
-      const localTs=(()=>{const s=localStorage.getItem('fs_firms');try{return JSON.parse(s)?.length?data.__ts-1:0;}catch{return 0;}})();
-      if(data.__ts>localTs){
-        const saved=localStorage.getItem('fs_firms');
-        const savedArr=saved?JSON.parse(saved):[];
-        // Só substitui se Firebase tiver diferente
-        if(JSON.stringify(savedArr)!==JSON.stringify(data.firms)){
-          FIRMS.splice(0);data.firms.forEach(f=>FIRMS.push(f));
-          localStorage.setItem('fs_firms',JSON.stringify(FIRMS));
-          setupFirmSelect();rFirms();
-        }
-      }
+      // Sempre sincronizar FIRMS com Firebase (fonte da verdade)
+      const remoteFirms=(data.firms||[]).filter(f=>f.id!=='e1');
+      FIRMS.splice(0);remoteFirms.forEach(f=>FIRMS.push(f));
+      localStorage.setItem('fs_firms',JSON.stringify(FIRMS));
+      setupFirmSelect();
+      if(document.getElementById('sec-firms')?.style.display==='block') rFirms();
     });
   }catch(e){console.error('[FB] firms sync:',e);}
 }
@@ -1143,7 +1137,27 @@ function showApp(){
     Notification.requestPermission();
   }
   _startRealtimeSync();
-  if(S.role==='admin'){document.getElementById('ni-firms').style.display='flex';_startFirmsSync();}
+  if(S.role==='admin'){
+    document.getElementById('ni-firms').style.display='flex';
+    _startFirmsSync();
+    // Fetch imediato — garante dropdown populado mesmo antes do snapshot chegar
+    _waitFB().then(async ()=>{
+      try{
+        const _cs=await window._fbGetDoc(window._fbDoc(window._fbDB,'flowsales_crm','__config'));
+        if(_cs.exists()){
+          const _cd=_cs.data();
+          if(_cd.firms&&_cd.firms.length){
+            FIRMS.splice(0);_cd.firms.filter(f=>f.id!=='e1').forEach(f=>FIRMS.push(f));
+            localStorage.setItem('fs_firms',JSON.stringify(FIRMS));
+            setupFirmSelect();
+          }
+          if(_cd.users&&_cd.users.length) _fbDynUsers=_cd.users;
+          if(_cd.creds) _fbCreds=_cd.creds;
+          if(_cd.profiles) _fbProfiles=_cd.profiles;
+        }
+      }catch(e){}
+    }).catch(()=>{});
+  }
 }
 
 function setupFirmSelect(){
@@ -1636,6 +1650,10 @@ function openM(type,data){
       body:`<div class="fg"><label>Título</label><input class="fi" id="m-ttl" value="${data?data.title:''}"></div><div class="fg"><label>Descrição</label><textarea id="m-dsc">${data?data.desc||'':''}</textarea></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Responsável</label><select class="fi" id="m-rsp"><option${!data||data.resp==='Flow Sales'?' selected':''}>Flow Sales</option><option${data&&data.resp==='Escritório'?' selected':''}>Escritório</option><option${data&&data.resp==='Ambos'?' selected':''}>Ambos</option></select></div><div class="fg"><label>Atribuída a</label><select class="fi" id="m-asg">${asgOpts}</select></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Semana</label><input class="fi" id="m-wk" type="number" min="1" max="26" value="${data?data.week:1}"></div><div class="fg"><label>Prazo</label><input class="fi" id="m-due" type="date" value="${data?data.due:''}"></div></div><div class="fg"><label>Status</label><select class="fi" id="m-sta"><option value="pending"${!data||data.status==='pending'?' selected':''}>Pendente</option><option value="done"${data&&data.status==='done'?' selected':''}>Concluída</option><option value="late"${data&&data.status==='late'?' selected':''}>Atrasada</option></select></div><div class="fg" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="m-urg" ${data&&data.urgent?'checked':''}><label style="text-transform:none;letter-spacing:0;font-size:12px;color:var(--text)">Marcar como urgente</label></div>`,
       save:()=>{const d=ld();const t={id:data?data.id:'t'+Date.now(),title:v('m-ttl'),desc:v('m-dsc'),resp:v('m-rsp'),assign:v('m-asg'),week:+v('m-wk'),due:v('m-due'),status:v('m-sta'),urgent:document.getElementById('m-urg').checked};if(data){const i=d.tasks.findIndex(x=>x.id===data.id);if(i>=0)d.tasks[i]=t;}else{d.tasks.push(t);activ(d,'Nova task: '+t.title,'var(--gold)');}sv(d);renderAll();populateWkFilter();cModal(null,1);}
     },
+    edFirmAdmin:{title:'Editar escritório',
+      body:()=>`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Nome</label><input class="fi" id="ef-nm" value="${data?data.name||'':''}"></div><div class="fg"><label>Área</label><input class="fi" id="ef-area" value="${data?data.area||'':''}"></div><div class="fg"><label>Cidade / UF</label><input class="fi" id="ef-city" value="${data?data.city||'':''}"></div><div class="fg"><label>Telefone</label><input class="fi" id="ef-ph" value="${data?data.phone||'':''}"></div><div class="fg"><label>E-mail de contato</label><input class="fi" id="ef-em" type="email" value="${data?data.email||'':''}"></div><div class="fg"><label>Mensalidade (R$)</label><input class="fi" id="ef-fee" type="number" value="${data?data.fee||3500:3500}"></div><div class="fg"><label>OAB</label><input class="fi" id="ef-oab" value="${data?data.oab||'':''}"></div><div class="fg"><label>Início do contrato</label><input class="fi" id="ef-start" type="date" value="${data?data.start||'':''}"></div></div>`,
+      save:()=>{const f=FIRMS.find(x=>x.id===data.id);if(!f)return;f.name=v('ef-nm')||f.name;f.area=v('ef-area');f.city=v('ef-city');f.phone=v('ef-ph');f.email=v('ef-em');f.fee=+(v('ef-fee')||f.fee);f.oab=v('ef-oab');f.start=v('ef-start');_saveFirms();setupFirmSelect();rFirms();_showToast('Escritório atualizado ✅','var(--green)');cModal(null,1);}
+    },
     meet:{title:data?'Editar reunião':'Nova reunião',
       body:(()=>{const isPast=data!=null;return`<div class="fg"><label>Título</label><input class="fi" id="m-ttl" value="${data?data.title:''}"></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px"><div class="fg"><label>Data</label><input class="fi" id="m-dt" type="date" value="${data?data.date:new Date().toISOString().split('T')[0]}"></div><div class="fg"><label>Horário</label><input class="fi" id="m-hr" type="time" value="${data?data.time||'10:00':'10:00'}"></div><div class="fg"><label>Duração</label><select class="fi" id="m-dur"><option value="30"${data&&data.duration==='30'?' selected':''}>30 min</option><option value="60"${!data||data.duration==='60'||!data.duration?' selected':''}>1 hora</option><option value="90"${data&&data.duration==='90'?' selected':''}>1h30</option><option value="120"${data&&data.duration==='120'?' selected':''}>2 horas</option></select></div></div><div class="fg"><label>Tipo</label><select class="fi" id="m-tp"><option${!data||data.type==='Check semanal'?' selected':''}>Check semanal</option><option${data&&data.type==='Onboarding'?' selected':''}>Onboarding</option><option${data&&data.type==='Revisão quinzenal'?' selected':''}>Revisão quinzenal</option><option${data&&data.type==='Alinhamento'?' selected':''}>Alinhamento</option><option${data&&data.type==='Treinamento'?' selected':''}>Treinamento</option><option${data&&data.type==='Emergência'?' selected':''}>Emergência</option></select></div><div class="fg"><label>Convidados</label><div id="m-guests-chips" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px">${(data&&data.guests?data.guests.split(',').map(g=>g.trim()).filter(Boolean):[]).map(g=>`<span class="guest-chip" style="display:flex;align-items:center;gap:4px;background:var(--gb);border:0.5px solid var(--bdr);border-radius:6px;padding:3px 8px;font-size:11px">${g}<button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:var(--t2);font-size:12px;line-height:1;padding:0 0 0 2px">×</button></span>`).join('')}</div><div style="display:flex;gap:6px"><input class="fi" id="m-guest-inp" placeholder="email@convidado.com" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();_addGuest();}"><button type="button" class="ca" onclick="_addGuest()" style="flex-shrink:0;padding:0 12px">+</button></div></div><div class="fg"><label>Notas</label><textarea id="m-nt" style="min-height:60px">${data?data.notes||'':''}</textarea></div><div class="fg"><label>Próximos passos (um por linha)</label><textarea id="m-ac">${data&&data.actions?data.actions.join('\n'):''}</textarea></div>${isPast?`<div class="fg"><label>URL da gravação</label><input class="fi" id="m-rec" type="url" placeholder="https://drive.google.com/..." value="${data?data.recording||'':''}"></div><div class="fg"><label>Resumo gerado</label><textarea id="m-sum" placeholder="Cole aqui o resumo automático da reunião...">${data?data.summary||'':''}</textarea></div>`:''}`})(),
       save:()=>{const d=ld();const ac=v('m-ac').split('\n').filter(x=>x.trim());const m={id:data?data.id:'m'+Date.now(),title:v('m-ttl'),date:v('m-dt'),time:v('m-hr'),duration:v('m-dur'),type:v('m-tp'),guests:_getGuests(),notes:v('m-nt'),actions:ac,tags:[v('m-tp'),v('m-hr')],recording:v('m-rec')||'',summary:v('m-sum')||''};if(data){const i=d.meetings.findIndex(x=>x.id===data.id);if(i>=0)d.meetings[i]=m;}else{d.meetings.push(m);activ(d,'Reunião agendada: '+m.title,'var(--blue)');// notificar só os envolvidos (convidados + admins)
@@ -1772,9 +1790,13 @@ function addAfPartner(){
 function rFirms(){
   if(S.role!=='admin')return;
   const el=document.getElementById('firms-list');if(!el)return;
-  el.innerHTML=FIRMS.map(f=>`<div class="card" style="margin-bottom:8px"><div class="ch"><div class="ct" style="font-size:14px;font-weight:600">${f.name}</div><div style="display:flex;gap:6px"><button class="ca" onclick="selectFirmAndNav('${f.id}')">Ver painel</button><button class="bda" style="font-size:10px;padding:3px 8px" onclick="removeFirm('${f.id}')">Remover</button></div></div><div class="traf-row"><span class="traf-lbl">Área</span><span class="traf-val">${f.area}</span></div><div class="traf-row"><span class="traf-lbl">Cidade</span><span class="traf-val">${f.city}</span></div><div class="traf-row"><span class="traf-lbl">Contato</span><span class="traf-val">${f.contact}</span></div><div class="traf-row"><span class="traf-lbl">E-mail</span><span class="traf-val">${f.email}</span></div><div class="traf-row"><span class="traf-lbl">Mensalidade</span><span class="traf-val">R$ ${(f.fee||0).toLocaleString('pt-BR')}</span></div><div class="traf-row"><span class="traf-lbl">Início</span><span class="traf-val">${fd(f.start)}</span></div></div>`).join('')||'<div class="empty">Nenhum escritório cadastrado.</div>';
+  el.innerHTML=FIRMS.map(f=>`<div class="card" style="margin-bottom:8px"><div class="ch"><div class="ct" style="font-size:14px;font-weight:600">${f.name}</div><div style="display:flex;gap:6px"><button class="ca" onclick="selectFirmAndNav('${f.id}')">Ver painel</button><button class="ca" style="background:var(--gb);color:var(--text);border:0.5px solid var(--bdr)" onclick="edFirm('${f.id}')">Editar</button><button class="bda" style="font-size:10px;padding:3px 8px" onclick="removeFirm('${f.id}')">Remover</button></div></div><div class="traf-row"><span class="traf-lbl">Área</span><span class="traf-val">${f.area}</span></div><div class="traf-row"><span class="traf-lbl">Cidade</span><span class="traf-val">${f.city}</span></div><div class="traf-row"><span class="traf-lbl">Contato</span><span class="traf-val">${f.contact}</span></div><div class="traf-row"><span class="traf-lbl">E-mail</span><span class="traf-val">${f.email}</span></div><div class="traf-row"><span class="traf-lbl">Mensalidade</span><span class="traf-val">R$ ${(f.fee||0).toLocaleString('pt-BR')}</span></div><div class="traf-row"><span class="traf-lbl">Início</span><span class="traf-val">${fd(f.start)}</span></div></div>`).join('')||'<div class="empty">Nenhum escritório cadastrado.</div>';
 }
 function selectFirmAndNav(id){selectFirm(id);nav('ov');}
+function edFirm(id){
+  const f=FIRMS.find(x=>x.id===id);if(!f)return;
+  openM('edFirmAdmin',f);
+}
 function removeFirm(id){if(!confirm('Remover este escritório?'))return;const idx=FIRMS.findIndex(f=>f.id===id);if(idx>=0)FIRMS.splice(idx,1);_saveFirms();rFirms();setupFirmSelect();}
 
 // ── FLOWSALES INTERNAL ─────────────────────────────────────────
