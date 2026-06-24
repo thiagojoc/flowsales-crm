@@ -571,7 +571,18 @@ if(window._fbResolve) window._fbResolve();
                 <div class="ch"><div class="ct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Próxima reunião</div></div>
                 <div id="nxtmeet"></div>
               </div>
-                                  
+              <div class="card" id="card-p90">
+                <div class="ch"><div class="ct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/></svg>Programa 6 meses</div><button class="ca" onclick="nav('tasks')">Tasks</button></div>
+                <div id="p90"></div>
+              </div>
+            </div>
+          </div>
+          <div class="card" id="card-notetxt">
+            <div class="ch"><div class="ct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Resumo executivo</div><button class="ca" id="notebtn" onclick="openM('note')">Editar</button></div>
+            <div id="notetxt" class="note-view note-ph">Adicione um resumo executivo visível ao cliente.</div>
+          </div>
+        </div>
+
         <!-- KPIS -->
         <div class="sec" id="s-kpis">
           <div class="fr" style="justify-content:flex-end;gap:8px;">
@@ -1280,6 +1291,13 @@ function rOv(d){
   const _p90=document.getElementById('p90');if(_p90)_p90.innerHTML=`<div class="pi"><div class="ph"><div class="pl">Progresso geral</div><div class="pv">${done}/${total}</div></div><div class="ptr"><div class="pf" style="width:${pct}%;background:var(--gold)"></div></div></div>`+weeks.slice(0,5).map(w=>{const wt=d.tasks.filter(t=>t.week===w);const wd=wt.filter(t=>t.status==='done').length;const wp=wt.length?Math.round(wd/wt.length*100):0;const c=wp===100?'var(--green)':wp>0?'var(--gold)':'var(--s3)';return`<div class="pi"><div class="ph"><div class="pl" style="font-size:10px;color:var(--t2)">Semana ${w}</div><div class="pv" style="font-size:10px;color:${c}">${wp}%</div></div><div class="ptr" style="height:4px"><div class="pf" style="width:${wp}%;background:${c}"></div></div></div>`;}).join('');
   const nt=document.getElementById('notetxt');if(nt){nt.textContent=d.note||'';nt.className='note-view'+(d.note?'':' note-ph');}
   const notebtn=document.getElementById('notebtn');if(notebtn&&S.role==='client')notebtn.style.display='none';
+  // Programa 6 meses + Resumo executivo: visíveis só no painel de cliente
+  const cardP90=document.getElementById('card-p90');
+  const cardNote=document.getElementById('card-notetxt');
+  // isFlowSalesView = admin sem firma de cliente selecionada
+  const isFlowView=S.role==='admin'&&!S.eid;
+  if(cardP90)cardP90.style.display=isFlowView?'none':'';
+  if(cardNote)cardNote.style.display=isFlowView?'none':'';
 }
 
 // ── KPIS ──────────────────────────────────────────────────────
