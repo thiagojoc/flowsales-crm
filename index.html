@@ -1850,8 +1850,8 @@ function rOv(d){
   const pct=total?Math.round(done/total*100):0;
   const weeks=[...new Set(d.tasks.map(t=>t.week))].sort((a,b)=>a-b);
   document.getElementById('p90').innerHTML=`<div class="pi"><div class="ph"><div class="pl">Progresso geral</div><div class="pv">${done}/${total}</div></div><div class="ptr"><div class="pf" style="width:${pct}%;background:var(--gold)"></div></div></div>`+weeks.slice(0,5).map(w=>{const wt=d.tasks.filter(t=>t.week===w);const wd=wt.filter(t=>t.status==='done').length;const wp=wt.length?Math.round(wd/wt.length*100):0;const c=wp===100?'var(--green)':wp>0?'var(--gold)':'var(--s3)';return`<div class="pi"><div class="ph"><div class="pl" style="font-size:10px;color:var(--t2)">Semana ${w}</div><div class="pv" style="font-size:10px;color:${c}">${wp}%</div></div><div class="ptr" style="height:4px"><div class="pf" style="width:${wp}%;background:${c}"></div></div></div>`;}).join('');
-  const nt=document.getElementById('notetxt');nt.textContent=d.note||'Adicione um resumo executivo visível ao cliente.';nt.className='note-view'+(d.note?'':' note-ph');
-  if(S.role==='client')document.getElementById('notebtn').style.display='none';
+  const nt=document.getElementById('notetxt');if(nt){nt.textContent=d.note||'';nt.className='note-view'+(d.note?'':' note-ph');}
+  const notebtn=document.getElementById('notebtn');if(notebtn&&S.role==='client')notebtn.style.display='none';
 }
 
 // ── KPIS ──────────────────────────────────────────────────────
