@@ -167,10 +167,20 @@ textarea{resize:none;min-height:100px;line-height:1.65;}
           <div class="field-err" id="e-area">Selecione pelo menos uma área</div>
         </div>
         <div class="divider"></div>
-        <div class="fg">
+        <div class="fg" style="margin-bottom:6px">
           <label>Endereço completo <span class="req">*</span></label>
-          <input type="text" id="f-rua" placeholder="Av. Afonso Pena, 1000 — rua e número">
-          <div class="field-err" id="e-rua">Digite o endereço</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 120px;gap:14px;margin-bottom:14px">
+          <div class="fg" style="margin-bottom:0">
+            <label>Rua / Avenida <span class="req">*</span></label>
+            <input type="text" id="f-rua" placeholder="Av. Afonso Pena">
+            <div class="field-err" id="e-rua">Digite a rua</div>
+          </div>
+          <div class="fg" style="margin-bottom:0">
+            <label>Número <span class="req">*</span></label>
+            <input type="text" id="f-num" placeholder="1000">
+            <div class="field-err" id="e-num">Digite o número</div>
+          </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr 80px 80px;gap:14px">
           <div class="fg" style="margin-bottom:0"><label>Bairro</label><input type="text" id="f-bairro" placeholder="Centro"></div>
@@ -432,8 +442,11 @@ function validate(step){
     document.getElementById('e-area').classList.toggle('on', !areas);
     if(!areas) ok=false;
     const rua = fv('f-rua').trim();
+    const num = fv('f-num').trim();
     setErr('f-rua','e-rua', !rua);
+    setErr('f-num','e-num', !num);
     if(!rua) ok=false;
+    if(!num) ok=false;
     const cidade = fv('f-cidade').trim();
     setErr('f-cidade','e-cidade', !cidade);
     if(!cidade) ok=false;
@@ -554,7 +567,7 @@ async function submitForm(){
   const areas      = getAreas();
   const cidade     = fv('f-cidade').trim();
   const uf         = document.getElementById('f-estado').value;
-  const rua        = fv('f-rua').trim();
+  const rua        = (fv('f-rua').trim() + (fv('f-num').trim() ? ', ' + fv('f-num').trim() : ''));
   const bairro     = fv('f-bairro').trim();
   const cep        = fv('f-cep').trim();
   const comp       = fv('f-comp').trim();
