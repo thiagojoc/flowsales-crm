@@ -446,7 +446,7 @@ if(window._fbResolve) window._fbResolve();
       <div class="fg"><label>E-mail</label><input class="fi" id="le" type="email" placeholder="seu@email.com" autocomplete="email"></div>
       <div class="fg"><label>Senha</label><input class="fi" id="lp" type="password" placeholder="••••••••" autocomplete="current-password"></div>
       <button class="lbtn" onclick="doLogin()">Entrar</button>
-      <div class="lerr" id="lerr"></div><div style="margin-top:20px;font-size:9px;color:#333;text-align:center;letter-spacing:.05em">v23jun · build 012 · firebase</div>
+      <div class="lerr" id="lerr"></div><div style="margin-top:20px;font-size:9px;color:#444;text-align:center;letter-spacing:.08em">Criado por FlowSales</div>
     </div>
   </div>
 </div>
@@ -1018,7 +1018,7 @@ if(window._fbResolve) window._fbResolve();
       <div class="fg"><label>E-mail</label><input class="fi" id="le" type="email" placeholder="seu@email.com" autocomplete="email"></div>
       <div class="fg"><label>Senha</label><input class="fi" id="lp" type="password" placeholder="••••••••" autocomplete="current-password"></div>
       <button class="lbtn" onclick="doLogin()">Entrar</button>
-      <div class="lerr" id="lerr"></div><div style="margin-top:20px;font-size:9px;color:#333;text-align:center;letter-spacing:.05em">v23jun · build 012 · firebase</div>
+      <div class="lerr" id="lerr"></div><div style="margin-top:20px;font-size:9px;color:#444;text-align:center;letter-spacing:.08em">Criado por FlowSales</div>
     </div>
   </div>
 </div>
@@ -1849,7 +1849,7 @@ function rOv(d){
   const done=d.tasks.filter(t=>t.status==='done').length;const total=d.tasks.length;
   const pct=total?Math.round(done/total*100):0;
   const weeks=[...new Set(d.tasks.map(t=>t.week))].sort((a,b)=>a-b);
-  document.getElementById('p90').innerHTML=`<div class="pi"><div class="ph"><div class="pl">Progresso geral</div><div class="pv">${done}/${total}</div></div><div class="ptr"><div class="pf" style="width:${pct}%;background:var(--gold)"></div></div></div>`+weeks.slice(0,5).map(w=>{const wt=d.tasks.filter(t=>t.week===w);const wd=wt.filter(t=>t.status==='done').length;const wp=wt.length?Math.round(wd/wt.length*100):0;const c=wp===100?'var(--green)':wp>0?'var(--gold)':'var(--s3)';return`<div class="pi"><div class="ph"><div class="pl" style="font-size:10px;color:var(--t2)">Semana ${w}</div><div class="pv" style="font-size:10px;color:${c}">${wp}%</div></div><div class="ptr" style="height:4px"><div class="pf" style="width:${wp}%;background:${c}"></div></div></div>`;}).join('');
+  const _p90=document.getElementById('p90');if(_p90)_p90.innerHTML=`<div class="pi"><div class="ph"><div class="pl">Progresso geral</div><div class="pv">${done}/${total}</div></div><div class="ptr"><div class="pf" style="width:${pct}%;background:var(--gold)"></div></div></div>`+weeks.slice(0,5).map(w=>{const wt=d.tasks.filter(t=>t.week===w);const wd=wt.filter(t=>t.status==='done').length;const wp=wt.length?Math.round(wd/wt.length*100):0;const c=wp===100?'var(--green)':wp>0?'var(--gold)':'var(--s3)';return`<div class="pi"><div class="ph"><div class="pl" style="font-size:10px;color:var(--t2)">Semana ${w}</div><div class="pv" style="font-size:10px;color:${c}">${wp}%</div></div><div class="ptr" style="height:4px"><div class="pf" style="width:${wp}%;background:${c}"></div></div></div>`;}).join('');
   const nt=document.getElementById('notetxt');if(nt){nt.textContent=d.note||'';nt.className='note-view'+(d.note?'':' note-ph');}
   const notebtn=document.getElementById('notebtn');if(notebtn&&S.role==='client')notebtn.style.display='none';
 }
@@ -1879,13 +1879,38 @@ function rKpis(d){
   const vbBtn=document.getElementById('vendas-add-btn');
   if(vbBtn){if(S.role==='admin'){vbBtn.innerHTML='<button class="ca" onclick="openAddVenda()">+ Tipo</button>';}else{vbBtn.innerHTML='';}}
   if(vbEl){
-    if(!vendasItems.length){vbEl.innerHTML='<div class="empty">Nenhuma venda registrada por tipo.</div>';}
+    if(!vendasItems.length){vbEl.innerHTML='<div class="empty">Nenhuma venda registrada. Clique em + Tipo para registrar.</div>';}
     else{
       const tot=vendasItems.reduce(function(s,x){return s+x.qty;},0);
-      vbEl.innerHTML=vendasItems.map(function(vi){
-        var delB=S.role==='admin'?'<button class="ib del" data-vid="'+vi.id+'" onclick="delVendasItem(this.dataset.vid)"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>':'';
-        return '<div class="traf-row"><span class="traf-lbl">'+vi.tipo+'</span><span class="traf-val" style="display:flex;align-items:center;gap:8px"><span>'+vi.qty+' venda'+(vi.qty!==1?'s':'')+'</span><span style="font-size:10px;color:var(--t2)">'+(tot?Math.round(vi.qty/tot*100):0)+'%</span>'+delB+'</span></div>';
-      }).join('')+'<div class="traf-row" style="border-top:0.5px solid var(--bdr);margin-top:4px;padding-top:8px"><span class="traf-lbl" style="font-weight:600">Total</span><span class="traf-val" style="font-weight:600">'+tot+' vendas</span></div>';
+      // Group by tipo for chart
+      var byTipo={};vendasItems.forEach(function(vi){if(!byTipo[vi.tipo])byTipo[vi.tipo]={qty:0,orig:{},clis:[]};byTipo[vi.tipo].qty+=vi.qty;if(vi.orig)byTipo[vi.tipo].orig[vi.orig]=(byTipo[vi.tipo].orig[vi.orig]||0)+vi.qty;if(vi.cli)byTipo[vi.tipo].clis.push(vi.cli);});
+      var tipos=Object.keys(byTipo);var cols=['var(--gold)','var(--blue)','var(--green)','#a78bfa','#f472b6','var(--red)','#34d399','#60a5fa'];
+      // Mini SVG bar chart
+      var maxQ=Math.max.apply(null,tipos.map(function(t){return byTipo[t].qty;}));
+      var bw=Math.min(48,Math.floor(320/tipos.length)-8);
+      var svgH=80;
+      var bars=tipos.map(function(t,i){var h=maxQ?Math.round(byTipo[t].qty/maxQ*(svgH-22)):0;var x=i*(bw+8)+4;return '<rect x="'+x+'" y="'+(svgH-22-h)+'" width="'+bw+'" height="'+h+'" rx="3" fill="'+cols[i%cols.length]+'"/><text x="'+(x+bw/2)+'" y="'+(svgH-22-h-4)+'" text-anchor="middle" font-size="9" fill="var(--t2)">'+byTipo[t].qty+'</text><text x="'+(x+bw/2)+'" y="'+(svgH-6)+'" text-anchor="middle" font-size="8" fill="var(--t3)">'+t.slice(0,8)+'</text>';}).join('');
+      var svgW=tipos.length*(bw+8)+8;
+      var chart='<div style="overflow-x:auto;margin-bottom:14px"><svg width="'+svgW+'" height="'+svgH+'" style="display:block;margin:0 auto"><line x1="0" y1="'+(svgH-22)+'" x2="'+svgW+'" y2="'+(svgH-22)+'" stroke="var(--bdr)" stroke-width="0.5"/>'+bars+'</svg></div>';
+      // Table rows per tipo
+      var rows=tipos.map(function(t,i){
+        var g=byTipo[t];var pct=tot?Math.round(g.qty/tot*100):0;
+        var origStr=Object.keys(g.orig).map(function(o){return o+' ('+g.orig[o]+')';}).join(', ')||'Não informada';
+        var cliStr=g.clis.length?g.clis.slice(0,3).join(', ')+(g.clis.length>3?' +'+( g.clis.length-3):''):'';
+        var delBtns=vendasItems.filter(function(vi){return vi.tipo===t;}).map(function(vi){return S.role==='admin'?'<button class="ib del" data-vid="'+vi.id+'" onclick="delVendasItem(this.dataset.vid)" title="Remover entrada"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>':'';}).join('');
+        return '<div style="border:0.5px solid var(--bdr);border-radius:8px;padding:10px 13px;margin-bottom:7px">'
+          +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+          +'<div style="display:flex;align-items:center;gap:7px"><div style="width:8px;height:8px;border-radius:50%;background:'+cols[i%cols.length]+';flex-shrink:0"></div><span style="font-size:12px;font-weight:600">'+t+'</span></div>'
+          +'<div style="display:flex;align-items:center;gap:6px"><span style="font-size:12px;font-weight:700;color:'+cols[i%cols.length]+'">'+g.qty+'</span><span style="font-size:9px;color:var(--t2);background:var(--gb);border-radius:4px;padding:1px 5px">'+pct+'%</span>'+delBtns+'</div></div>'
+          +'<div style="font-size:10px;color:var(--t2);display:flex;flex-wrap:wrap;gap:10px">'
+          +'<span><b style="color:var(--t3)">Origem:</b> '+origStr+'</span>'
+          +(cliStr?'<span><b style="color:var(--t3)">Clientes:</b> '+cliStr+'</span>':'')
+          +'</div>'
+          +'<div style="margin-top:7px;height:3px;background:var(--s3);border-radius:2px"><div style="height:100%;width:'+pct+'%;background:'+cols[i%cols.length]+';border-radius:2px"></div></div>'
+          +'</div>';
+      }).join('');
+      var total_row='<div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;padding:8px 2px;border-top:0.5px solid var(--bdr);margin-top:4px"><span>Total</span><span>'+tot+' vendas</span></div>';
+      vbEl.innerHTML=chart+rows+total_row;
     }
   }
   document.getElementById('kpi-g6').innerHTML=metrics.map(i=>{
@@ -2378,8 +2403,8 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
       save:()=>{const d=ldFS();d.tasks=d.tasks||[];const rspVal=v('m-rsp');const rspLabel=(FIRMS.find(f=>f.id===rspVal)||{}).name||rspVal;const ft={id:'ft'+Date.now(),title:v('m-ttl'),assign:v('m-asg'),resp:rspLabel,due:v('m-due'),done:false};d.tasks.push(ft);svFS(d);_clickupTask({title:ft.title,assign:ft.assign,due:ft.due,desc:'Responsável: '+rspLabel,urgent:false});rFlow();cModal(null,1);}
     },
     vendasItem:{title:'Registrar tipo de venda',
-      body:`<div class="fg"><label>Produto / Serviço</label><input class="fi" id="vi-tipo" placeholder="Planejamento previdenciário, Auxílio maternidade..."></div><div class="fg"><label>Quantidade</label><input class="fi" id="vi-qty" type="number" min="1" value="1"></div>`,
-      save:()=>{const tipo=v('vi-tipo').trim();const qty=+v('vi-qty');if(!tipo||!qty){alert('Preencha tipo e quantidade.');return;}const d=ld();d.vendasItems=d.vendasItems||[];const ex=d.vendasItems.find(x=>x.tipo.toLowerCase()===tipo.toLowerCase());if(ex){ex.qty+=qty;}else{d.vendasItems.push({id:'vi'+Date.now(),tipo,qty});}sv(d);renderAll();cModal(null,1);}
+      body:`<div class="fg"><label>Produto / Serviço</label><input class="fi" id="vi-tipo" placeholder="Planejamento previdenciário, Auxílio maternidade..."></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Quantidade</label><input class="fi" id="vi-qty" type="number" min="1" value="1"></div><div class="fg"><label>Origem</label><select class="fi" id="vi-orig"><option value="">Não informada</option><option>Meta Ads</option><option>Google Ads</option><option>Indicação</option><option>WhatsApp</option><option>Instagram</option><option>Site</option><option>Evento</option><option>Outro</option></select></div></div><div class="fg"><label>Nome do cliente (opcional)</label><input class="fi" id="vi-cli" placeholder="Dr. João Silva..."></div>`,
+      save:()=>{const tipo=v('vi-tipo').trim();const qty=+v('vi-qty');const orig=v('vi-orig');const cli=v('vi-cli').trim();if(!tipo||!qty){alert('Preencha tipo e quantidade.');return;}const d=ld();d.vendasItems=d.vendasItems||[];d.vendasItems.push({id:'vi'+Date.now(),tipo,qty,orig,cli});sv(d);renderAll();cModal(null,1);}
     },
     fspipe:{title:'Novo lead no pipeline',
       body:`<div class="fg"><label>Nome do escritório</label><input class="fi" id="m-ttl" placeholder="Escritório XYZ Advogados"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Cidade</label><input class="fi" id="m-city" placeholder="São José dos Campos"></div><div class="fg"><label>Temperatura</label><select class="fi" id="m-stage"><option value="hot">Quente</option><option value="warm">Morno</option><option value="cold">Frio</option></select></div></div><div class="fg"><label>Observações</label><textarea id="m-dsc" placeholder="Contexto do lead..."></textarea></div>`,
