@@ -1196,6 +1196,8 @@ function selectFirm(id){
     o.classList.toggle('active',o.dataset.fid===id);
   });
   loadFirm();nav('ov');renderAll();populateWkFilter();
+  // Apply responsável photo if stored
+  try{const fe=(ld().firmExtra||{});if(fe.respPhoto){const av=document.getElementById('uav');if(av)av.innerHTML='<img src="'+fe.respPhoto+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';}} catch(e){}
   _startRealtimeSync();
 }
 function loadFirm(){
@@ -1211,8 +1213,8 @@ function loadFirm(){
   const f=FIRMS.find(x=>x.id===S.eid);
   if(!f)return;
   document.getElementById('sfn').textContent=f.name;
-  document.getElementById('sfs').textContent=f.area+' - '+f.city;
-  document.getElementById('sbdg').textContent='Ativo - Semana '+f.week;
+  document.getElementById('sfs').textContent='';
+  document.getElementById('sbdg').textContent='';
 }
 function populateWkFilter(){const sel=document.getElementById('wk-sel');if(!sel)return;const d=ld();const weeks=[...new Set(d.tasks.map(t=>t.week))].sort((a,b)=>a-b);sel.innerHTML='<option value="all">Todas</option>'+weeks.map(w=>`<option value="${w}">Semana ${w}</option>`).join('');}
 
