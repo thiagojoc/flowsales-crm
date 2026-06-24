@@ -208,12 +208,46 @@ textarea{resize:none;min-height:100px;line-height:1.65;}
         <div class="step-hd">
           <div class="step-tag">Etapa 2 de 3</div>
           <div class="step-ttl">Responsável pelo contrato</div>
-          <div class="step-sub">Dados do advogado responsável pela parceria com a Flow Sales.</div>
+          <div class="step-sub">Dados pessoais do advogado responsável pela parceria.</div>
         </div>
         <div class="fg">
-          <label>Nome completo <span class="req">*</span></label>
-          <input type="text" id="f-nome" placeholder="Dr(a). Nome Sobrenome">
-          <div class="field-err" id="e-nome">Digite o nome completo</div>
+          <label>Foto de perfil <span class="req">*</span></label>
+          <div class="photo-upload-wrap" id="photo-wrap-resp" onclick="document.getElementById('f-foto-resp').click()">
+            <div class="photo-preview" id="photo-preview-resp">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--t3)"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span>Clique para adicionar foto</span>
+            </div>
+            <input type="file" id="f-foto-resp" accept="image/*" style="display:none" onchange="previewPhoto('resp',this)">
+          </div>
+          <div class="field-err" id="e-foto-resp">Adicione uma foto de perfil</div>
+        </div>
+        <div class="row2">
+          <div class="fg">
+            <label>Nome <span class="req">*</span></label>
+            <input type="text" id="f-nome" placeholder="Dr(a). Nome">
+            <div class="field-err" id="e-nome">Digite o nome</div>
+          </div>
+          <div class="fg">
+            <label>Sobrenome <span class="req">*</span></label>
+            <input type="text" id="f-sobrenome" placeholder="Sobrenome">
+            <div class="field-err" id="e-sobrenome">Digite o sobrenome</div>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="fg">
+            <label>E-mail pessoal <span class="req">*</span></label>
+            <div class="inp-group"><span class="inp-addon" style="font-size:12px;line-height:1;">@</span>
+              <input type="email" id="f-email" placeholder="nome@email.com.br" inputmode="email">
+            </div>
+            <div class="field-err" id="e-email">Informe um e-mail válido</div>
+          </div>
+          <div class="fg">
+            <label>WhatsApp <span class="req">*</span></label>
+            <div class="inp-group"><span class="inp-addon">📱</span>
+              <input type="tel" id="f-tel" placeholder="(00) 00000-0000" inputmode="numeric">
+            </div>
+            <div class="field-err" id="e-tel">Informe um WhatsApp válido com DDD</div>
+          </div>
         </div>
         <div class="row2">
           <div class="fg">
@@ -221,23 +255,54 @@ textarea{resize:none;min-height:100px;line-height:1.65;}
             <input type="text" id="f-oab" placeholder="000000/MG">
             <div class="field-err" id="e-oab">Digite o número da OAB</div>
           </div>
-          <div class="fg">
-            <label>Telefone / WhatsApp <span class="req">*</span></label>
-            <div class="inp-group">
-              <span class="inp-addon">📱</span>
-              <input type="tel" id="f-tel" placeholder="(00) 00000-0000" inputmode="numeric">
-            </div>
-            <div class="field-err" id="e-tel">Informe um telefone válido com DDD — ex: (11) 99999-9999</div>
-          </div>
+          <div class="fg"></div>
         </div>
         <div class="fg">
-          <label>E-mail profissional <span class="req">*</span></label>
-          <div class="inp-group">
-            <span class="inp-addon" style="font-size:12px;line-height:1;">@</span>
-            <input type="email" id="f-email" placeholder="nome@escritorio.com.br" inputmode="email">
+          <label>Área de atuação <span class="req">*</span></label>
+          <div style="font-size:11px;color:var(--t2);margin-bottom:10px;">Selecione todas que se aplicam</div>
+          <div class="pills" id="pills-area">
+            <div class="pill" data-v="Trabalhista">Trabalhista</div>
+            <div class="pill" data-v="Família e Sucessões">Família</div>
+            <div class="pill" data-v="Cível">Cível</div>
+            <div class="pill" data-v="Criminal">Criminal</div>
+            <div class="pill" data-v="Tributário">Tributário</div>
+            <div class="pill" data-v="Empresarial">Empresarial</div>
+            <div class="pill" data-v="Previdenciário">Previdenciário</div>
+            <div class="pill" data-v="Imobiliário">Imobiliário</div>
+            <div class="pill" data-v="Ambiental">Ambiental</div>
+            <div class="pill" data-v="Outra">Outra</div>
           </div>
-          <div class="field-err" id="e-email">Informe um e-mail válido — ex: nome@dominio.com.br</div>
+          <div class="field-err" id="e-area">Selecione pelo menos uma área de atuação</div>
         </div>
+        <div class="divider"></div>
+        <div class="fg" style="margin-bottom:6px"><label>Endereço do responsável <span class="req">*</span></label></div>
+        <div style="display:grid;grid-template-columns:1fr 120px;gap:14px;margin-bottom:14px">
+          <div class="fg" style="margin-bottom:0">
+            <label>Rua / Avenida <span class="req">*</span></label>
+            <input type="text" id="f-resp-rua" placeholder="Av. Afonso Pena">
+            <div class="field-err" id="e-resp-rua">Digite a rua</div>
+          </div>
+          <div class="fg" style="margin-bottom:0">
+            <label>Número <span class="req">*</span></label>
+            <input type="text" id="f-resp-num" placeholder="1000">
+            <div class="field-err" id="e-resp-num">Digite o número</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 80px 80px;gap:14px">
+          <div class="fg" style="margin-bottom:0"><label>Bairro</label><input type="text" id="f-resp-bairro" placeholder="Centro"></div>
+          <div class="fg" style="margin-bottom:0">
+            <label>Cidade <span class="req">*</span></label>
+            <input type="text" id="f-resp-cidade" placeholder="Belo Horizonte">
+            <div class="field-err" id="e-resp-cidade">Digite a cidade</div>
+          </div>
+          <div class="fg" style="margin-bottom:0">
+            <label>UF <span class="req">*</span></label>
+            <select id="f-resp-estado"><option value="" disabled selected>UF</option><option>AC</option><option>AL</option><option>AM</option><option>AP</option><option>BA</option><option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option><option>MG</option><option>MS</option><option>MT</option><option>PA</option><option>PB</option><option>PE</option><option>PI</option><option>PR</option><option>RJ</option><option>RN</option><option>RO</option><option>RR</option><option>RS</option><option>SC</option><option>SE</option><option>SP</option><option>TO</option></select>
+            <div class="field-err" id="e-resp-estado">Selecione o estado</div>
+          </div>
+          <div class="fg" style="margin-bottom:0"><label>CEP</label><input type="text" id="f-resp-cep" placeholder="00000" maxlength="9"></div>
+        </div>
+        <div class="fg" style="margin-top:14px"><label>Complemento</label><input type="text" id="f-resp-comp" placeholder="Sala 42, andar 3..."></div>
         <div class="divider"></div>
         <div class="toggle-row" id="socio-toggle" onclick="toggleSocio()">
           <div><div class="toggle-lbl">O escritório possui sócio(a)?</div><div class="toggle-sub">Adicionar dados dos sócios</div></div>
@@ -329,27 +394,70 @@ let CUR = 1;
 let SOCIO = false;
 let SOCIO_COUNT = 0;
 
+// Photo upload preview
+function previewPhoto(key, inp){
+  if(!inp.files||!inp.files[0])return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const preview=document.getElementById('photo-preview-'+key);
+    if(preview){preview.innerHTML='<img src="'+e.target.result+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%"><span>Foto selecionada - clique para trocar</span>';}
+    const wrap=document.getElementById('photo-wrap-'+key);
+    if(wrap){wrap.classList.add('has-photo');wrap.classList.remove('err');}
+    const err=document.getElementById('e-foto-'+key);
+    if(err)err.classList.remove('on');
+    // store b64 on the input element
+    const el=document.getElementById('f-foto-'+key)||document.getElementById('f-foto-resp');
+    if(el)el.dataset.b64=e.target.result;
+    // also try with dashes in key (for socio-0, socio-1 etc.)
+    const el2=document.getElementById('f-'+key.replace('-','').replace('socio','socio-foto').replace('resp','foto-resp'));
+    if(!el&&el2)el2.dataset.b64=e.target.result;
+  };
+  reader.readAsDataURL(inp.files[0]);
+}
+
 function socioCardHTML(idx){
   return `<div class="socio-card" id="socio-card-${idx}">
     <div class="socio-card-hd">
       <span class="socio-card-ttl">Sócio(a) ${idx+1}</span>
       ${idx>0?`<button type="button" class="socio-del-btn" onclick="removeSocio(${idx})">Remover</button>`:''}
     </div>
+    <div class="fg">
+      <label>Foto de perfil <span class="req">*</span></label>
+      <div class="photo-upload-wrap" id="photo-wrap-socio-${idx}" onclick="document.getElementById('f-socio-foto-${idx}').click()">
+        <div class="photo-preview" id="photo-preview-socio-${idx}">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--t3)"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>Clique para adicionar foto</span>
+        </div>
+        <input type="file" id="f-socio-foto-${idx}" accept="image/*" style="display:none" onchange="previewPhoto('socio-${idx}',this)">
+      </div>
+      <div class="field-err" id="e-socio-foto-${idx}">⚠ Foto obrigatória</div>
+    </div>
     <div class="row2">
-      <div class="fg"><label>Nome</label><input type="text" id="f-socio-nome-${idx}" placeholder="Dr(a). Nome Sobrenome">
+      <div class="fg"><label>Nome <span class="req">*</span></label><input type="text" id="f-socio-nome-${idx}" placeholder="Dr(a). Nome">
         <div class="field-err" id="e-socio-nome-${idx}">⚠ Nome obrigatório</div></div>
-      <div class="fg"><label>OAB</label><input type="text" id="f-socio-oab-${idx}" placeholder="000000/MG">
-        <div class="field-err" id="e-socio-oab-${idx}">⚠ OAB obrigatória</div></div>
+      <div class="fg"><label>Sobrenome <span class="req">*</span></label><input type="text" id="f-socio-sobrenome-${idx}" placeholder="Sobrenome">
+        <div class="field-err" id="e-socio-sobrenome-${idx}">⚠ Sobrenome obrigatório</div></div>
     </div>
     <div class="row2">
-      <div class="fg"><label>E-mail</label><input type="email" id="f-socio-email-${idx}" placeholder="socio@escritorio.com.br">
+      <div class="fg"><label>E-mail <span class="req">*</span></label><input type="email" id="f-socio-email-${idx}" placeholder="socio@email.com.br">
         <div class="field-err" id="e-socio-email-${idx}">⚠ E-mail inválido</div></div>
-      <div class="fg"><label>Telefone</label><input type="tel" id="f-socio-tel-${idx}" placeholder="(00) 00000-0000">
-        <div class="field-err" id="e-socio-tel-${idx}">⚠ Telefone inválido</div></div>
+      <div class="fg"><label>WhatsApp <span class="req">*</span></label><input type="tel" id="f-socio-tel-${idx}" placeholder="(00) 00000-0000">
+        <div class="field-err" id="e-socio-tel-${idx}">⚠ WhatsApp inválido</div></div>
     </div>
-    <div class="fg"><label>Rua e número</label>
-      <input type="text" id="f-socio-rua-${idx}" placeholder="Av. Afonso Pena, 1000"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 80px;gap:14px">
+    <div class="row2">
+      <div class="fg"><label>OAB <span class="req">*</span></label><input type="text" id="f-socio-oab-${idx}" placeholder="000000/MG">
+        <div class="field-err" id="e-socio-oab-${idx}">⚠ OAB obrigatória</div></div>
+      <div class="fg"><label>Área de atuação</label><input type="text" id="f-socio-area-${idx}" placeholder="Ex: Trabalhista, Cível"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 120px;gap:14px;margin-bottom:14px">
+      <div class="fg" style="margin-bottom:0"><label>Rua / Avenida <span class="req">*</span></label>
+        <input type="text" id="f-socio-rua-${idx}" placeholder="Av. Afonso Pena">
+        <div class="field-err" id="e-socio-rua-${idx}">⚠ Rua obrigatória</div></div>
+      <div class="fg" style="margin-bottom:0"><label>Número <span class="req">*</span></label>
+        <input type="text" id="f-socio-num-${idx}" placeholder="1000">
+        <div class="field-err" id="e-socio-num-${idx}">⚠ Número</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 80px 80px;gap:14px">
       <div class="fg" style="margin-bottom:0"><label>Bairro</label><input type="text" id="f-socio-bairro-${idx}" placeholder="Centro"></div>
       <div class="fg" style="margin-bottom:0"><label>Cidade</label><input type="text" id="f-socio-cidade-${idx}" placeholder="Belo Horizonte"></div>
       <div class="fg" style="margin-bottom:0"><label>UF</label>
@@ -363,9 +471,10 @@ function socioCardHTML(idx){
           <option>RS</option><option>RO</option><option>RR</option><option>SC</option>
           <option>SP</option><option>SE</option><option>TO</option>
         </select></div>
+      <div class="fg" style="margin-bottom:0"><label>CEP</label><input type="text" id="f-socio-cep-${idx}" placeholder="00000"></div>
     </div>
-    <div class="fg" style="margin-bottom:0"><label>CEP / Complemento</label>
-      <input type="text" id="f-socio-comp-${idx}" placeholder="CEP ou complemento"></div>
+    <div class="fg" style="margin-top:14px"><label>Complemento</label>
+      <input type="text" id="f-socio-comp-${idx}" placeholder="Sala, bloco..."></div>
   </div>`;
 }
 
@@ -389,18 +498,26 @@ function getSocios(){
     const nome = (document.getElementById('f-socio-nome-'+idx)||{}).value||'';
     if(!nome.trim()) return;
     const _sv = id => (document.getElementById(id)||{}).value||'';
+    const sobrenome = _sv('f-socio-sobrenome-'+idx);
     const srua    = _sv('f-socio-rua-'+idx);
+    const snum    = _sv('f-socio-num-'+idx);
     const sbairro = _sv('f-socio-bairro-'+idx);
     const scidade = _sv('f-socio-cidade-'+idx);
     const suf     = _sv('f-socio-uf-'+idx);
+    const scep    = _sv('f-socio-cep-'+idx);
     const scomp   = _sv('f-socio-comp-'+idx);
-    const saddr   = [srua, sbairro, scidade+(suf?' / '+suf:''), scomp].filter(Boolean).join(' · ');
+    const saddr   = [srua+(snum?', '+snum:''), sbairro, scidade+(suf?' / '+suf:''), scep, scomp].filter(Boolean).join(' · ');
+    const fotoEl  = document.getElementById('f-socio-foto-'+idx);
     socios.push({
       nome: nome.trim(),
+      sobrenome: sobrenome.trim(),
+      nomeCompleto: (nome+' '+sobrenome).trim(),
       oab: _sv('f-socio-oab-'+idx),
+      area: _sv('f-socio-area-'+idx),
       email: _sv('f-socio-email-'+idx),
       tel: _sv('f-socio-tel-'+idx),
-      addr: saddr, rua:srua, bairro:sbairro, cidade:scidade, uf:suf, comp:scomp
+      addr: saddr, rua:srua, num:snum, bairro:sbairro, cidade:scidade, uf:suf, cep:scep, comp:scomp,
+      photo: fotoEl?.dataset?.b64||''
     });
   });
   return socios;
@@ -436,11 +553,13 @@ function validate(step){
     const nome = fv('f-escritorio').trim();
     setErr('f-escritorio','e-escritorio', !nome);
     if(!nome) ok=false;
-    const areas = getAreas();
-    const pillsEl = document.getElementById('pills-area');
-    pillsEl.classList.toggle('err', !areas);
-    document.getElementById('e-area').classList.toggle('on', !areas);
-    if(!areas) ok=false;
+    const telEsc = fv('f-tel-esc').trim();
+    setErr('f-tel-esc','e-tel-esc', !telEsc);
+    if(!telEsc) ok=false;
+    const emailEsc = fv('f-email-esc').trim();
+    const emailEscOk = validEmail(emailEsc);
+    setErr('f-email-esc','e-email-esc', !emailEscOk);
+    if(!emailEscOk) ok=false;
     const rua = fv('f-rua').trim();
     const num = fv('f-num').trim();
     setErr('f-rua','e-rua', !rua);
@@ -456,27 +575,57 @@ function validate(step){
     if(!uf) ok=false;
   }
   if(step===2){
+    // Foto do responsável
+    const fotoResp = (document.getElementById('f-foto-resp')||{}).dataset?.b64||'';
+    const fotoWrap = document.getElementById('photo-wrap-resp');
+    const fotoErr  = document.getElementById('e-foto-resp');
+    if(!fotoResp){ if(fotoWrap)fotoWrap.classList.add('err'); if(fotoErr)fotoErr.classList.add('on'); ok=false; }
+    else { if(fotoWrap)fotoWrap.classList.remove('err'); if(fotoErr)fotoErr.classList.remove('on'); }
     const nome = fv('f-nome').trim();
     setErr('f-nome','e-nome', !nome);
     if(!nome) ok=false;
-    const oab = fv('f-oab').trim();
-    setErr('f-oab','e-oab', !oab);
-    if(!oab) ok=false;
-    const tel = fv('f-tel');
-    const telOk = validPhone(tel);
-    setErr('f-tel','e-tel', !telOk);
-    if(!telOk) ok=false;
+    const sobrenome = fv('f-sobrenome').trim();
+    setErr('f-sobrenome','e-sobrenome', !sobrenome);
+    if(!sobrenome) ok=false;
     const email = fv('f-email');
     const emailOk = validEmail(email);
     setErr('f-email','e-email', !emailOk);
     if(!emailOk) ok=false;
+    const tel = fv('f-tel');
+    const telOk = validPhone(tel);
+    setErr('f-tel','e-tel', !telOk);
+    if(!telOk) ok=false;
+    const oab = fv('f-oab').trim();
+    setErr('f-oab','e-oab', !oab);
+    if(!oab) ok=false;
+    const areas = getAreas();
+    const pillsEl = document.getElementById('pills-area');
+    if(pillsEl){ pillsEl.classList.toggle('err', !areas); document.getElementById('e-area').classList.toggle('on', !areas); }
+    if(!areas) ok=false;
+    const respRua = fv('f-resp-rua').trim();
+    const respNum = fv('f-resp-num').trim();
+    setErr('f-resp-rua','e-resp-rua', !respRua);
+    setErr('f-resp-num','e-resp-num', !respNum);
+    if(!respRua) ok=false;
+    if(!respNum) ok=false;
+    const respCidade = fv('f-resp-cidade').trim();
+    setErr('f-resp-cidade','e-resp-cidade', !respCidade);
+    if(!respCidade) ok=false;
+    const respEstado = (document.getElementById('f-resp-estado')||{}).value||'';
+    if(document.getElementById('f-resp-estado')){ document.getElementById('f-resp-estado').classList.toggle('err',!respEstado); document.getElementById('e-resp-estado').classList.toggle('on',!respEstado); }
+    if(!respEstado) ok=false;
     // Sócios: valida cada card presente
     if(SOCIO){
       document.querySelectorAll('.socio-card').forEach(card => {
         const idx = card.id.replace('socio-card-','');
+        const sfoto = (document.getElementById('f-socio-foto-'+idx)||{}).dataset?.b64||'';
+        if(!sfoto){ const sw=document.getElementById('photo-wrap-socio-'+idx); if(sw)sw.classList.add('err'); document.getElementById('e-socio-foto-'+idx)?.classList.add('on'); ok=false; }
         const snome = (document.getElementById('f-socio-nome-'+idx)||{}).value||'';
         setErr('f-socio-nome-'+idx,'e-socio-nome-'+idx, !snome.trim());
         if(!snome.trim()) ok=false;
+        const ssobrenome = (document.getElementById('f-socio-sobrenome-'+idx)||{}).value||'';
+        setErr('f-socio-sobrenome-'+idx,'e-socio-sobrenome-'+idx, !ssobrenome.trim());
+        if(!ssobrenome.trim()) ok=false;
         const soab = (document.getElementById('f-socio-oab-'+idx)||{}).value||'';
         setErr('f-socio-oab-'+idx,'e-socio-oab-'+idx, !soab.trim());
         if(!soab.trim()) ok=false;
@@ -488,6 +637,12 @@ function validate(step){
         const stelOk = validPhone(stel);
         setErr('f-socio-tel-'+idx,'e-socio-tel-'+idx, !stelOk);
         if(!stelOk) ok=false;
+        const srua = (document.getElementById('f-socio-rua-'+idx)||{}).value||'';
+        setErr('f-socio-rua-'+idx,'e-socio-rua-'+idx, !srua.trim());
+        if(!srua.trim()) ok=false;
+        const snum = (document.getElementById('f-socio-num-'+idx)||{}).value||'';
+        setErr('f-socio-num-'+idx,'e-socio-num-'+idx, !snum.trim());
+        if(!snum.trim()) ok=false;
       });
     }
   }
@@ -549,7 +704,7 @@ function telMask(id){
     this.value=v.trim().replace(/-$/,'');
   });
 }
-telMask('f-tel'); telMask('f-socio-tel');
+telMask('f-tel');
 document.getElementById('f-cep').addEventListener('input',function(){
   let v=this.value.replace(/\D/g,'');
   if(v.length>5) v=v.replace(/(\d{5})(\d{0,3})/,'$1-$2');
@@ -563,23 +718,40 @@ async function submitForm(){
   btn.disabled=true;
   btn.textContent='Enviando...';
 
+  // — Escritório
   const escritorio = fv('f-escritorio').trim();
-  const areas      = getAreas();
+  const telEsc     = fv('f-tel-esc').trim();
+  const emailEsc   = fv('f-email-esc').trim().toLowerCase();
+  const escRua     = fv('f-rua').trim();
+  const escNum     = fv('f-num').trim();
+  const escBairro  = fv('f-bairro').trim();
   const cidade     = fv('f-cidade').trim();
   const uf         = document.getElementById('f-estado').value;
-  const rua        = (fv('f-rua').trim() + (fv('f-num').trim() ? ', ' + fv('f-num').trim() : ''));
-  const bairro     = fv('f-bairro').trim();
   const cep        = fv('f-cep').trim();
   const comp       = fv('f-comp').trim();
-  const responsavel= fv('f-nome').trim();
+  const escEndereco= [escRua+(escNum?', '+escNum:''), escBairro, cidade+(uf?' / '+uf:''), cep, comp].filter(Boolean).join(' · ');
+  // — Responsável
+  const nome       = fv('f-nome').trim();
+  const sobrenome  = fv('f-sobrenome').trim();
+  const responsavel= (nome+' '+sobrenome).trim();
   const oab        = fv('f-oab').trim();
+  const areas      = getAreas();
   const telefone   = fv('f-tel').trim();
   const email      = fv('f-email').trim().toLowerCase();
+  const respRua    = fv('f-resp-rua').trim();
+  const respNum    = fv('f-resp-num').trim();
+  const respBairro = fv('f-resp-bairro').trim();
+  const respCidade = fv('f-resp-cidade').trim();
+  const respUF     = (document.getElementById('f-resp-estado')||{}).value||'';
+  const respCep    = fv('f-resp-cep').trim();
+  const respComp   = fv('f-resp-comp').trim();
+  const respEndereco=[respRua+(respNum?', '+respNum:''), respBairro, respCidade+(respUF?' / '+respUF:''), respCep, respComp].filter(Boolean).join(' · ');
+  const fotoRespB64= (document.getElementById('f-foto-resp')||{}).dataset?.b64||'';
+  // — Extras
   const site       = fv('f-site').trim();
   const instagram  = fv('f-ig').trim().replace('@','');
   const origem     = document.getElementById('f-origem').value||'';
   const expectativas = fv('f-obs').trim();
-  const address    = [rua, bairro, cep, comp].filter(Boolean).join(' · ');
 
   // Gerar ID e senha da firma
   const firmId   = 'f' + Date.now().toString(36);
@@ -587,27 +759,31 @@ async function submitForm(){
   const clientPass   = primeiroNome + '2026';
   const initials     = responsavel.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
 
-  // Dados iniciais da firma (estrutura idêntica ao dflEmpty do CRM)
+  // Dados iniciais da firma
   const firmData = {
     tasks:[],
     kpis:{leads:0,leadsG:0,reunAgd:0,reunAgdG:0,reunReal:0,reunRealG:0,vendas:0,vendasG:0,rev:0,revG:0,invest:0,investG:0,impressoes:0,cliques:0,cpl:0,conv:0,convG:0},
     implementations:[],meetings:[],files:[],links:[],msgs:[],demands:[],
     metas:{day:[],wk:[],mo:[]},
-    notifs:[],activity:[],note:'',unreadChat:0,partners:getSocios().map((s,i)=>({id:'p'+Date.now()+i,name:s.nome,role:'Sócio(a)',email:s.email,phone:s.tel,oab:s.oab,address:s.addr,photo:''})),payments:[],
-    firmExtra:{address,website:site,instagram:instagram?'@'+instagram:''},
+    notifs:[],activity:[],note:'',unreadChat:0,
+    partners:getSocios().map((s,i)=>({id:'p'+Date.now()+i,name:s.nomeCompleto,role:'Sócio(a)',email:s.email,phone:s.tel,oab:s.oab,area:s.area,address:s.addr,photo:s.photo||''})),
+    payments:[],
+    firmExtra:{address:escEndereco,website:site,instagram:instagram?'@'+instagram:'',respPhoto:fotoRespB64,respAddress:respEndereco,respOAB:oab,respAreas:areas},
     __ts: Date.now()
   };
 
   const novaFirma = {
     id:firmId, name:escritorio, area:areas, city:cidade+'/'+uf, week:1, total:52,
-    contact:responsavel, phone:telefone, email, fee:3500,
-    start: new Date().toISOString().slice(0,10),
-    address, website:site, oab, due:''
+    contact:responsavel, phone:telEsc, email:emailEsc,
+    contactPhone:telefone, contactEmail:email,
+    fee:3500, start: new Date().toISOString().slice(0,10),
+    address:escEndereco, website:site, oab, due:''
   };
 
   const novoUsuario = {
     email, pass:clientPass, name:responsavel,
-    role:'client', eid:firmId, init:initials, photo:fotoRespB64
+    role:'client', eid:firmId, init:initials, photo:fotoRespB64,
+    oab, area:areas, address:respEndereco, phone:telefone
   };
 
   // Gerar usuários para cada sócio
@@ -645,14 +821,38 @@ async function submitForm(){
   }
 
   // Google Sheets — planilha de clientes (URLSearchParams p/ no-cors)
-  const socios_str = getSocios().map((s,i)=>`[${i+1}] ${s.nome} · OAB: ${s.oab} · ${s.email} · ${s.tel}${s.addr?' · '+s.addr:''}`).join(' | ');
+  const socios_str = getSocios().map((s,i)=>`[${i+1}] ${s.nomeCompleto} · OAB: ${s.oab}${s.area?' · '+s.area:''} · ${s.email} · ${s.tel}${s.addr?' · '+s.addr:''}`).join(' | ');
   const sheetsParams = new URLSearchParams({
-    escritorio, area:areas, cidade, uf, endereco:address,
-    responsavel, oab, telefone, email,
-    site:site||'', instagram:instagram?'@'+instagram:'',
-    origem:origem||'', expectativas:expectativas||'',
-    mensalidade:'R$ 3.500', inicio:new Date().toLocaleDateString('pt-BR'),
-    firmId, senha:clientPass, socios: socios_str||''
+    escritorio,
+    tel_esc: telEsc,
+    email_esc: emailEsc,
+    esc_rua: escRua,
+    esc_num: escNum,
+    esc_bairro: escBairro,
+    esc_cidade: cidade,
+    esc_uf: uf,
+    esc_cep: cep,
+    esc_comp: comp,
+    responsavel,
+    resp_email: email,
+    resp_whatsapp: telefone,
+    resp_oab: oab,
+    resp_areas: areas,
+    resp_rua: respRua,
+    resp_num: respNum,
+    resp_bairro: respBairro,
+    resp_cidade: respCidade,
+    resp_uf: respUF,
+    resp_cep: respCep,
+    resp_comp: respComp,
+    site: site||'',
+    instagram: instagram?'@'+instagram:'',
+    origem: origem||'',
+    expectativas: expectativas||'',
+    mensalidade: 'R$ 3.500',
+    inicio: new Date().toLocaleDateString('pt-BR'),
+    firmId, senha: clientPass,
+    socios: socios_str||''
   });
   try{
     await fetch('https://script.google.com/macros/s/AKfycbyzoR-eIxWJLcwV9oCzfWf7bOOObWdviKvox9GxMHbBNyAmDXu0HZQXb3DYuvYGJGuWHw/exec',{
