@@ -522,6 +522,26 @@ async function submitForm(){
     // Não bloqueia — email de backup ainda vai
   }
 
+  // Google Sheets — planilha de clientes
+  const sheetsPayload = {
+    escritorio, area:areas, cidade, uf, endereco:address,
+    responsavel, oab, telefone, email,
+    site:site||'', instagram:instagram?'@'+instagram:'',
+    origem:origem||'', expectativas:expectativas||'',
+    mensalidade:'R$ 3.500', inicio:new Date().toLocaleDateString('pt-BR'),
+    firmId, senha:clientPass,
+    socio: SOCIO ? [fv('f-socio-nome'),fv('f-socio-oab'),fv('f-socio-email'),fv('f-socio-tel'),fv('f-socio-addr')].filter(Boolean).join(' · ') : ''
+  };
+  try{
+    await fetch('https://script.google.com/macros/s/AKfycbyzoR-eIxWJLcwV9oCzfWf7bOOObWdviKvox9GxMHbBNyAmDXu0HZQXb3DYuvYGJGuWHw/exec',{
+      method:'POST',
+      mode:'no-cors',
+      body:JSON.stringify(sheetsPayload),
+      headers:{'Content-Type':'application/json'}
+    });
+    console.log('[Sheets] Enviado para planilha');
+  }catch(e){ console.warn('[Sheets]',e); }
+
   // Email via Formspree (backup)
   const emailData = {
     '📋 Escritório': escritorio,
