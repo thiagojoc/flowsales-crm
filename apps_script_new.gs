@@ -4,23 +4,23 @@
 // Deploy como: Web App > Anyone > Execute as: Me
 // ============================================================
 
+var HEADERS = [
+  'Data', 'Escritório', 'Tel. Escritório', 'E-mail Escritório',
+  'Rua Esc.', 'Número Esc.', 'Bairro Esc.', 'Cidade Esc.', 'UF Esc.', 'CEP Esc.', 'Comp. Esc.',
+  'Responsável', 'E-mail Resp.', 'WhatsApp Resp.', 'OAB', 'Áreas de Atuação',
+  'Rua Resp.', 'Número Resp.', 'Bairro Resp.', 'Cidade Resp.', 'UF Resp.', 'CEP Resp.', 'Comp. Resp.',
+  'Site', 'Instagram', 'Como chegou', 'Expectativas',
+  'Mensalidade', 'Início', 'ID Firma', 'Senha', 'Sócios'
+];
+
 function doPost(e) {
   try {
     var p = e.parameter;
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName('Clientes') || ss.getActiveSheet();
 
-    // ── cabeçalho (cria se não existir) ──
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow([
-        'Data', 'Escritório', 'Tel. Escritório', 'E-mail Escritório',
-        'Rua Esc.', 'Número Esc.', 'Bairro Esc.', 'Cidade Esc.', 'UF Esc.', 'CEP Esc.', 'Comp. Esc.',
-        'Responsável', 'E-mail Resp.', 'WhatsApp Resp.', 'OAB', 'Áreas de Atuação',
-        'Rua Resp.', 'Número Resp.', 'Bairro Resp.', 'Cidade Resp.', 'UF Resp.', 'CEP Resp.', 'Comp. Resp.',
-        'Site', 'Instagram', 'Como chegou', 'Expectativas',
-        'Mensalidade', 'Início', 'ID Firma', 'Senha', 'Sócios'
-      ]);
-    }
+    // Sempre sobrescreve a linha 1 com o cabeçalho correto
+    sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
 
     var row = [
       new Date().toLocaleString('pt-BR'),
@@ -72,4 +72,12 @@ function doPost(e) {
 
 function doGet(e) {
   return ContentService.createTextOutput('Flow Sales CRM — Apps Script ativo ✅');
+}
+
+// Utilitário: força cabeçalho agora (rode manualmente se precisar corrigir planilha existente)
+function fixHeader() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Clientes') || ss.getActiveSheet();
+  sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
+  SpreadsheetApp.getUi().alert('Cabeçalho corrigido ✅');
 }
