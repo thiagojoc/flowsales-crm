@@ -337,8 +337,25 @@ function socioCardHTML(idx){
       <div class="fg"><label>Telefone</label><input type="tel" id="f-socio-tel-${idx}" placeholder="(00) 00000-0000">
         <div class="field-err" id="e-socio-tel-${idx}">⚠ Telefone inválido</div></div>
     </div>
-    <div class="fg" style="margin-bottom:0"><label>Endereço</label>
-      <input type="text" id="f-socio-addr-${idx}" placeholder="Rua, número, bairro, cidade/UF"></div>
+    <div class="fg"><label>Rua e número</label>
+      <input type="text" id="f-socio-rua-${idx}" placeholder="Av. Afonso Pena, 1000"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 80px;gap:14px">
+      <div class="fg" style="margin-bottom:0"><label>Bairro</label><input type="text" id="f-socio-bairro-${idx}" placeholder="Centro"></div>
+      <div class="fg" style="margin-bottom:0"><label>Cidade</label><input type="text" id="f-socio-cidade-${idx}" placeholder="Belo Horizonte"></div>
+      <div class="fg" style="margin-bottom:0"><label>UF</label>
+        <select id="f-socio-uf-${idx}" style="width:100%;background:var(--s2);border:1px solid var(--bdr2);border-radius:var(--r);padding:13px 10px;color:var(--text);font-size:13px;outline:none;font-family:inherit">
+          <option value="">UF</option>
+          <option>AC</option><option>AL</option><option>AP</option><option>AM</option>
+          <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
+          <option>GO</option><option>MA</option><option>MT</option><option>MS</option>
+          <option>MG</option><option>PA</option><option>PB</option><option>PR</option>
+          <option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
+          <option>RS</option><option>RO</option><option>RR</option><option>SC</option>
+          <option>SP</option><option>SE</option><option>TO</option>
+        </select></div>
+    </div>
+    <div class="fg" style="margin-bottom:0"><label>CEP / Complemento</label>
+      <input type="text" id="f-socio-comp-${idx}" placeholder="CEP ou complemento"></div>
   </div>`;
 }
 
@@ -361,12 +378,19 @@ function getSocios(){
     const idx = card.id.replace('socio-card-','');
     const nome = (document.getElementById('f-socio-nome-'+idx)||{}).value||'';
     if(!nome.trim()) return;
+    const _sv = id => (document.getElementById(id)||{}).value||'';
+    const srua    = _sv('f-socio-rua-'+idx);
+    const sbairro = _sv('f-socio-bairro-'+idx);
+    const scidade = _sv('f-socio-cidade-'+idx);
+    const suf     = _sv('f-socio-uf-'+idx);
+    const scomp   = _sv('f-socio-comp-'+idx);
+    const saddr   = [srua, sbairro, scidade+(suf?' / '+suf:''), scomp].filter(Boolean).join(' · ');
     socios.push({
       nome: nome.trim(),
-      oab: (document.getElementById('f-socio-oab-'+idx)||{}).value||'',
-      email: (document.getElementById('f-socio-email-'+idx)||{}).value||'',
-      tel: (document.getElementById('f-socio-tel-'+idx)||{}).value||'',
-      addr: (document.getElementById('f-socio-addr-'+idx)||{}).value||''
+      oab: _sv('f-socio-oab-'+idx),
+      email: _sv('f-socio-email-'+idx),
+      tel: _sv('f-socio-tel-'+idx),
+      addr: saddr, rua:srua, bairro:sbairro, cidade:scidade, uf:suf, comp:scomp
     });
   });
   return socios;
@@ -547,7 +571,7 @@ async function submitForm(){
   // Gerar ID e senha da firma
   const firmId   = 'f' + Date.now().toString(36);
   const primeiroNome = responsavel.split(' ')[0].toLowerCase().replace(/[^a-z]/g,'') || 'cliente';
-  const clientPass   = primeiroNome + '2024';
+  const clientPass   = primeiroNome + '2026';
   const initials     = responsavel.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
 
   // Dados iniciais da firma (estrutura idêntica ao dflEmpty do CRM)
@@ -577,7 +601,7 @@ async function submitForm(){
   const sociosList = getSocios();
   const socioUsers = sociosList.map(s => {
     const sFirst = s.nome.split(' ')[0].toLowerCase().replace(/[^a-z]/g,'') || 'socio';
-    const sPass  = sFirst + '2024';
+    const sPass  = sFirst + '2026';
     const sInit  = s.nome.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
     return {email:s.email.toLowerCase(), pass:sPass, name:s.nome, role:'client', eid:firmId, init:sInit};
   }).filter(u => u.email);

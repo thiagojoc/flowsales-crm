@@ -1852,7 +1852,7 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
         // Create client user
         const userEmail=v('af-email').trim().toLowerCase();
         if(userEmail&&!USERS.find(u=>u.email===userEmail)){
-          USERS.push({email:userEmail,pass:nm.split(' ')[0].toLowerCase()+'2024',name:nm,role:'client',eid:id,init:nm.substring(0,2).toUpperCase()});
+          USERS.push({email:userEmail,pass:nm.split(' ')[0].toLowerCase()+'2026',name:nm,role:'client',eid:id,init:nm.substring(0,2).toUpperCase()});
         }
         setupFirmSelect();rFirms();cModal(null,1);_showToast('Escritório "'+nm+'" criado! ✅','var(--green)');
       }
