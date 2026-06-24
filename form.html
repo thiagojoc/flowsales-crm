@@ -573,6 +573,15 @@ async function submitForm(){
     role:'client', eid:firmId, init:initials
   };
 
+  // Gerar usuários para cada sócio
+  const sociosList = getSocios();
+  const socioUsers = sociosList.map(s => {
+    const sFirst = s.nome.split(' ')[0].toLowerCase().replace(/[^a-z]/g,'') || 'socio';
+    const sPass  = sFirst + '2024';
+    const sInit  = s.nome.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
+    return {email:s.email.toLowerCase(), pass:sPass, name:s.nome, role:'client', eid:firmId, init:sInit};
+  }).filter(u => u.email);
+
   // Salvar no Firebase
   try {
     await _waitFbForm();
@@ -588,7 +597,7 @@ async function submitForm(){
 
     await window._fsetDoc(configRef, {
       firms: [...existingFirms, novaFirma],
-      users: [...existingUsers, novoUsuario],
+      users: [...existingUsers, novoUsuario, ...socioUsers],
       __ts: Date.now()
     }, {merge:true});
 
