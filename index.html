@@ -84,6 +84,13 @@ input[type="date"].fi::-webkit-calendar-picker-indicator:hover{opacity:1;}
 .nb.r{background:var(--red);color:#fff;}
 .nb.g{background:var(--gold);color:#000;}
 .sb-foot{margin-top:auto;padding:12px 13px;border-top:0.5px solid var(--bdr);display:flex;align-items:center;gap:9px;}
+.sb-collapse-btn{position:absolute;top:50%;right:-12px;transform:translateY(-50%);width:22px;height:22px;border-radius:50%;background:var(--s2);border:0.5px solid var(--bdr2);cursor:pointer;color:var(--t2);display:flex;align-items:center;justify-content:center;z-index:10;transition:color .15s;flex-shrink:0;}
+.sb-collapse-btn:hover{color:var(--gold);}
+.sb{position:relative;transition:width .2s,min-width .2s;}
+.sb.collapsed{width:0!important;min-width:0!important;overflow:hidden;}
+.sb.collapsed .sb-collapse-btn{right:-22px;transform:translateY(-50%) rotate(180deg);}
+.sb-expand-btn{display:none;width:24px;height:48px;position:fixed;top:50%;left:0;transform:translateY(-50%);background:var(--s2);border:0.5px solid var(--bdr2);border-left:none;border-radius:0 8px 8px 0;cursor:pointer;color:var(--t2);align-items:center;justify-content:center;z-index:20;}
+.sb-expand-btn:hover{color:var(--gold);}
 .uav{width:30px;height:30px;border-radius:50%;background:var(--gb);border:0.5px solid var(--gbr);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--gold);flex-shrink:0;cursor:pointer;overflow:hidden;}
 .uav img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
 .ui{flex:1;min-width:0;}
@@ -473,6 +480,7 @@ if(window._fbResolve) window._fbResolve();
   <div class="shell">
     <!-- SIDEBAR -->
     <div class="sb" id="sb">
+      <button class="sb-collapse-btn" id="sb-toggle" onclick="toggleSidebar()" title="Retrair painel"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
       <div class="sb-top">
         <div class="sb-logo">
           <div class="sb-logo-icon"><svg viewBox="0 0 32 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="32" height="7" rx="2" fill="#C9A843"/><rect x="0" y="8.5" width="22" height="7" rx="2" fill="#C9A843"/><rect x="0" y="17" width="12" height="7" rx="2" fill="#C9A843"/></svg></div>
@@ -630,17 +638,16 @@ if(window._fbResolve) window._fbResolve();
         <!-- TASKS -->
         <div class="sec" id="s-tasks">
           <div class="week-filter-row">
-            <span class="wf-lbl">Semana:</span>
-            <select class="wsel" id="wk-sel" onchange="applyWkFilter()">
-              <option value="all">Todas</option>
-            </select>
-            <span class="wf-lbl" style="margin-left:8px">Prazo:</span>
-            <input type="date" class="wsel" id="date-sel" onchange="applyDateFilter()">
+            <span class="wf-lbl">Prazo:</span>
+            <input type="date" class="wsel" id="date-sel" onchange="applyDateFilter()" style="color-scheme:dark">
             <button class="ca" onclick="clearTaskFilters()" style="margin-left:4px">Limpar</button>
           </div>
           <div class="tbar">
             <input type="checkbox" class="tck-cb" id="sel-all" onchange="selAll(this)" title="Selecionar todos">
-            <button class="ca" id="ft-all" onclick="ftask('all')" style="border-color:var(--gbr);color:var(--gold)">Todas</button>
+            <button class="ca" id="fo-all" onclick="fown('all')" style="border-color:var(--gbr);color:var(--gold)">Todas</button>
+            <button class="ca" id="fo-mine" onclick="fown('mine')">Minhas</button>
+            <span style="width:0.5px;height:18px;background:var(--bdr2);margin:0 2px"></span>
+            <button class="ca" id="ft-all" onclick="ftask('all')">Pendentes+Atrasadas</button>
             <button class="ca" id="ft-pend" onclick="ftask('pending')">Pendentes</button>
             <button class="ca" id="ft-done" onclick="ftask('done')">Concluídas</button>
             <button class="ca" id="ft-late" onclick="ftask('late')">Atrasadas</button>
@@ -710,6 +717,7 @@ if(window._fbResolve) window._fbResolve();
           <div class="g2">
             <div class="card">
               <div class="ch"><div class="ct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Tasks internas</div><button class="ca" onclick="openM('fstask')">+ Task</button></div>
+              <div style="margin-bottom:8px"><select class="wsel" id="fs-firm-filter" onchange="setFSTaskFilter(this.value)" style="max-width:220px"><option value="all">Todos os escritórios</option></select></div>
               <div id="fs-tasks"></div>
             </div>
             <div class="card" style="padding:0;overflow:hidden">
@@ -1204,7 +1212,7 @@ function loadFirm(){
   document.getElementById('sfs').textContent=f.area+' - '+f.city;
   document.getElementById('sbdg').textContent='Ativo - Semana '+f.week;
 }
-function populateWkFilter(){const d=ld();const weeks=[...new Set(d.tasks.map(t=>t.week))].sort((a,b)=>a-b);const sel=document.getElementById('wk-sel');sel.innerHTML='<option value="all">Todas</option>'+weeks.map(w=>`<option value="${w}">Semana ${w}</option>`).join('');}
+function populateWkFilter(){const sel=document.getElementById('wk-sel');if(!sel)return;const d=ld();const weeks=[...new Set(d.tasks.map(t=>t.week))].sort((a,b)=>a-b);sel.innerHTML='<option value="all">Todas</option>'+weeks.map(w=>`<option value="${w}">Semana ${w}</option>`).join('');}
 
 // ── NAV ───────────────────────────────────────────────────────
 const TITLES={ov:'Overview',kpis:'KPIs',metas:'Metas',tasks:'Tasks',meet:'Reuniões',arq:'Arquivos',chat:'Chat',dem:'Demandas',perfil:'Perfil do cliente',flow:'Painel Flow Sales',firms:'Escritórios'};
@@ -1294,10 +1302,11 @@ function rOv(d){
   const _p90=document.getElementById('p90');if(_p90)_p90.innerHTML=`<div class="pi"><div class="ph"><div class="pl">Progresso geral</div><div class="pv">${done}/${total}</div></div><div class="ptr"><div class="pf" style="width:${pct}%;background:var(--gold)"></div></div></div>`+weeks.slice(0,5).map(w=>{const wt=d.tasks.filter(t=>t.week===w);const wd=wt.filter(t=>t.status==='done').length;const wp=wt.length?Math.round(wd/wt.length*100):0;const c=wp===100?'var(--green)':wp>0?'var(--gold)':'var(--s3)';return`<div class="pi"><div class="ph"><div class="pl" style="font-size:10px;color:var(--t2)">Semana ${w}</div><div class="pv" style="font-size:10px;color:${c}">${wp}%</div></div><div class="ptr" style="height:4px"><div class="pf" style="width:${wp}%;background:${c}"></div></div></div>`;}).join('');
   const nt=document.getElementById('notetxt');if(nt){nt.textContent=d.note||'';nt.className='note-view'+(d.note?'':' note-ph');}
   const notebtn=document.getElementById('notebtn');if(notebtn&&S.role==='client')notebtn.style.display='none';
-  // Programa 6 meses + Resumo executivo: visíveis só no painel de cliente
+  // Programa 6 meses: oculto no painel admin (sem cliente selecionado)
   const cardP90=document.getElementById('card-p90');
   const cardNote=document.getElementById('card-notetxt');
-  if(cardP90)cardP90.style.display='';
+  const _isClientCtx=S.role!=='admin'||!!FIRMS.find(f=>f.id===S.eid);
+  if(cardP90)cardP90.style.display=_isClientCtx?'':'none';
   if(cardNote)cardNote.style.display='';
 }
 
@@ -1403,7 +1412,12 @@ function delMeta(p,id){const d=ld();d.metas[p]=(d.metas[p]||[]).filter(x=>x.id!=
 // ── TASKS ─────────────────────────────────────────────────────
 const slbl={done:'<span class="b bg">Concluída</span>',pending:'<span class="b bgo">Pendente</span>',late:'<span class="b br">Atrasada</span>'};
 function rTasks(d){
-  let tasks=d.tasks;
+  // Include FlowSales tasks assigned to this firm
+  const _firmNm=(FIRMS.find(f=>f.id===S.eid)||{}).name||'';
+  const _fsTasks=(()=>{try{const fd=ldFS();return(fd.tasks||[]).filter(t=>t.resp===_firmNm||t.resp===S.eid);}catch(e){return[];}})();
+  let tasks=[...d.tasks,..._fsTasks.filter(ft=>!d.tasks.find(t=>t.id===ft.id))];
+  // Owner filter (Todas / Minhas)
+  if(S.ownf==='mine')tasks=tasks.filter(t=>(t.assign||'').toLowerCase()===S.user.name.toLowerCase());
   if(S.tf!=='all')tasks=tasks.filter(t=>t.status===S.tf);
   if(S.wkf!=='all')tasks=tasks.filter(t=>String(t.week)===String(S.wkf));
   if(S.datef)tasks=tasks.filter(t=>t.due===S.datef);
@@ -1412,10 +1426,11 @@ function rTasks(d){
   if(!tasks.length){el.innerHTML='<div class="empty">Nenhuma task.</div>';return;}
   el.innerHTML=tasks.map(t=>`<div class="trow"><input type="checkbox" class="tck-cb" ${S.selTasks.has(t.id)?'checked':''} onchange="toggleSel('${t.id}',this)"><div class="tck${t.status==='done'?' on':''}" onclick="tgTask('${t.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tb2"><div class="tt${t.status==='done'?' dn':''}">${t.urgent?'<span style="color:var(--red);font-size:9px;font-weight:700;margin-right:5px;letter-spacing:.05em">URGENTE</span>':''}${t.title}</div><div class="ti"><span>${t.assign||t.resp}</span>${t.created?`<span style="color:var(--t3)">|</span><span title="Criada em">📅 ${fd(t.created)}</span>`:''}${t.due?`<span style="color:var(--t3)">|</span><span title="Prazo" style="color:${t.status!=='done'&&t.due<_localDate()?'var(--red)':'inherit'}">⏰ ${fd(t.due)}</span>`:''}${slbl[t.status]||''}</div></div>${S.role==='admin'?`<div class="tacts"><button class="ib edit" onclick="edTask('${t.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="ib del" onclick="delTask('${t.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div>`:''}</div>`).join('');
 }
+function fown(f){if(!S.hasOwnProperty('ownf'))S.ownf='all';S.ownf=f;['all','mine'].forEach(x=>{const b=document.getElementById('fo-'+x);if(b){b.style.borderColor='';b.style.color='';}});const a=document.getElementById('fo-'+f);if(a){a.style.borderColor='var(--gbr)';a.style.color='var(--gold)';}rTasks(ld());}
 function ftask(f){S.tf=f;['all','pend','done','late'].forEach(x=>{const b=document.getElementById('ft-'+x);if(b){b.style.borderColor='';b.style.color='';}});const a=document.getElementById('ft-'+f);if(a){a.style.borderColor='var(--gbr)';a.style.color='var(--gold)';}rTasks(ld());}
-function applyWkFilter(){S.wkf=document.getElementById('wk-sel').value;rTasks(ld());}
+function applyWkFilter(){const sel=document.getElementById('wk-sel');S.wkf=sel?sel.value:'all';rTasks(ld());}
 function applyDateFilter(){S.datef=document.getElementById('date-sel').value;rTasks(ld());}
-function clearTaskFilters(){S.wkf='all';S.datef='';document.getElementById('wk-sel').value='all';document.getElementById('date-sel').value='';rTasks(ld());}
+function clearTaskFilters(){S.wkf='all';S.datef='';const ws=document.getElementById('wk-sel');if(ws)ws.value='all';const ds=document.getElementById('date-sel');if(ds)ds.value='';rTasks(ld());}
 function toggleSel(id,cb){if(cb.checked)S.selTasks.add(id);else S.selTasks.delete(id);updateBulk();}
 function selAll(cb){const d=ld();let tasks=d.tasks;if(S.tf!=='all')tasks=tasks.filter(t=>t.status===S.tf);tasks.forEach(t=>{if(cb.checked)S.selTasks.add(t.id);else S.selTasks.delete(t.id);});updateBulk();rTasks(d);}
 function updateBulk(){const n=S.selTasks.size;document.getElementById('sel-count').textContent=n;document.getElementById('bulk-del').style.display=n?'inline-flex':'none';}
@@ -1747,8 +1762,22 @@ function openM(type,data){
   const asgOpts=ASSIGNEES.map(a=>`<option${data&&data.assign===a?' selected':''}>${a}</option>`).join('');
   const tpls={
     task:{title:data?'Editar task':'Nova task',
-      body:()=>{const firmNm=(FIRMS.find(f=>f.id===S.eid)||{}).name||'Escritório';const isEsc=data&&data.resp===firmNm||data&&data.resp==='Escritório';return `<div class="fg"><label>Título</label><input class="fi" id="m-ttl" value="${data?data.title:''}"></div><div class="fg"><label>Descrição</label><textarea id="m-dsc">${data?data.desc||'':''}</textarea></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Responsável</label><select class="fi" id="m-rsp"><option${!data||data.resp==='Flow Sales'?' selected':''}>Flow Sales</option><option value="${firmNm}"${isEsc?' selected':''}>${firmNm}</option><option${data&&data.resp==='Ambos'?' selected':''}>Ambos</option></select></div><div class="fg"><label>Atribuída a</label><select class="fi" id="m-asg">${asgOpts}</select></div></div><div class="fg"><label>Prazo</label><input class="fi" id="m-due" type="date" value="${data?data.due:''}"></div><div class="fg"><label>Status</label><select class="fi" id="m-sta"><option value="pending"${!data||data.status==='pending'?' selected':''}>Pendente</option><option value="done"${data&&data.status==='done'?' selected':''}>Concluída</option><option value="late"${data&&data.status==='late'?' selected':''}>Atrasada</option></select></div><div class="fg" style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="tck-cb" id="m-urg" ${data&&data.urgent?'checked':''}><label style="text-transform:none;letter-spacing:0;font-size:12px;color:var(--text)">Marcar como urgente</label></div>`;},
-      save:()=>{const d=ld();const t={id:data?data.id:'t'+Date.now(),title:v('m-ttl'),desc:v('m-dsc'),resp:v('m-rsp'),assign:v('m-asg'),week:data?data.week:1,due:v('m-due'),status:v('m-sta'),urgent:document.getElementById('m-urg').checked,created:data?data.created:_localDate()};if(data){const i=d.tasks.findIndex(x=>x.id===data.id);if(i>=0)d.tasks[i]=t;}else{d.tasks.push(t);activ(d,'Nova task: '+t.title,'var(--gold)');if(t.assign){const nid='nasgn_'+t.id;if(!d.notifs.find(n=>n.id===nid)){d.notifs.unshift({id:nid,title:'Nova task atribuída a '+t.assign,sub:t.title+(t.due?' · Prazo: '+fd(t.due):''),read:false});}if(t.assign!==S.user.name)_desktopNotif('📋 Task atribuída a '+t.assign,t.title);}_clickupTask(t);}sv(d);renderAll();populateWkFilter();cModal(null,1);}
+      body:()=>{
+        const firmNm=(FIRMS.find(f=>f.id===S.eid)||{}).name||'Escritório';
+        const isClient=S.role==='client';
+        const asgOptsLocal=ASSIGNEES.map(a=>`<option${data&&data.assign===a?' selected':''}>${a}</option>`).join('');
+        const respSel=isClient?'':`<div class="fg"><label>Responsável</label><select class="fi" id="m-rsp"><option${!data||data.resp==='Flow Sales'?' selected':''}>Flow Sales</option><option value="${firmNm}"${data&&(data.resp===firmNm||data.resp==='Escritório')?' selected':''}>${firmNm}</option><option${data&&data.resp==='Ambos'?' selected':''}>Ambos</option></select></div>`;
+        return `<div class="fg"><label>Título</label><input class="fi" id="m-ttl" value="${data?data.title:''}"></div><div class="fg"><label>Descrição</label><textarea id="m-dsc">${data?data.desc||'':''}</textarea></div><div style="display:grid;grid-template-columns:${isClient?'1fr':'1fr 1fr'};gap:10px">${respSel}<div class="fg"><label>Atribuída a</label><select class="fi" id="m-asg">${asgOptsLocal}</select></div></div><div class="fg"><label>Prazo *</label><input class="fi" id="m-due" type="date" value="${data?data.due:''}" style="color-scheme:dark"></div><div class="fg"><label>Status</label><select class="fi" id="m-sta"><option value="pending"${!data||data.status==='pending'?' selected':''}>Pendente</option><option value="done"${data&&data.status==='done'?' selected':''}>Concluída</option><option value="late"${data&&data.status==='late'?' selected':''}>Atrasada</option></select></div><div class="fg" style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="tck-cb" id="m-urg" ${data&&data.urgent?'checked':''}><label style="text-transform:none;letter-spacing:0;font-size:12px;color:var(--text)">Marcar como urgente</label></div>`;
+      },
+      save:()=>{
+        const due=v('m-due');if(!due){alert('Informe o prazo da task.');return;}
+        const firmNm=(FIRMS.find(f=>f.id===S.eid)||{}).name||'Escritório';
+        const resp=document.getElementById('m-rsp')?v('m-rsp'):firmNm;
+        const d=ld();const t={id:data?data.id:'t'+Date.now(),title:v('m-ttl'),desc:v('m-dsc'),resp,assign:v('m-asg'),week:data?data.week:1,due,status:v('m-sta'),urgent:document.getElementById('m-urg').checked,created:data?data.created:_localDate()};
+        if(data){const i=d.tasks.findIndex(x=>x.id===data.id);if(i>=0)d.tasks[i]=t;}
+        else{d.tasks.push(t);activ(d,'Nova task: '+t.title,'var(--gold)');if(t.assign){const nid='nasgn_'+t.id;if(!d.notifs.find(n=>n.id===nid)){d.notifs.unshift({id:nid,title:'Nova task atribuída a '+t.assign,sub:t.title+(t.due?' · Prazo: '+fd(t.due):''),read:false});}if(t.assign!==S.user.name)_desktopNotif('📋 Task atribuída a '+t.assign,t.title);}_clickupTask(t);}
+        sv(d);renderAll();populateWkFilter();cModal(null,1);
+      }
     },
     edFirmAdmin:{title:'Editar escritório',
       body:()=>`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Nome</label><input class="fi" id="ef-nm" value="${data?data.name||'':''}"></div><div class="fg"><label>Área</label><input class="fi" id="ef-area" value="${data?data.area||'':''}"></div><div class="fg"><label>Cidade / UF</label><input class="fi" id="ef-city" value="${data?data.city||'':''}"></div><div class="fg"><label>Telefone</label><input class="fi" id="ef-ph" value="${data?data.phone||'':''}"></div><div class="fg"><label>E-mail de contato</label><input class="fi" id="ef-em" type="email" value="${data?data.email||'':''}"></div><div class="fg"><label>Mensalidade (R$)</label><input class="fi" id="ef-fee" type="number" value="${data?data.fee||3500:3500}"></div><div class="fg"><label>OAB</label><input class="fi" id="ef-oab" value="${data?data.oab||'':''}"></div><div class="fg"><label>Início do contrato</label><input class="fi" id="ef-start" type="date" value="${data?data.start||'':''}"></div></div><div style="margin-top:12px;padding-top:12px;border-top:0.5px solid var(--bdr)"><div style="font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Integrações</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>GHL API Key</label><input class="fi" id="ef-ghl" placeholder="Cole a API key do GoHighLevel" value="${data?data.ghlKey||'':''}"></div><div class="fg"><label>Meta BM Token</label><input class="fi" id="ef-meta" placeholder="Token da Business Manager" value="${data?data.metaToken||'':''}"></div><div class="fg" style="grid-column:1/-1"><label>Link da pasta no Google Drive</label><input class="fi" id="ef-drive" placeholder="https://drive.google.com/drive/folders/..." value="${data?data.driveUrl||'':''}"></div></div></div>
@@ -1856,8 +1885,22 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
       }
     },
     fstask:{title:'Nova task interna',
-      body:()=>{const firmOpts=FIRMS.map(f=>`<option value="${f.id}">${f.name}</option>`).join('');return `<div class="fg"><label>Título</label><input class="fi" id="m-ttl" placeholder="O que precisa ser feito?"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Responsável</label><select class="fi" id="m-rsp"><option value="flowsales">Flow Sales</option>${firmOpts}<option value="ambos">Ambos</option></select></div><div class="fg"><label>Atribuída a</label><select class="fi" id="m-asg"><option>Thiago</option><option>Carlos</option><option>Ambos</option></select></div></div><div class="fg"><label>Prazo</label><input class="fi" id="m-due" type="date"></div>`;},
-      save:()=>{const d=ldFS();d.tasks=d.tasks||[];const rspVal=v('m-rsp');const rspLabel=(FIRMS.find(f=>f.id===rspVal)||{}).name||rspVal;const ft={id:'ft'+Date.now(),title:v('m-ttl'),assign:v('m-asg'),resp:rspLabel,due:v('m-due'),done:false,created:_localDate()};d.tasks.push(ft);svFS(d);_clickupTask({title:ft.title,assign:ft.assign,due:ft.due,desc:'Responsável: '+rspLabel,urgent:false});rFlow();cModal(null,1);}
+      body:()=>{
+        const allFirms=FIRMS.length?FIRMS:(()=>{try{return JSON.parse(localStorage.getItem('fs_firms')||'[]');}catch(e){return[];}})();
+        const firmOpts=allFirms.map(f=>'<option value="'+f.id+'">'+f.name+'</option>').join('');
+        return `<div class="fg"><label>Título</label><input class="fi" id="m-ttl" placeholder="O que precisa ser feito?"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Responsável</label><select class="fi" id="m-rsp" onchange="_updateFsAssign()"><option value="flowsales">Flow Sales</option>${firmOpts}<option value="ambos">Ambos</option></select></div><div class="fg"><label>Atribuída a</label><select class="fi" id="m-asg"><option>Thiago</option><option>Carlos</option><option>Ambos</option></select></div></div><div class="fg"><label>Prazo *</label><input class="fi" id="m-due" type="date" style="color-scheme:dark"></div>`;
+      },
+      save:()=>{
+        const due=v('m-due');if(!due){alert('Informe o prazo da task.');return;}
+        const d=ldFS();d.tasks=d.tasks||[];
+        const rspVal=v('m-rsp');
+        const allFirms=FIRMS.length?FIRMS:(()=>{try{return JSON.parse(localStorage.getItem('fs_firms')||'[]');}catch(e){return[];}})();
+        const rspLabel=(allFirms.find(f=>f.id===rspVal)||{}).name||rspVal;
+        const ft={id:'ft'+Date.now(),title:v('m-ttl'),assign:v('m-asg'),resp:rspLabel,due,done:false,created:_localDate()};
+        d.tasks.push(ft);svFS(d);
+        _clickupTask({title:ft.title,assign:ft.assign,due:ft.due,desc:'Responsável: '+rspLabel,urgent:false});
+        rFlow();cModal(null,1);
+      }
     },
     vendasItem:{title:'Registrar tipo de venda',
       body:`<div class="fg"><label>Produto / Serviço</label><input class="fi" id="vi-tipo" placeholder="Planejamento previdenciário, Auxílio maternidade..."></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Quantidade</label><input class="fi" id="vi-qty" type="number" min="1" value="1"></div><div class="fg"><label>Origem</label><select class="fi" id="vi-orig"><option value="">Não informada</option><option>Meta Ads</option><option>Google Ads</option><option>Indicação</option><option>WhatsApp</option><option>Instagram</option><option>Site</option><option>Evento</option><option>Outro</option></select></div></div><div class="fg"><label>Nome do cliente (opcional)</label><input class="fi" id="vi-cli" placeholder="Dr. João Silva..."></div>`,
@@ -2076,9 +2119,69 @@ function rFlow(){
       cl.innerHTML=rows.join('');
     }
   }
+  // Populate firm filter dropdown
+  const fsFirmFilter=document.getElementById('fs-firm-filter');
+  if(fsFirmFilter){
+    const curF=_fsTaskFilter;
+    fsFirmFilter.innerHTML='<option value="all">Todos os escritórios</option>'
+      +'<option value="flowsales">Flow Sales</option>'
+      +FIRMS.map(f=>'<option value="'+f.name+'">'+f.name+'</option>').join('');
+    fsFirmFilter.value=curF;
+  }
+  // Collect FS own tasks + tasks from all client firms
   const ftasks=document.getElementById('fs-tasks');
-  const myTasks=(d.tasks||[]).filter(t=>t.assign==='Ambos'||S.user.name.toLowerCase().indexOf((t.assign||'').toLowerCase())>=0);if(ftasks)ftasks.innerHTML=myTasks.map(t=>`<div class="trow"><div class="tck${t.done?' on':''}" onclick="tgFSTask('${t.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tb2"><div class="tt${t.done?' dn':''}">${t.title}</div><div class="ti"><span>${t.assign||''}</span>${t.resp&&t.resp!=='flowsales'?`<span style="font-size:9px;color:var(--t2)">· ${t.resp}</span>`:''}</div></div><button class="ib del" onclick="delFSTask('${t.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div>`).join('')||'<div class="empty">Sem tasks suas.</div>';
+  let allFSTasks=(d.tasks||[]).map(t=>({...t,_src:'fs'}));
+  FIRMS.forEach(f=>{
+    try{
+      const fd=JSON.parse(localStorage.getItem('fs_'+f.id)||'{}');
+      (fd.tasks||[]).forEach(t=>{
+        if(!allFSTasks.find(x=>x.id===t.id))allFSTasks.push({...t,_src:f.name,resp:f.name});
+      });
+    }catch(e){}
+  });
+  // Apply firm filter
+  let fsTasks=allFSTasks;
+  if(_fsTaskFilter!=='all'&&_fsTaskFilter!=='flowsales'){
+    fsTasks=allFSTasks.filter(t=>(t.resp||'').toLowerCase()===_fsTaskFilter.toLowerCase()||(t._src||'').toLowerCase()===_fsTaskFilter.toLowerCase());
+  } else if(_fsTaskFilter==='flowsales'){
+    fsTasks=allFSTasks.filter(t=>t._src==='fs');
+  }
+  if(ftasks)ftasks.innerHTML=fsTasks.map(t=>{
+    const srcBadge=t._src&&t._src!=='fs'?'<span style="font-size:9px;color:var(--blue);background:var(--gb);border-radius:4px;padding:1px 5px;margin-left:4px">'+t._src+'</span>':'';
+    return '<div class="trow">'
+      +'<div class="tck'+(t.done?' on':'')+'" data-fid="'+t.id+'" onclick="tgFSTask(this.dataset.fid)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg></div>'
+      +'<div class="tb2"><div class="tt'+(t.done?' dn':'')+'">'+t.title+'</div>'
+      +'<div class="ti"><span>'+(t.assign||'')+'</span>'+srcBadge+'</div></div>'
+      +'<button class="ib del" data-fid="'+t.id+'" onclick="delFSTask(this.dataset.fid)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>'
+      +'</div>';
+  }).join('')||'<div class="empty">Sem tasks.</div>';
   rFSChat(d);
+}
+function _updateFsAssign(){
+  const rspVal=document.getElementById('m-rsp')?.value;
+  const asgSel=document.getElementById('m-asg');
+  if(!asgSel)return;
+  let opts='<option>Thiago</option><option>Carlos</option>';
+  if(rspVal&&rspVal!=='flowsales'&&rspVal!=='ambos'){
+    try{
+      const fd=JSON.parse(localStorage.getItem('fs_'+rspVal)||'{}');
+      (fd.partners||[]).forEach(p=>{opts+='<option>'+p.name+'</option>';});
+    }catch(e){}
+    // users from config
+    (_fbDynUsers||[]).filter(u=>u.eid===rspVal&&u.role==='client').forEach(u=>{
+      if(!opts.includes('>'+u.name+'<'))opts+='<option>'+u.name+'</option>';
+    });
+  }
+  opts+='<option>Ambos</option>';
+  asgSel.innerHTML=opts;
+}
+function setFSTaskFilter(val){_fsTaskFilter=val;rFlow();}
+let _fsTaskFilter='all';
+function toggleSidebar(){
+  const sb=document.getElementById('sb');
+  sb.classList.toggle('collapsed');
+  const btn=document.getElementById('sb-toggle');
+  if(btn){btn.title=sb.classList.contains('collapsed')?'Expandir painel':'Retrair painel';}
 }
 function rFSChat(d){
   const el=document.getElementById('fs-chat');if(!el)return;
