@@ -84,12 +84,12 @@ input[type="date"].fi::-webkit-calendar-picker-indicator:hover{opacity:1;}
 .nb.r{background:var(--red);color:#fff;}
 .nb.g{background:var(--gold);color:#000;}
 .sb-foot{margin-top:auto;padding:12px 13px;border-top:0.5px solid var(--bdr);display:flex;align-items:center;gap:9px;}
-.sb-collapse-btn{display:flex;align-items:center;justify-content:center;gap:7px;width:calc(100% - 24px);margin:0 12px 10px;padding:9px 12px;border-radius:8px;background:var(--gb);border:0.5px solid var(--bdr2);cursor:pointer;color:var(--t2);font-size:11px;font-family:inherit;transition:all .15s;flex-shrink:0;}
-.sb-collapse-btn:hover{border-color:var(--gbr);color:var(--gold);}
-.sb-collapse-lbl{font-size:11px;}
 .sb{position:relative;transition:width .2s,min-width .2s;}
 .sb.collapsed{width:0!important;min-width:0!important;overflow:hidden;}
-.sb-expand-tab{display:none;position:fixed;bottom:80px;left:0;width:28px;height:52px;background:var(--s2);border:0.5px solid var(--bdr2);border-left:none;border-radius:0 10px 10px 0;cursor:pointer;color:var(--t2);align-items:center;justify-content:center;z-index:100;transition:color .15s;}
+.sb-edge-btn{position:absolute;top:50%;right:-9px;transform:translateY(-50%);width:9px;height:44px;background:var(--s1);border:0.5px solid var(--bdr);border-left:none;border-radius:0 5px 5px 0;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:20;opacity:0;transition:opacity .2s,color .15s;color:var(--t3);}
+.sb:hover .sb-edge-btn{opacity:1;}
+.sb-edge-btn:hover{color:var(--gold);opacity:1!important;}
+.sb-expand-tab{display:none;position:fixed;top:50%;left:0;transform:translateY(-50%);width:9px;height:44px;background:var(--s1);border:0.5px solid var(--bdr);border-left:none;border-radius:0 5px 5px 0;cursor:pointer;color:var(--t3);align-items:center;justify-content:center;z-index:100;transition:color .15s;}
 .sb-expand-tab:hover{color:var(--gold);}
 .sb-expand-tab.on{display:flex;}
 .uav{width:30px;height:30px;border-radius:50%;background:var(--gb);border:0.5px solid var(--gbr);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--gold);flex-shrink:0;cursor:pointer;overflow:hidden;}
@@ -509,16 +509,13 @@ if(window._fbResolve) window._fbResolve();
       <div class="sb-sec">Gestão</div>
       <div class="ni client-nav" id="ni-perfil" onclick="nav('perfil')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Perfil do cliente</div>
       <div class="ni admin-only" id="ni-firms" onclick="nav('firms')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Escritórios</div>
-      <button class="sb-collapse-btn" id="sb-toggle" onclick="toggleSidebar()" title="Retrair painel lateral">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-        <span class="sb-collapse-lbl">Retrair</span>
-      </button>
       <div class="sb-foot">
         <div class="uav" id="uav" onclick="openProfile()">TC</div>
         <div class="ui"><div class="un" id="un">Thiago</div><div class="ur" id="ur">Admin</div></div>
         <button class="lout" onclick="openProfile()" title="Editar perfil" style="margin-right:2px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
         <button class="lout" onclick="doLogout()" title="Sair"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
       </div>
+    <button class="sb-edge-btn" id="sb-toggle" onclick="toggleSidebar()" title="Retrair painel"><svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button>
     </div>
     <button class="sb-expand-tab" id="sb-expand-tab" onclick="toggleSidebar()" title="Expandir painel lateral"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
 
@@ -652,10 +649,10 @@ if(window._fbResolve) window._fbResolve();
             <button class="ca" id="fo-all" onclick="fown('all')" style="border-color:var(--gbr);color:var(--gold)">Todas</button>
             <button class="ca" id="fo-mine" onclick="fown('mine')">Minhas</button>
             <span style="width:0.5px;height:18px;background:var(--bdr2);margin:0 2px"></span>
-            <button class="ca" id="ft-all" onclick="ftask('all')">Pendentes+Atrasadas</button>
             <button class="ca" id="ft-pend" onclick="ftask('pending')">Pendentes</button>
             <button class="ca" id="ft-done" onclick="ftask('done')">Concluídas</button>
             <button class="ca" id="ft-late" onclick="ftask('late')">Atrasadas</button>
+            <button class="ca" id="ft-all" onclick="ftask('all')" style="display:none"></button>
             <button class="bulk-del" id="bulk-del" onclick="bulkDelete()">Excluir selecionadas (<span id="sel-count">0</span>)</button>
             <button class="ca mla" onclick="openM('task')">+ Nova task</button>
           </div>
@@ -2188,8 +2185,6 @@ function toggleSidebar(){
   const collapsed=sb.classList.contains('collapsed');
   const tab=document.getElementById('sb-expand-tab');
   if(tab)tab.classList.toggle('on',collapsed);
-  const lbl=document.querySelector('.sb-collapse-lbl');
-  if(lbl)lbl.textContent=collapsed?'Expandir':'Retrair';
   const btn=document.getElementById('sb-toggle');
   const btnSvg=btn?btn.querySelector('svg'):null;
   if(btnSvg)btnSvg.style.transform=collapsed?'rotate(180deg)':'';
