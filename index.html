@@ -1771,14 +1771,28 @@ function openM(type,data){
         const isClient=S.role==='client';
         // Para clientes: listar o próprio usuário + sócios do escritório
         const _buildClientAsg=()=>{
-          const names=[S.user.name];
+          const f=FIRMS.find(x=>x.id===S.eid)||{};
+          const names=[];
+          if(f.contact&&!names.includes(f.contact))names.push(f.contact);
+          if(S.user&&S.user.name&&!names.includes(S.user.name))names.push(S.user.name);
           const _d=ld();
           (_d.partners||[]).forEach(p=>{if(p.name&&!names.includes(p.name))names.push(p.name);});
-          // também incluir usuários do mesmo escritório via _fbDynUsers
-          (_fbDynUsers||[]).filter(u=>u.eid===S.eid&&u.role==='client'&&!names.includes(u.name)).forEach(u=>names.push(u.name));
+          (_fbDynUsers||[]).filter(u=>u.eid===S.eid&&u.role==='client'&&u.name&&!names.includes(u.name)).forEach(u=>names.push(u.name));
           return names.map(n=>`<option${data&&data.assign===n?' selected':''}>${n}</option>`).join('');
         };
-        const asgOptsLocal=S.role==='client'?_buildClientAsg():ASSIGNEES.filter(a=>a!=='Ambos').map(a=>`<option${data&&data.assign===a?' selected':''}>${a}</option>`).join('');
+        const _asgAdmin=()=>{
+          const baseOpts=ASSIGNEES.filter(a=>a!=='Ambos').map(a=>`<option${data&&data.assign===a?' selected':''}>${a}</option>`).join('');
+          if(S.eid==='flowsales')return baseOpts;
+          const f=FIRMS.find(x=>x.id===S.eid)||{};
+          const _d=ld();
+          const cNames=[];
+          if(f.contact)cNames.push(f.contact);
+          (_d.partners||[]).forEach(p=>{if(p.name&&!cNames.includes(p.name))cNames.push(p.name);});
+          (_fbDynUsers||[]).filter(u=>u.eid===S.eid&&u.role==='client'&&u.name&&!cNames.includes(u.name)).forEach(u=>cNames.push(u.name));
+          const allNames=[...ASSIGNEES.filter(a=>a!=='Ambos'),...cNames];
+          return allNames.map(n=>`<option${data&&data.assign===n?' selected':''}>${n}</option>`).join('');
+        };
+        const asgOptsLocal=S.role==='client'?_buildClientAsg():_asgAdmin();
         const respSel=isClient?'':`<div class="fg"><label>Responsável</label><select class="fi" id="m-rsp"><option${!data||data.resp==='Flow Sales'?' selected':''}>Flow Sales</option><option value="${firmNm}"${data&&(data.resp===firmNm||data.resp==='Escritório')?' selected':''}>${firmNm}</option><option${data&&data.resp==='Ambos'?' selected':''}>Ambos</option></select></div>`;
         return `<div class="fg"><label>Título</label><input class="fi" id="m-ttl" value="${data?data.title:''}"></div><div class="fg"><label>Descrição</label><textarea id="m-dsc">${data?data.desc||'':''}</textarea></div><div style="display:grid;grid-template-columns:${isClient?'1fr':'1fr 1fr'};gap:10px">${respSel}<div class="fg"><label>Atribuída a</label><select class="fi" id="m-asg">${asgOptsLocal}</select></div></div><div class="fg"><label>Prazo *</label><input class="fi" id="m-due" type="date" value="${data?data.due:''}" style="color-scheme:dark"></div><div class="fg"><label>Status</label><select class="fi" id="m-sta"><option value="pending"${!data||data.status==='pending'?' selected':''}>Pendente</option><option value="done"${data&&data.status==='done'?' selected':''}>Concluída</option><option value="late"${data&&data.status==='late'?' selected':''}>Atrasada</option></select></div><div class="fg" style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="tck-cb" id="m-urg" ${data&&data.urgent?'checked':''}><label style="text-transform:none;letter-spacing:0;font-size:12px;color:var(--text)">Marcar como urgente</label></div>`;
       },
@@ -1923,6 +1937,22 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
       body:`<div class="fg"><label>Nome do escritório</label><input class="fi" id="m-ttl" placeholder="Escritório XYZ Advogados"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Cidade</label><input class="fi" id="m-city" placeholder="São José dos Campos"></div><div class="fg"><label>Temperatura</label><select class="fi" id="m-stage"><option value="hot">Quente</option><option value="warm">Morno</option><option value="cold">Frio</option></select></div></div><div class="fg"><label>Observações</label><textarea id="m-dsc" placeholder="Contexto do lead..."></textarea></div>`,
       save:()=>{const d=ldFS();d.pipeline=d.pipeline||[];d.pipeline.push({id:'fp'+Date.now(),name:v('m-ttl'),city:v('m-city'),stage:v('m-stage'),notes:v('m-dsc'),done:false});svFS(d);rFlow();cModal(null,1);}
     },
+    firmDetail:{title:'Dados do escritório',
+      body:()=>{
+        const fd=JSON.parse(localStorage.getItem('fs_'+data.id)||'{}');
+        const fe=fd.firmExtra||{};
+        const partners=fd.partners||[];
+        const k=fd.kpis||{leads:0,leadsG:0,reunAgd:0,reunAgdG:0,reunReal:0,reunRealG:0,vendas:0,vendasG:0,invest:0,rev:0};
+        const bar=(v,g,color)=>{const pct=g>0?Math.min(100,Math.round(v/g*100)):0;return `<div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:5px;background:var(--bdr);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${color};border-radius:3px"></div></div><span style="font-size:10px;color:var(--t2);flex-shrink:0">${v}/${g}</span></div>`;};
+        const row=(label,val)=>val?`<div style="display:flex;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--bdr)"><span style="font-size:11px;color:var(--t2);min-width:100px;flex-shrink:0">${label}</span><span style="font-size:11px;font-weight:500;word-break:break-word">${val}</span></div>`:'';
+        const sec=(title)=>`<div style="font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.07em;margin:14px 0 6px">${title}</div>`;
+        const kpi=(label,val,unit)=>`<div style="background:var(--gb);border:0.5px solid var(--bdr);border-radius:8px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:700;color:var(--text)">${val}${unit||''}</div><div style="font-size:10px;color:var(--t2);margin-top:2px">${label}</div></div>`;
+        const partnersHtml=partners.length?partners.map(p=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--bdr)"><div style="width:28px;height:28px;border-radius:50%;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0">${(p.name||'?')[0].toUpperCase()}</div><div><div style="font-size:12px;font-weight:500">${p.name}</div><div style="font-size:10px;color:var(--t2)">${p.role||'Sócio'}${p.oab?' · '+p.oab:''}${p.email?' · '+p.email:''}</div></div></div>`).join(''):'<div style="font-size:11px;color:var(--t2);padding:6px 0">Nenhum sócio cadastrado.</div>';
+        setTimeout(()=>{const mf=document.getElementById('moff');if(mf)mf.innerHTML='<button class="bpr" onclick="cModal(null,1)">Fechar</button>';},0);
+        return sec('Escritório')+row('Nome',data.name)+row('Área',data.area)+row('Cidade',data.city)+row('OAB',data.oab)+row('Telefone',data.phone)+row('E-mail',data.email)+row('Endereço',data.address||(fe&&fe.address)||'')+row('Website',fe.website||data.website||'')+row('Instagram',fe.instagram||'')+row('Início',data.start)+row('Mensalidade',data.fee?'R$ '+Number(data.fee).toLocaleString('pt-BR'):'')+sec('Responsável')+row('Nome',data.contact)+row('Telefone',data.contactPhone)+row('E-mail',data.contactEmail)+row('Endereço',fe.respAddress||'')+row('OAB',fe.respOAB||'')+sec('Sócios')+partnersHtml+sec('Métricas')+`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px">${kpi('Leads',k.leads||0)}${kpi('Reun. Agend.',k.reunAgd||0)}${kpi('Vendas',k.vendas||0)}</div><div style="display:flex;flex-direction:column;gap:6px">${k.leadsG?'<div style="font-size:11px;color:var(--t2);margin-bottom:2px">Leads vs meta: '+bar(k.leads||0,k.leadsG,'var(--gold)')+'</div>':''}${k.reunAgdG?'<div style="font-size:11px;color:var(--t2);margin-bottom:2px">Reun. agendadas: '+bar(k.reunAgd||0,k.reunAgdG,'var(--blue)')+'</div>':''}${k.vendasG?'<div style="font-size:11px;color:var(--t2);margin-bottom:2px">Vendas: '+bar(k.vendas||0,k.vendasG,'var(--green)')+'</div>':''}</div>`;
+      },
+      save:()=>{cModal(null,1);}
+    },
   };
   const tpl=tpls[type];if(!tpl)return;
   tt.textContent=tpl.title;mb.innerHTML=typeof tpl.body==='function'?tpl.body():tpl.body;
@@ -1985,6 +2015,7 @@ function rFirms(){
       +'<div style="font-size:10px;color:var(--t2);margin-top:2px">'+(f.area||'')+' · '+(f.city||'')+'</div></div>'
       +'<div style="display:flex;gap:6px;align-items:center">'
       +'<span style="font-size:9px;font-weight:700;color:'+hc+';background:'+hc+'22;border:0.5px solid '+hc+'44;border-radius:4px;padding:2px 6px">'+hl+(health!==null?' '+health+'%':'')+'</span>'
+      +'<button class="ca" data-fd="'+f.id+'" onclick="openM('firmDetail',FIRMS.find(x=>x.id===this.dataset.fd))" style="font-size:10px;padding:3px 8px;background:var(--gb);color:var(--text);border:0.5px solid var(--bdr)">Dados</button>'
       +'<button class="ca" data-fid="'+f.id+'" onclick="selectFirmAndNav(this.dataset.fid)" style="font-size:10px;padding:3px 10px">Ver painel</button>'
       +'<button class="ca" data-fid2="'+f.id+'" style="background:var(--gb);color:var(--text);border:0.5px solid var(--bdr);font-size:10px;padding:3px 8px" onclick="edFirm(this.dataset.fid2)">Editar</button>'
       +'<button class="bda" data-fid3="'+f.id+'" style="font-size:10px;padding:3px 8px" onclick="removeFirm(this.dataset.fid3)">Excluir</button>'
