@@ -720,7 +720,8 @@ if(window._fbResolve) window._fbResolve();
 
         <!-- ESCRITÓRIOS (ADMIN) -->
         <div class="sec" id="s-firms">
-          <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;font-weight:500">Escritórios clientes</div><button class="ca" onclick="openM('addfirm')">+ Novo escritório</button></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:13px;font-weight:500">Escritórios clientes</div><button class="ca" onclick="openM('addfirm')">+ Novo escritório</button></div>
+          <div id="firms-summary" style="margin-bottom:10px"></div>
           <div id="firms-list"></div>
         </div>
 
@@ -1814,7 +1815,67 @@ function addAfPartner(){
 function rFirms(){
   if(S.role!=='admin')return;
   const el=document.getElementById('firms-list');if(!el)return;
-  el.innerHTML=FIRMS.map(f=>`<div class="card" style="margin-bottom:8px"><div class="ch"><div class="ct" style="font-size:14px;font-weight:600">${f.name}</div><div style="display:flex;gap:6px"><button class="ca" onclick="selectFirmAndNav('${f.id}')">Ver painel</button><button class="ca" style="background:var(--gb);color:var(--text);border:0.5px solid var(--bdr)" onclick="edFirm('${f.id}')">Editar</button><button class="bda" style="font-size:10px;padding:3px 8px" onclick="removeFirm('${f.id}')">Remover</button></div></div><div class="traf-row"><span class="traf-lbl">Área</span><span class="traf-val">${f.area}</span></div><div class="traf-row"><span class="traf-lbl">Cidade</span><span class="traf-val">${f.city}</span></div><div class="traf-row"><span class="traf-lbl">Contato</span><span class="traf-val">${f.contact}</span></div><div class="traf-row"><span class="traf-lbl">E-mail</span><span class="traf-val">${f.email}</span></div><div class="traf-row"><span class="traf-lbl">Mensalidade</span><span class="traf-val">R$ ${(f.fee||0).toLocaleString('pt-BR')}</span></div><div class="traf-row"><span class="traf-lbl">Início</span><span class="traf-val">${fd(f.start)}</span></div></div>`).join('')||'<div class="empty">Nenhum escritório cadastrado.</div>';
+  const sumEl=document.getElementById('firms-summary');
+  if(!FIRMS.length){el.innerHTML='<div class="empty">Nenhum escritório cadastrado.</div>';if(sumEl)sumEl.innerHTML='';return;}
+  var today=new Date();
+  var totH=0,hCnt=0,expiring=0,critical=0;
+  var cards=FIRMS.map(function(f){
+    var fd2={};try{fd2=JSON.parse(localStorage.getItem('fs_'+f.id)||'{}');}catch(e){}
+    var k=fd2.kpis||{};
+    var hm=[{v:k.leads||0,g:k.leadsG||0},{v:k.reunReal||0,g:k.reunRealG||0},{v:k.vendas||0,g:k.vendasG||0}];
+    var hs=hm.filter(function(x){return x.g>0;});
+    var health=hs.length?Math.round(hs.reduce(function(s,x){return s+Math.min(x.v/x.g,1);},0)/hs.length*100):null;
+    if(health!==null){totH+=health;hCnt++;}
+    var hc=health===null?'var(--t2)':health>=70?'var(--green)':health>=40?'var(--gold)':'var(--red)';
+    var hl=health===null?'Sem metas':health>=70?'Saudável':health>=40?'Atenção':'Crítico';
+    if(health!==null&&health<40)critical++;
+    var dLeft=null;
+    if(f.start){try{var s2=new Date(f.start+'T12:00:00');var e2=new Date(s2);e2.setDate(e2.getDate()+(f.total||52)*7);dLeft=Math.round((e2-today)/864e5);}catch(ex){}}
+    if(dLeft!==null&&dLeft<=60)expiring++;
+    var dc=dLeft===null?'var(--t2)':dLeft>90?'var(--green)':dLeft>30?'var(--gold)':'var(--red)';
+    var wkPct=f.total?Math.min(Math.round((f.week||1)/f.total*100),100):0;
+    var rev=k.rev||0;var revG=k.revG||0;
+    var revPct=revG?Math.min(Math.round(rev/revG*100),100):null;
+    var revC=revPct!==null?(revPct>=100?'var(--green)':revPct>=60?'var(--gold)':'var(--red)'):'var(--t2)';
+    var hBar=health!==null?'<div style="margin-top:8px"><div style="display:flex;justify-content:space-between;font-size:9px;color:var(--t2);margin-bottom:3px"><span>Saúde</span><span style="color:'+hc+'">'+health+'%</span></div><div style="height:4px;background:var(--s3);border-radius:2px"><div style="height:100%;width:'+health+'%;background:'+hc+';border-radius:2px;transition:width .4s"></div></div></div>':'';
+    var cBar='<div style="margin-top:6px"><div style="display:flex;justify-content:space-between;font-size:9px;color:var(--t2);margin-bottom:3px"><span>Contrato</span><span>'+wkPct+'%</span></div><div style="height:4px;background:var(--s3);border-radius:2px"><div style="height:100%;width:'+wkPct+'%;background:'+(wkPct>=85?'var(--green)':wkPct>=50?'var(--blue)':'var(--gold)')+';border-radius:2px;transition:width .4s"></div></div></div>';
+    return '<div class="card" style="padding:14px 16px;margin-bottom:8px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">'
+      +'<div><div style="font-size:13px;font-weight:600">'+f.name+'</div>'
+      +'<div style="font-size:10px;color:var(--t2);margin-top:2px">'+(f.area||'')+' · '+(f.city||'')+'</div></div>'
+      +'<div style="display:flex;gap:6px;align-items:center">'
+      +'<span style="font-size:9px;font-weight:700;color:'+hc+';background:'+hc+'22;border:0.5px solid '+hc+'44;border-radius:4px;padding:2px 6px">'+hl+(health!==null?' '+health+'%':'')+'</span>'
+      +'<button class="ca" data-fid="'+f.id+'" onclick="selectFirmAndNav(this.dataset.fid)" style="font-size:10px;padding:3px 10px">Ver painel</button>'
+      +'<button class="ca" data-fid2="'+f.id+'" style="background:var(--gb);color:var(--text);border:0.5px solid var(--bdr);font-size:10px;padding:3px 8px" onclick="edFirm(this.dataset.fid2)">Editar</button>'
+      +'</div></div>'
+      +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px">'
+      +'<div style="background:var(--s2);border-radius:6px;padding:8px 10px"><div style="font-size:8px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em">Faturamento</div>'
+      +'<div style="font-size:13px;font-weight:600;margin-top:3px">R$ '+rev.toLocaleString('pt-BR')+'</div>'
+      +'<div style="font-size:9px;color:'+revC+'">'+(revPct!==null?revPct+'% da meta':'sem meta')+'</div></div>'
+      +'<div style="background:var(--s2);border-radius:6px;padding:8px 10px"><div style="font-size:8px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em">Semana</div>'
+      +'<div style="font-size:13px;font-weight:600;margin-top:3px">'+(f.week||1)+'/'+(f.total||52)+'</div>'
+      +'<div style="font-size:9px;color:var(--t2)">'+(( (f.total||52)-(f.week||1) ))+' restantes</div></div>'
+      +'<div style="background:var(--s2);border-radius:6px;padding:8px 10px"><div style="font-size:8px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em">Vence em</div>'
+      +'<div style="font-size:13px;font-weight:600;margin-top:3px;color:'+dc+'">'+(dLeft!==null?dLeft+'d':'--')+'</div>'
+      +'<div style="font-size:9px;color:var(--t2)">'+(dLeft!==null?'dias':'não definido')+'</div></div>'
+      +'<div style="background:var(--s2);border-radius:6px;padding:8px 10px"><div style="font-size:8px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em">Mensalidade</div>'
+      +'<div style="font-size:13px;font-weight:600;margin-top:3px">R$ '+(f.fee||0).toLocaleString('pt-BR')+'</div>'
+      +'<div style="font-size:9px;color:var(--t2)">/ mês</div></div>'
+      +'</div>'
+      +cBar+hBar
+      +'</div>';
+  });
+  var avg=hCnt?Math.round(totH/hCnt):null;
+  var ac=avg===null?'var(--t2)':avg>=70?'var(--green)':avg>=40?'var(--gold)':'var(--red)';
+  if(sumEl){
+    sumEl.innerHTML='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">'
+      +'<div class="card" style="padding:12px 14px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--gold)">'+FIRMS.length+'</div><div style="font-size:9px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;margin-top:3px">Ativos</div></div>'
+      +'<div class="card" style="padding:12px 14px;text-align:center"><div style="font-size:24px;font-weight:700;color:'+ac+'">'+(avg!==null?avg+'%':'--')+'</div><div style="font-size:9px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;margin-top:3px">Saúde média</div></div>'
+      +'<div class="card" style="padding:12px 14px;text-align:center"><div style="font-size:24px;font-weight:700;color:'+(expiring>0?'var(--gold)':'var(--green)')+'">'+expiring+'</div><div style="font-size:9px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;margin-top:3px">Vcto ≤ 60d</div></div>'
+      +'<div class="card" style="padding:12px 14px;text-align:center"><div style="font-size:24px;font-weight:700;color:'+(critical>0?'var(--red)':'var(--green)')+'">'+critical+'</div><div style="font-size:9px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;margin-top:3px">Críticos</div></div>'
+      +'</div>';
+  }
+  el.innerHTML=cards.join('');
 }
 function selectFirmAndNav(id){selectFirm(id);nav('ov');}
 function edFirm(id){
