@@ -74,7 +74,15 @@ textarea{resize:none;min-height:100px;line-height:1.65;}
 .toggle-sw::after{content:'';position:absolute;top:4px;left:4px;width:14px;height:14px;border-radius:7px;background:var(--t3);transition:all .25s;}
 .toggle-row.on .toggle-sw{background:var(--gb);border-color:var(--gbr);}
 .toggle-row.on .toggle-sw::after{left:22px;background:var(--gold);}
-.socio-block{display:none;margin-top:16px;padding:20px;background:var(--s2);border:1px solid var(--bdr2);border-radius:var(--r);animation:fadeUp .25s ease both;}
+.socio-block{display:none;margin-top:16px;animation:fadeUp .25s ease both;}
+.socio-block.on{display:block;}
+.socio-card{background:var(--s2);border:1px solid var(--bdr2);border-radius:var(--r);padding:20px;margin-bottom:12px;position:relative;}
+.socio-card-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.socio-card-ttl{font-size:12px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:.06em;}
+.socio-del-btn{background:none;border:1px solid rgba(192,57,43,.3);color:var(--red);border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;transition:all .15s;}
+.socio-del-btn:hover{background:rgba(192,57,43,.1);}
+.btn-add-socio{width:100%;background:none;border:1px dashed var(--bdr2);border-radius:var(--r);padding:12px;color:var(--t2);font-size:13px;cursor:pointer;transition:all .15s;font-family:inherit;margin-top:4px;}
+.btn-add-socio:hover{border-color:var(--gbr);color:var(--gold);}
 .socio-block.on{display:block;}
 .pills{display:flex;flex-wrap:wrap;gap:8px;}
 .pill{padding:8px 16px;border:1px solid var(--bdr2);border-radius:20px;font-size:12px;cursor:pointer;transition:all .15s;user-select:none;color:var(--t2);}
@@ -222,19 +230,12 @@ textarea{resize:none;min-height:100px;line-height:1.65;}
         </div>
         <div class="divider"></div>
         <div class="toggle-row" id="socio-toggle" onclick="toggleSocio()">
-          <div><div class="toggle-lbl">O escritório possui sócio(a)?</div><div class="toggle-sub">Adicionar dados do sócio</div></div>
+          <div><div class="toggle-lbl">O escritório possui sócio(a)?</div><div class="toggle-sub">Adicionar dados dos sócios</div></div>
           <div class="toggle-sw" id="socio-sw"></div>
         </div>
         <div class="socio-block" id="socio-block">
-          <div class="row2">
-            <div class="fg"><label>Nome do sócio(a)</label><input type="text" id="f-socio-nome" placeholder="Dr(a). Nome Sobrenome"></div><div class="field-err" id="e-socio-nome">⚠ Nome do sócio é obrigatório</div>
-            <div class="fg"><label>OAB do sócio(a)</label><input type="text" id="f-socio-oab" placeholder="000000/MG"></div><div class="field-err" id="e-socio-oab">⚠ OAB do sócio é obrigatória</div>
-          </div>
-          <div class="row2">
-            <div class="fg" style="margin-bottom:0"><label>E-mail do sócio(a)</label><input type="email" id="f-socio-email" placeholder="socio@escritorio.com.br"></div><div class="field-err" id="e-socio-email">⚠ E-mail inválido</div>
-            <div class="fg" style="margin-bottom:0"><label>Telefone do sócio(a)</label><input type="tel" id="f-socio-tel" placeholder="(00) 00000-0000"></div><div class="field-err" id="e-socio-tel">⚠ Telefone inválido</div>
-          </div>
-          <div class="fg" style="margin-bottom:0"><label>Endereço do sócio(a)</label><input type="text" id="f-socio-addr" placeholder="Rua, número, bairro, cidade/UF"></div>
+          <div id="socios-container"></div>
+          <button type="button" class="btn-add-socio" id="btn-add-socio" onclick="addSocio()">+ Adicionar outro sócio</button>
         </div>
         <div class="btn-row">
           <button class="btn-back" onclick="goStep(1)">← Voltar</button>
@@ -316,6 +317,60 @@ if(window._fbFormResolve) window._fbFormResolve();
 <script>
 let CUR = 1;
 let SOCIO = false;
+let SOCIO_COUNT = 0;
+
+function socioCardHTML(idx){
+  return `<div class="socio-card" id="socio-card-${idx}">
+    <div class="socio-card-hd">
+      <span class="socio-card-ttl">Sócio(a) ${idx+1}</span>
+      ${idx>0?`<button type="button" class="socio-del-btn" onclick="removeSocio(${idx})">Remover</button>`:''}
+    </div>
+    <div class="row2">
+      <div class="fg"><label>Nome</label><input type="text" id="f-socio-nome-${idx}" placeholder="Dr(a). Nome Sobrenome">
+        <div class="field-err" id="e-socio-nome-${idx}">⚠ Nome obrigatório</div></div>
+      <div class="fg"><label>OAB</label><input type="text" id="f-socio-oab-${idx}" placeholder="000000/MG">
+        <div class="field-err" id="e-socio-oab-${idx}">⚠ OAB obrigatória</div></div>
+    </div>
+    <div class="row2">
+      <div class="fg"><label>E-mail</label><input type="email" id="f-socio-email-${idx}" placeholder="socio@escritorio.com.br">
+        <div class="field-err" id="e-socio-email-${idx}">⚠ E-mail inválido</div></div>
+      <div class="fg"><label>Telefone</label><input type="tel" id="f-socio-tel-${idx}" placeholder="(00) 00000-0000">
+        <div class="field-err" id="e-socio-tel-${idx}">⚠ Telefone inválido</div></div>
+    </div>
+    <div class="fg" style="margin-bottom:0"><label>Endereço</label>
+      <input type="text" id="f-socio-addr-${idx}" placeholder="Rua, número, bairro, cidade/UF"></div>
+  </div>`;
+}
+
+function addSocio(){
+  const container = document.getElementById('socios-container');
+  container.insertAdjacentHTML('beforeend', socioCardHTML(SOCIO_COUNT));
+  telMask('f-socio-tel-'+SOCIO_COUNT);
+  SOCIO_COUNT++;
+}
+
+function removeSocio(idx){
+  const card = document.getElementById('socio-card-'+idx);
+  if(card) card.remove();
+}
+
+function getSocios(){
+  const socios = [];
+  const cards = document.querySelectorAll('.socio-card');
+  cards.forEach(card => {
+    const idx = card.id.replace('socio-card-','');
+    const nome = (document.getElementById('f-socio-nome-'+idx)||{}).value||'';
+    if(!nome.trim()) return;
+    socios.push({
+      nome: nome.trim(),
+      oab: (document.getElementById('f-socio-oab-'+idx)||{}).value||'',
+      email: (document.getElementById('f-socio-email-'+idx)||{}).value||'',
+      tel: (document.getElementById('f-socio-tel-'+idx)||{}).value||'',
+      addr: (document.getElementById('f-socio-addr-'+idx)||{}).value||''
+    });
+  });
+  return socios;
+}
 const prog = [33, 66, 100];
 
 function _waitFbForm(){
@@ -378,22 +433,25 @@ function validate(step){
     const emailOk = validEmail(email);
     setErr('f-email','e-email', !emailOk);
     if(!emailOk) ok=false;
-    // Sócio: campos obrigatórios se opção marcada
+    // Sócios: valida cada card presente
     if(SOCIO){
-      const snome = fv('f-socio-nome').trim();
-      setErr('f-socio-nome','e-socio-nome', !snome);
-      if(!snome) ok=false;
-      const soab = fv('f-socio-oab').trim();
-      setErr('f-socio-oab','e-socio-oab', !soab);
-      if(!soab) ok=false;
-      const semail = fv('f-socio-email');
-      const semailOk = validEmail(semail);
-      setErr('f-socio-email','e-socio-email', !semailOk);
-      if(!semailOk) ok=false;
-      const stel = fv('f-socio-tel');
-      const stelOk = validPhone(stel);
-      setErr('f-socio-tel','e-socio-tel', !stelOk);
-      if(!stelOk) ok=false;
+      document.querySelectorAll('.socio-card').forEach(card => {
+        const idx = card.id.replace('socio-card-','');
+        const snome = (document.getElementById('f-socio-nome-'+idx)||{}).value||'';
+        setErr('f-socio-nome-'+idx,'e-socio-nome-'+idx, !snome.trim());
+        if(!snome.trim()) ok=false;
+        const soab = (document.getElementById('f-socio-oab-'+idx)||{}).value||'';
+        setErr('f-socio-oab-'+idx,'e-socio-oab-'+idx, !soab.trim());
+        if(!soab.trim()) ok=false;
+        const semail = (document.getElementById('f-socio-email-'+idx)||{}).value||'';
+        const semailOk = validEmail(semail);
+        setErr('f-socio-email-'+idx,'e-socio-email-'+idx, !semailOk);
+        if(!semailOk) ok=false;
+        const stel = (document.getElementById('f-socio-tel-'+idx)||{}).value||'';
+        const stelOk = validPhone(stel);
+        setErr('f-socio-tel-'+idx,'e-socio-tel-'+idx, !stelOk);
+        if(!stelOk) ok=false;
+      });
     }
   }
   if(!ok){
@@ -440,6 +498,7 @@ function toggleSocio(){
   SOCIO=!SOCIO;
   document.getElementById('socio-toggle').classList.toggle('on',SOCIO);
   document.getElementById('socio-block').classList.toggle('on',SOCIO);
+  if(SOCIO && SOCIO_COUNT===0) addSocio();
 }
 
 // Máscaras
@@ -497,7 +556,7 @@ async function submitForm(){
     kpis:{leads:0,leadsG:0,reunAgd:0,reunAgdG:0,reunReal:0,reunRealG:0,vendas:0,vendasG:0,rev:0,revG:0,invest:0,investG:0,impressoes:0,cliques:0,cpl:0,conv:0,convG:0},
     implementations:[],meetings:[],files:[],links:[],msgs:[],demands:[],
     metas:{day:[],wk:[],mo:[]},
-    notifs:[],activity:[],note:'',unreadChat:0,partners:[],payments:[],
+    notifs:[],activity:[],note:'',unreadChat:0,partners:getSocios().map((s,i)=>({id:'p'+Date.now()+i,name:s.nome,role:'Sócio(a)',email:s.email,phone:s.tel,oab:s.oab,address:s.addr,photo:''})),payments:[],
     firmExtra:{address,website:site,instagram:instagram?'@'+instagram:''},
     __ts: Date.now()
   };
@@ -539,22 +598,21 @@ async function submitForm(){
     // Não bloqueia — email de backup ainda vai
   }
 
-  // Google Sheets — planilha de clientes
-  const sheetsPayload = {
+  // Google Sheets — planilha de clientes (URLSearchParams p/ no-cors)
+  const socios_str = getSocios().map((s,i)=>`[${i+1}] ${s.nome} · OAB: ${s.oab} · ${s.email} · ${s.tel}${s.addr?' · '+s.addr:''}`).join(' | ');
+  const sheetsParams = new URLSearchParams({
     escritorio, area:areas, cidade, uf, endereco:address,
     responsavel, oab, telefone, email,
     site:site||'', instagram:instagram?'@'+instagram:'',
     origem:origem||'', expectativas:expectativas||'',
     mensalidade:'R$ 3.500', inicio:new Date().toLocaleDateString('pt-BR'),
-    firmId, senha:clientPass,
-    socio: SOCIO ? [fv('f-socio-nome'),fv('f-socio-oab'),fv('f-socio-email'),fv('f-socio-tel'),fv('f-socio-addr')].filter(Boolean).join(' · ') : ''
-  };
+    firmId, senha:clientPass, socios: socios_str||''
+  });
   try{
     await fetch('https://script.google.com/macros/s/AKfycbyzoR-eIxWJLcwV9oCzfWf7bOOObWdviKvox9GxMHbBNyAmDXu0HZQXb3DYuvYGJGuWHw/exec',{
       method:'POST',
       mode:'no-cors',
-      body:JSON.stringify(sheetsPayload),
-      headers:{'Content-Type':'application/json'}
+      body:sheetsParams
     });
     console.log('[Sheets] Enviado para planilha');
   }catch(e){ console.warn('[Sheets]',e); }
@@ -569,7 +627,7 @@ async function submitForm(){
     '📜 OAB': oab,
     '📱 Telefone': telefone,
     '✉️ E-mail': email,
-    '🤝 Sócio(a)': SOCIO ? [fv('f-socio-nome'),fv('f-socio-oab'),fv('f-socio-email'),fv('f-socio-tel'),fv('f-socio-addr')].filter(Boolean).join(' · ') : 'Não informado',
+    '🤝 Sócios': SOCIO ? getSocios().map((s,i)=>`[${i+1}] ${s.nome} (${s.oab}) — ${s.email} — ${s.tel}`).join(' | ') : 'Não informado',
     '🌐 Site': site||'—',
     '📸 Instagram': instagram?'@'+instagram:'—',
     '🔍 Origem': origem||'—',
