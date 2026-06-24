@@ -1769,7 +1769,16 @@ function openM(type,data){
       body:()=>{
         const firmNm=(FIRMS.find(f=>f.id===S.eid)||{}).name||'Escritório';
         const isClient=S.role==='client';
-        const asgOptsLocal=ASSIGNEES.map(a=>`<option${data&&data.assign===a?' selected':''}>${a}</option>`).join('');
+        // Para clientes: listar o próprio usuário + sócios do escritório
+        const _buildClientAsg=()=>{
+          const names=[S.user.name];
+          const _d=ld();
+          (_d.partners||[]).forEach(p=>{if(p.name&&!names.includes(p.name))names.push(p.name);});
+          // também incluir usuários do mesmo escritório via _fbDynUsers
+          (_fbDynUsers||[]).filter(u=>u.eid===S.eid&&u.role==='client'&&!names.includes(u.name)).forEach(u=>names.push(u.name));
+          return names.map(n=>`<option${data&&data.assign===n?' selected':''}>${n}</option>`).join('');
+        };
+        const asgOptsLocal=S.role==='client'?_buildClientAsg():ASSIGNEES.filter(a=>a!=='Ambos').map(a=>`<option${data&&data.assign===a?' selected':''}>${a}</option>`).join('');
         const respSel=isClient?'':`<div class="fg"><label>Responsável</label><select class="fi" id="m-rsp"><option${!data||data.resp==='Flow Sales'?' selected':''}>Flow Sales</option><option value="${firmNm}"${data&&(data.resp===firmNm||data.resp==='Escritório')?' selected':''}>${firmNm}</option><option${data&&data.resp==='Ambos'?' selected':''}>Ambos</option></select></div>`;
         return `<div class="fg"><label>Título</label><input class="fi" id="m-ttl" value="${data?data.title:''}"></div><div class="fg"><label>Descrição</label><textarea id="m-dsc">${data?data.desc||'':''}</textarea></div><div style="display:grid;grid-template-columns:${isClient?'1fr':'1fr 1fr'};gap:10px">${respSel}<div class="fg"><label>Atribuída a</label><select class="fi" id="m-asg">${asgOptsLocal}</select></div></div><div class="fg"><label>Prazo *</label><input class="fi" id="m-due" type="date" value="${data?data.due:''}" style="color-scheme:dark"></div><div class="fg"><label>Status</label><select class="fi" id="m-sta"><option value="pending"${!data||data.status==='pending'?' selected':''}>Pendente</option><option value="done"${data&&data.status==='done'?' selected':''}>Concluída</option><option value="late"${data&&data.status==='late'?' selected':''}>Atrasada</option></select></div><div class="fg" style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="tck-cb" id="m-urg" ${data&&data.urgent?'checked':''}><label style="text-transform:none;letter-spacing:0;font-size:12px;color:var(--text)">Marcar como urgente</label></div>`;
       },
