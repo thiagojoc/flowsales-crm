@@ -2030,7 +2030,7 @@ function rFirms(){
       +'<div style="font-size:10px;color:var(--t2);margin-top:2px">'+(f.area||'')+' · '+(f.city||'')+'</div></div>'
       +'<div style="display:flex;gap:6px;align-items:center">'
       +'<span style="font-size:9px;font-weight:700;color:'+hc+';background:'+hc+'22;border:0.5px solid '+hc+'44;border-radius:4px;padding:2px 6px">'+hl+(health!==null?' '+health+'%':'')+'</span>'
-      +'<button class="ca" data-fd="'+f.id+'" onclick="openM('firmDetail',FIRMS.find(x=>x.id===this.dataset.fd))" style="font-size:10px;padding:3px 8px;background:var(--gb);color:var(--text);border:0.5px solid var(--bdr)">Dados</button>'
+      +'<button class="ca" data-fd="'+f.id+'" data-mtype="firmDetail" onclick="openM(this.dataset.mtype,FIRMS.find(x=>x.id===this.dataset.fd))" style="font-size:10px;padding:3px 8px;background:var(--gb);color:var(--text);border:0.5px solid var(--bdr)">Dados</button>'
       +'<button class="ca" data-fid="'+f.id+'" onclick="selectFirmAndNav(this.dataset.fid)" style="font-size:10px;padding:3px 10px">Ver painel</button>'
       +'<button class="ca" data-fid2="'+f.id+'" style="background:var(--gb);color:var(--text);border:0.5px solid var(--bdr);font-size:10px;padding:3px 8px" onclick="edFirm(this.dataset.fid2)">Editar</button>'
       +'<button class="bda" data-fid3="'+f.id+'" style="font-size:10px;padding:3px 8px" onclick="removeFirm(this.dataset.fid3)">Excluir</button>'
