@@ -48,7 +48,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
 .step{display:none;animation:fadeUp .35s ease both;}.step.active{display:block;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
 .fg{margin-bottom:20px;}.fg:last-child{margin-bottom:0;}
-label{display:flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;color:var(--t2);margin-bottom:8px;letter-spacing:.04em;text-transform:uppercase;}
+label{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:var(--text);margin-bottom:8px;letter-spacing:.03em;}
 .req{color:var(--gold);font-size:12px;line-height:1;}
 input,select,textarea{width:100%;background:var(--s2);border:1px solid var(--bdr2);border-radius:var(--r);padding:13px 16px;color:var(--text);font-size:13.5px;outline:none;transition:border-color .2s,background .2s,box-shadow .2s;font-family:inherit;-webkit-appearance:none;}
 input::placeholder,textarea::placeholder{color:var(--t3);}
@@ -142,33 +142,28 @@ textarea{resize:none;min-height:100px;line-height:1.65;}
         <div class="step-hd">
           <div class="step-tag">Etapa 1 de 3</div>
           <div class="step-ttl">Dados do escritório</div>
-          <div class="step-sub">Informações básicas para identificar e localizar seu escritório.</div>
+          <div class="step-sub">Informações do escritório como pessoa jurídica.</div>
         </div>
         <div class="fg">
           <label>Nome do escritório <span class="req">*</span></label>
           <input type="text" id="f-escritorio" placeholder="Ex: Silva & Associados Advocacia">
           <div class="field-err" id="e-escritorio">Digite o nome do escritório</div>
         </div>
-        <div class="fg">
-          <label>Áreas de atuação <span class="req">*</span></label>
-          <div style="font-size:11px;color:var(--t2);margin-bottom:10px;">Selecione todas que se aplicam</div>
-          <div class="pills" id="pills-area">
-            <div class="pill" data-v="Trabalhista">Trabalhista</div>
-            <div class="pill" data-v="Família e Sucessões">Família</div>
-            <div class="pill" data-v="Cível">Cível</div>
-            <div class="pill" data-v="Criminal">Criminal</div>
-            <div class="pill" data-v="Tributário">Tributário</div>
-            <div class="pill" data-v="Empresarial">Empresarial</div>
-            <div class="pill" data-v="Previdenciário">Previdenciário</div>
-            <div class="pill" data-v="Imobiliário">Imobiliário</div>
-            <div class="pill" data-v="Ambiental">Ambiental</div>
-            <div class="pill" data-v="Outra">Outra</div>
+        <div class="row2">
+          <div class="fg">
+            <label>Telefone do escritório <span class="req">*</span></label>
+            <div class="inp-group"><span class="inp-addon">📞</span><input type="tel" id="f-tel-esc" placeholder="(00) 00000-0000" inputmode="numeric"></div>
+            <div class="field-err" id="e-tel-esc">Informe o telefone do escritório</div>
           </div>
-          <div class="field-err" id="e-area">Selecione pelo menos uma área</div>
+          <div class="fg">
+            <label>E-mail do escritório <span class="req">*</span></label>
+            <div class="inp-group"><span class="inp-addon" style="font-size:12px">@</span><input type="email" id="f-email-esc" placeholder="contato@escritorio.com.br" inputmode="email"></div>
+            <div class="field-err" id="e-email-esc">Informe o e-mail do escritório</div>
+          </div>
         </div>
         <div class="divider"></div>
         <div class="fg" style="margin-bottom:6px">
-          <label>Endereço completo <span class="req">*</span></label>
+          <label>Endereço completo do escritório <span class="req">*</span></label>
         </div>
         <div style="display:grid;grid-template-columns:1fr 120px;gap:14px;margin-bottom:14px">
           <div class="fg" style="margin-bottom:0">
@@ -704,7 +699,7 @@ function telMask(id){
     this.value=v.trim().replace(/-$/,'');
   });
 }
-telMask('f-tel');
+telMask('f-tel');telMask('f-tel-esc');
 document.getElementById('f-cep').addEventListener('input',function(){
   let v=this.value.replace(/\D/g,'');
   if(v.length>5) v=v.replace(/(\d{5})(\d{0,3})/,'$1-$2');
