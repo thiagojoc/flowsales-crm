@@ -732,6 +732,20 @@ if(window._fbResolve) window._fbResolve();
               </div>
             </div>
           </div>
+          <!-- Configurações FlowSales -->
+          <div class="card" style="margin-top:12px">
+            <div class="ch">
+              <div class="ct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>Integrações — FlowSales</div>
+              <button class="ca" onclick="saveFSConfig()">Salvar</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
+              <div class="fg"><label>GHL Agency API Key</label><input class="fi" id="fsc-ghl-key" placeholder="Agency API Key do GoHighLevel"></div>
+              <div class="fg"><label>GHL Location ID (subconta FlowSales)</label><input class="fi" id="fsc-ghl-loc" placeholder="Location ID da subconta"></div>
+              <div class="fg"><label>Meta BM Token</label><input class="fi" id="fsc-meta-token" placeholder="Token da Business Manager"></div>
+              <div class="fg"><label>Meta Ad Account ID</label><input class="fi" id="fsc-meta-acc" placeholder="act_XXXXXXXXXX"></div>
+            </div>
+            <div id="fsc-status" style="font-size:11px;color:var(--t2);margin-top:6px"></div>
+          </div>
         </div>
 
         <!-- ESCRITÓRIOS (ADMIN) -->
@@ -927,6 +941,7 @@ async function _startFirmsSync(){
     const ref=window._fbDoc(window._fbDB,'flowsales_crm','__config');
     window._fbOnSnapshot(ref, snap=>{
       if(!snap.exists())return;
+      if(snap.data&&snap.data().fsConfig){try{localStorage.setItem('fs__config',JSON.stringify(snap.data().fsConfig));loadFSConfig();}catch(e){}}
       const data=snap.data();
       // Carregar usuários dinâmicos, credenciais e perfis do Firebase
       if(data.users&&data.users.length) _fbDynUsers=data.users;
@@ -2059,8 +2074,30 @@ async function removeFirm(id){if(!confirm('Remover este escritório?'))return;co
 // ── FLOWSALES INTERNAL ─────────────────────────────────────────
 function ldFS(){const s=localStorage.getItem('fs_internal');return s?JSON.parse(s):{tasks:[],msgs:[],pipeline:[],goals:[{id:'g1',title:'MRR R$ 21.000 (6 clientes)',done:false},{id:'g2',title:'Fechar 2 novos clientes no mês',done:false},{id:'g3',title:'NPS dos clientes > 8',done:false}]};}
 function svFS(d){localStorage.setItem('fs_internal',JSON.stringify(d));}
+function loadFSConfig(){
+  try{
+    const cfg=JSON.parse(localStorage.getItem('fs__config')||'{}');
+    const set=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.value=v;};
+    set('fsc-ghl-key',cfg.ghlKey);
+    set('fsc-ghl-loc',cfg.ghlLocId);
+    set('fsc-meta-token',cfg.metaToken);
+    set('fsc-meta-acc',cfg.metaAccId);
+  }catch(e){}
+}
+function saveFSConfig(){
+  const v=id=>{ const el=document.getElementById(id); return el?el.value.trim():''; };
+  const cfg={ghlKey:v('fsc-ghl-key'),ghlLocId:v('fsc-ghl-loc'),metaToken:v('fsc-meta-token'),metaAccId:v('fsc-meta-acc')};
+  localStorage.setItem('fs__config',JSON.stringify(cfg));
+  window._waitFB&&_waitFB().then(()=>{
+    window._fbSetDoc(window._fbDoc(window._fbDB,'flowsales_crm','__config'),{fsConfig:cfg,__ts:Date.now()},{merge:true})
+      .then(()=>{const s=document.getElementById('fsc-status');if(s){s.textContent='Salvo ✅';setTimeout(()=>s.textContent='',2500);}})
+      .catch(e=>console.error('[FB] fsConfig save:',e));
+  }).catch(()=>{});
+  _showToast('Configurações salvas ✅','var(--green)');
+}
 function rFlow(){
   if(S.role!=='admin'){return;}
+  loadFSConfig();
   const d=ldFS();
   // MRR calc from active firms
   const mrr=FIRMS.reduce((s,f)=>s+(f.fee||0),0);
