@@ -38,7 +38,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
 .ls.active .ls-num{border-color:var(--gold);background:var(--gb);color:var(--gold);}
 .ls.done .ls-num{border-color:var(--green);background:rgba(29,158,117,.1);color:var(--green);}
 .ls-lbl{font-size:12px;font-weight:500;}.ls.active .ls-lbl{color:var(--text);}.ls.done .ls-lbl{color:var(--t2);}
-.left-foot{font-size:11px;color:var(--t3);margin-top:auto;padding-top:32px;}
+.left-foot{font-size:11px;color:var(--t2);font-weight:500;margin-top:auto;padding-top:32px;}
 .right{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:52px 40px 80px;}
 .form-wrap{width:100%;max-width:520px;}
 .step-hd{margin-bottom:36px;}
@@ -110,7 +110,7 @@ textarea{resize:none;min-height:100px;line-height:1.65;}
 .cred-row:last-child{border:none;}
 .cred-lbl{font-size:11px;color:var(--t2);}
 .cred-val{font-size:12px;font-weight:600;color:var(--text);font-family:monospace;}
-@media(max-width:820px){.wrap{flex-direction:column;}.left{width:100%;min-width:0;height:auto;position:relative;padding:36px 24px 32px;border-right:none;border-bottom:0.5px solid rgba(201,168,67,0.1);}.left-body{margin:24px 0 0;}.left-h{font-size:22px;}.left-steps{flex-direction:row;flex-wrap:wrap;gap:10px;}.ls-lbl{display:none;}.left-foot{display:none;}.left::before{display:none;}.right{padding:32px 20px 60px;}.row2,.row3{grid-template-columns:1fr;}.step-ttl{font-size:22px;}}
+@media(max-width:820px){.wrap{flex-direction:column;}.left{width:100%;min-width:0;height:auto;position:relative;padding:36px 24px 32px;border-right:none;border-bottom:0.5px solid rgba(201,168,67,0.1);}.left-body{margin:24px 0 0;}.left-h{font-size:22px;}.left-steps{flex-direction:row;flex-wrap:wrap;gap:10px;}.ls-lbl{display:none;}.left-foot{display:none;}.left::before{display:none;}.right{padding:32px 20px 60px;}.row2,.row3{grid-template-columns:1fr;}.step-ttl{font-size:22px;}}.photo-upload-wrap{cursor:pointer;border:2px dashed var(--bdr2);border-radius:10px;padding:20px;display:flex;align-items:center;justify-content:center;transition:border-color .2s;background:rgba(255,255,255,.02);}.photo-upload-wrap:hover{border-color:var(--gold);}.photo-upload-wrap.err{border-color:var(--red);}.photo-preview{display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--t3);font-size:12px;text-align:center;}
 </style>
 </head>
 <body>
@@ -153,7 +153,7 @@ textarea{resize:none;min-height:100px;line-height:1.65;}
           <div class="fg">
             <label>Telefone do escritório <span class="req">*</span></label>
             <div class="inp-group"><span class="inp-addon">📞</span><input type="tel" id="f-tel-esc" placeholder="(00) 00000-0000" inputmode="numeric"></div>
-            <div class="field-err" id="e-tel-esc">Informe o telefone do escritório</div>
+            <div class="field-err" id="e-tel-esc">Informe um telefone válido com DDD — ex: (11) 99999-9999</div>
           </div>
           <div class="fg">
             <label>E-mail do escritório <span class="req">*</span></label>
@@ -390,23 +390,10 @@ let SOCIO = false;
 let SOCIO_COUNT = 0;
 
 // Photo upload preview
-function previewPhoto(key, inp){
+function previewPhoto(key,inp){
   if(!inp.files||!inp.files[0])return;
   const reader=new FileReader();
-  reader.onload=e=>{
-    const preview=document.getElementById('photo-preview-'+key);
-    if(preview){preview.innerHTML='<img src="'+e.target.result+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%"><span>Foto selecionada - clique para trocar</span>';}
-    const wrap=document.getElementById('photo-wrap-'+key);
-    if(wrap){wrap.classList.add('has-photo');wrap.classList.remove('err');}
-    const err=document.getElementById('e-foto-'+key);
-    if(err)err.classList.remove('on');
-    // store b64 on the input element
-    const el=document.getElementById('f-foto-'+key)||document.getElementById('f-foto-resp');
-    if(el)el.dataset.b64=e.target.result;
-    // also try with dashes in key (for socio-0, socio-1 etc.)
-    const el2=document.getElementById('f-'+key.replace('-','').replace('socio','socio-foto').replace('resp','foto-resp'));
-    if(!el&&el2)el2.dataset.b64=e.target.result;
-  };
+  reader.onload=function(e){openCropModal(key,inp,e.target.result);};
   reader.readAsDataURL(inp.files[0]);
 }
 
@@ -453,9 +440,9 @@ function socioCardHTML(idx){
         <div class="field-err" id="e-socio-num-${idx}">⚠ Número</div></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 80px 80px;gap:14px">
-      <div class="fg" style="margin-bottom:0"><label>Bairro</label><input type="text" id="f-socio-bairro-${idx}" placeholder="Centro"></div>
-      <div class="fg" style="margin-bottom:0"><label>Cidade</label><input type="text" id="f-socio-cidade-${idx}" placeholder="Belo Horizonte"></div>
-      <div class="fg" style="margin-bottom:0"><label>UF</label>
+      <div class="fg" style="margin-bottom:0"><label>Bairro <span class="req">*</span></label><input type="text" id="f-socio-bairro-${idx}" placeholder="Centro"></div>
+      <div class="fg" style="margin-bottom:0"><label>Cidade <span class="req">*</span></label><input type="text" id="f-socio-cidade-${idx}" placeholder="Belo Horizonte"></div>
+      <div class="fg" style="margin-bottom:0"><label>UF <span class="req">*</span></label>
         <select id="f-socio-uf-${idx}" style="width:100%;background:var(--s2);border:1px solid var(--bdr2);border-radius:var(--r);padding:13px 10px;color:var(--text);font-size:13px;outline:none;font-family:inherit">
           <option value="">UF</option>
           <option>AC</option><option>AL</option><option>AP</option><option>AM</option>
@@ -466,7 +453,7 @@ function socioCardHTML(idx){
           <option>RS</option><option>RO</option><option>RR</option><option>SC</option>
           <option>SP</option><option>SE</option><option>TO</option>
         </select></div>
-      <div class="fg" style="margin-bottom:0"><label>CEP</label><input type="text" id="f-socio-cep-${idx}" placeholder="00000"></div>
+      <div class="fg" style="margin-bottom:0"><label>CEP <span class="req">*</span></label><input type="text" id="f-socio-cep-${idx}" placeholder="00000"></div>
     </div>
     <div class="fg" style="margin-top:14px"><label>Complemento</label>
       <input type="text" id="f-socio-comp-${idx}" placeholder="Sala, bloco..."></div>
@@ -549,8 +536,9 @@ function validate(step){
     setErr('f-escritorio','e-escritorio', !nome);
     if(!nome) ok=false;
     const telEsc = fv('f-tel-esc').trim();
-    setErr('f-tel-esc','e-tel-esc', !telEsc);
-    if(!telEsc) ok=false;
+    const telEscOk = telEsc && validPhone(telEsc);
+    setErr('f-tel-esc','e-tel-esc', !telEscOk);
+    if(!telEscOk) ok=false;
     const emailEsc = fv('f-email-esc').trim();
     const emailEscOk = validEmail(emailEsc);
     setErr('f-email-esc','e-email-esc', !emailEscOk);
@@ -901,6 +889,84 @@ async function submitForm(){
 window.goStep      = goStep;
 window.toggleSocio = toggleSocio;
 window.submitForm  = submitForm;
+</script>
+
+<!-- Crop Modal -->
+<div id="crop-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#1a1a17;border:0.5px solid rgba(201,168,67,.2);border-radius:14px;padding:24px;width:340px;max-width:95vw">
+    <div style="font-size:15px;font-weight:600;color:#f0f0f0;margin-bottom:16px">Enquadrar foto</div>
+    <div id="crop-container" style="width:280px;height:280px;border-radius:50%;overflow:hidden;margin:0 auto;position:relative;cursor:move;background:#111;touch-action:none;border:2px solid rgba(201,168,67,.35)">
+      <img id="crop-img" src="" style="position:absolute;top:0;left:0;transform-origin:0 0;pointer-events:none;max-width:none;user-select:none;-webkit-user-drag:none">
+    </div>
+    <div style="text-align:center;font-size:11px;color:#888;margin:10px 0 16px">Arraste para reposicionar &middot; Scroll para zoom</div>
+    <div style="display:flex;gap:10px">
+      <button type="button" onclick="cancelCrop()" style="flex:1;padding:11px;background:rgba(255,255,255,.06);border:0.5px solid rgba(255,255,255,.12);border-radius:8px;color:#ccc;font-size:13px;cursor:pointer;font-family:inherit">Cancelar</button>
+      <button type="button" onclick="confirmCrop()" style="flex:1;padding:11px;background:#C9A843;border:none;border-radius:8px;color:#000;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Usar esta foto</button>
+    </div>
+  </div>
+</div>
+<script>
+let _cropKey='',_cropInp=null,_cropScale=1,_cropX=0,_cropY=0,_cropDrag=false,_cropSX=0,_cropSY=0,_cropLastDist=0;
+function openCropModal(key,inp,src){
+  _cropKey=key;_cropInp=inp;
+  const modal=document.getElementById('crop-modal');
+  const img=document.getElementById('crop-img');
+  modal.style.display='flex';
+  img.onload=function(){
+    const cw=280;
+    const ratio=Math.max(cw/img.naturalWidth,cw/img.naturalHeight);
+    _cropScale=ratio;
+    _cropX=(cw-img.naturalWidth*ratio)/2;
+    _cropY=(cw-img.naturalHeight*ratio)/2;
+    updateCropTransform();
+  };
+  img.src=src;
+  const con=document.getElementById('crop-container');
+  con.onmousedown=function(e){e.preventDefault();_cropDrag=true;_cropSX=e.clientX-_cropX;_cropSY=e.clientY-_cropY;};
+  con.onmousemove=function(e){if(!_cropDrag)return;_cropX=e.clientX-_cropSX;_cropY=e.clientY-_cropSY;updateCropTransform();};
+  con.onmouseup=function(){_cropDrag=false;};
+  con.onmouseleave=function(){_cropDrag=false;};
+  con.onwheel=function(e){e.preventDefault();_cropScale=Math.max(0.2,Math.min(8,_cropScale+(e.deltaY<0?0.1:-0.1)));updateCropTransform();};
+  con.ontouchstart=function(e){
+    e.preventDefault();
+    if(e.touches.length===1){_cropDrag=true;_cropSX=e.touches[0].clientX-_cropX;_cropSY=e.touches[0].clientY-_cropY;}
+    else if(e.touches.length===2){_cropLastDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);}
+  };
+  con.ontouchmove=function(e){
+    e.preventDefault();
+    if(e.touches.length===1&&_cropDrag){_cropX=e.touches[0].clientX-_cropSX;_cropY=e.touches[0].clientY-_cropSY;updateCropTransform();}
+    else if(e.touches.length===2){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);_cropScale=Math.max(0.2,Math.min(8,_cropScale*(d/_cropLastDist)));_cropLastDist=d;updateCropTransform();}
+  };
+  con.ontouchend=function(){_cropDrag=false;};
+}
+function updateCropTransform(){
+  const img=document.getElementById('crop-img');
+  img.style.transform='translate('+_cropX+'px,'+_cropY+'px) scale('+_cropScale+')';
+  img.style.transformOrigin='0 0';
+}
+function cancelCrop(){
+  document.getElementById('crop-modal').style.display='none';
+  if(_cropInp){_cropInp.value='';}
+}
+function confirmCrop(){
+  const canvas=document.createElement('canvas');
+  const sz=400;canvas.width=sz;canvas.height=sz;
+  const ctx=canvas.getContext('2d');
+  ctx.beginPath();ctx.arc(sz/2,sz/2,sz/2,0,Math.PI*2);ctx.clip();
+  const img=document.getElementById('crop-img');
+  const ratio=sz/280;
+  ctx.drawImage(img,_cropX*ratio,_cropY*ratio,img.naturalWidth*_cropScale*ratio,img.naturalHeight*_cropScale*ratio);
+  const b64=canvas.toDataURL('image/jpeg',0.88);
+  if(_cropInp)_cropInp.dataset.b64=b64;
+  const preview=document.getElementById('photo-preview-'+_cropKey);
+  if(preview){preview.innerHTML='<img src="'+b64+'" style="width:80px;height:80px;object-fit:cover;border-radius:50%;margin-bottom:4px"><br><span style="font-size:11px;color:#aaa">Clique para trocar</span>';}
+  const wrap=document.getElementById('photo-wrap-'+_cropKey);
+  if(wrap){wrap.classList.add('has-photo');wrap.classList.remove('err');}
+  let errEl=document.getElementById('e-foto-'+_cropKey);
+  if(!errEl&&_cropKey.startsWith('socio-')){errEl=document.getElementById('e-socio-foto-'+_cropKey.replace('socio-',''));}
+  if(errEl){errEl.classList.remove('on');}
+  document.getElementById('crop-modal').style.display='none';
+}
 </script>
 </body>
 </html>
