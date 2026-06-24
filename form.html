@@ -178,7 +178,7 @@ textarea{resize:none;min-height:100px;line-height:1.65;}
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr 80px 80px;gap:14px">
-          <div class="fg" style="margin-bottom:0"><label>Bairro <span class="req">*</span></label><input type="text" id="f-bairro" placeholder="Centro"></div>
+          <div class="fg" style="margin-bottom:0"><label>Bairro <span class="req">*</span></label><input type="text" id="f-bairro" placeholder="Centro"><div class="field-err" id="e-bairro">Bairro obrigatório</div></div>
           <div class="fg" style="margin-bottom:0">
             <label>Cidade <span class="req">*</span></label>
             <input type="text" id="f-cidade" placeholder="Belo Horizonte">
@@ -189,7 +189,7 @@ textarea{resize:none;min-height:100px;line-height:1.65;}
             <select id="f-estado"><option value="" disabled selected>UF</option><option>AC</option><option>AL</option><option>AM</option><option>AP</option><option>BA</option><option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option><option>MG</option><option>MS</option><option>MT</option><option>PA</option><option>PB</option><option>PE</option><option>PI</option><option>PR</option><option>RJ</option><option>RN</option><option>RO</option><option>RR</option><option>RS</option><option>SC</option><option>SE</option><option>SP</option><option>TO</option></select>
             <div class="field-err" id="e-estado">Selecione o estado</div>
           </div>
-          <div class="fg" style="margin-bottom:0"><label>CEP <span class="req">*</span></label><input type="text" id="f-cep" placeholder="00000" maxlength="9"></div>
+          <div class="fg" style="margin-bottom:0"><label>CEP <span class="req">*</span></label><input type="text" id="f-cep" placeholder="00000" maxlength="9"><div class="field-err" id="e-cep">CEP inválido (8 dígitos)</div></div>
         </div>
         <div class="fg" style="margin-top:14px"><label>Complemento</label><input type="text" id="f-comp" placeholder="Sala 42, andar 3..."></div>
         <div class="btn-row">
@@ -284,7 +284,7 @@ textarea{resize:none;min-height:100px;line-height:1.65;}
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr 80px 80px;gap:14px">
-          <div class="fg" style="margin-bottom:0"><label>Bairro</label><input type="text" id="f-resp-bairro" placeholder="Centro"></div>
+          <div class="fg" style="margin-bottom:0"><label>Bairro <span class="req">*</span></label><input type="text" id="f-resp-bairro" placeholder="Centro"><div class="field-err" id="e-resp-bairro">Bairro obrigatório</div></div>
           <div class="fg" style="margin-bottom:0">
             <label>Cidade <span class="req">*</span></label>
             <input type="text" id="f-resp-cidade" placeholder="Belo Horizonte">
@@ -295,7 +295,7 @@ textarea{resize:none;min-height:100px;line-height:1.65;}
             <select id="f-resp-estado"><option value="" disabled selected>UF</option><option>AC</option><option>AL</option><option>AM</option><option>AP</option><option>BA</option><option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option><option>MG</option><option>MS</option><option>MT</option><option>PA</option><option>PB</option><option>PE</option><option>PI</option><option>PR</option><option>RJ</option><option>RN</option><option>RO</option><option>RR</option><option>RS</option><option>SC</option><option>SE</option><option>SP</option><option>TO</option></select>
             <div class="field-err" id="e-resp-estado">Selecione o estado</div>
           </div>
-          <div class="fg" style="margin-bottom:0"><label>CEP</label><input type="text" id="f-resp-cep" placeholder="00000" maxlength="9"></div>
+          <div class="fg" style="margin-bottom:0"><label>CEP <span class="req">*</span></label><input type="text" id="f-resp-cep" placeholder="00000" maxlength="9"><div class="field-err" id="e-resp-cep">CEP inválido (8 dígitos)</div></div>
         </div>
         <div class="fg" style="margin-top:14px"><label>Complemento</label><input type="text" id="f-resp-comp" placeholder="Sala 42, andar 3..."></div>
         <div class="divider"></div>
@@ -556,6 +556,12 @@ function validate(step){
     document.getElementById('f-estado').classList.toggle('err', !uf);
     document.getElementById('e-estado').classList.toggle('on', !uf);
     if(!uf) ok=false;
+    const bairro = fv('f-bairro').trim();
+    setErr('f-bairro','e-bairro', !bairro);
+    if(!bairro) ok=false;
+    const cepVal = fv('f-cep').replace(/\D/g,'');
+    setErr('f-cep','e-cep', cepVal.length!==8);
+    if(cepVal.length!==8) ok=false;
   }
   if(step===2){
     // Foto do responsável
@@ -597,6 +603,12 @@ function validate(step){
     const respEstado = (document.getElementById('f-resp-estado')||{}).value||'';
     if(document.getElementById('f-resp-estado')){ document.getElementById('f-resp-estado').classList.toggle('err',!respEstado); document.getElementById('e-resp-estado').classList.toggle('on',!respEstado); }
     if(!respEstado) ok=false;
+    const respBairroV = fv('f-resp-bairro').trim();
+    setErr('f-resp-bairro','e-resp-bairro', !respBairroV);
+    if(!respBairroV) ok=false;
+    const respCepV = fv('f-resp-cep').replace(/\D/g,'');
+    setErr('f-resp-cep','e-resp-cep', respCepV.length!==8);
+    if(respCepV.length!==8) ok=false;
     // Sócios: valida cada card presente
     if(SOCIO){
       document.querySelectorAll('.socio-card').forEach(card => {
@@ -658,6 +670,7 @@ function goStep(n){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
+
 function getAreas(){
   return [...document.querySelectorAll('#pills-area .pill.on')].map(p=>p.dataset.v).join(', ');
 }
@@ -689,6 +702,11 @@ function telMask(id){
 }
 telMask('f-tel');telMask('f-tel-esc');
 document.getElementById('f-cep').addEventListener('input',function(){
+  let v=this.value.replace(/\D/g,'');
+  if(v.length>5) v=v.replace(/(\d{5})(\d{0,3})/,'$1-$2');
+  this.value=v;
+});
+document.getElementById('f-resp-cep').addEventListener('input',function(){
   let v=this.value.replace(/\D/g,'');
   if(v.length>5) v=v.replace(/(\d{5})(\d{0,3})/,'$1-$2');
   this.value=v;
@@ -851,7 +869,7 @@ async function submitForm(){
     '📋 Escritório': escritorio,
     '⚖️ Áreas': areas,
     '📍 Cidade/UF': cidade+' / '+uf,
-    '🏢 Endereço': address,
+    '🏢 Endereço': escEndereco,
     '👤 Responsável': responsavel,
     '📜 OAB': oab,
     '📱 Telefone': telefone,
@@ -885,6 +903,7 @@ async function submitForm(){
   });
   window.scrollTo({top:0,behavior:'smooth'});
 }
+
 
 window.goStep      = goStep;
 window.toggleSocio = toggleSocio;
