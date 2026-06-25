@@ -299,14 +299,14 @@ input[type="date"].fi::-webkit-calendar-picker-indicator:hover{opacity:1;}
 .mrow:hover .chat-msg-acts{opacity:1;}
 .chat-msg-acts button{background:none;border:none;cursor:pointer;color:var(--t3);padding:2px;border-radius:3px;transition:color .12s;display:flex;align-items:center;}
 .chat-msg-acts button:hover{color:var(--t2);}
-.cinp{display:flex;gap:6px;align-items:flex-end;padding:12px 14px;background:var(--s1);border-top:0.5px solid var(--bdr);position:relative;flex-shrink:0;}
+.cinp{display:flex;gap:8px;align-items:flex-end;padding:14px 16px;background:var(--s1);border-top:0.5px solid var(--bdr);position:relative;flex-shrink:0;}
 .emoji-btn{background:none;border:none;cursor:pointer;color:var(--t2);padding:6px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;line-height:1;transition:color .15s,background .15s;flex-shrink:0;margin-bottom:2px;}
 .emoji-btn:hover{color:var(--gold);background:var(--gb);}
 .emoji-pick{position:absolute;bottom:100%;left:14px;background:var(--s1);border:0.5px solid var(--bdr);border-radius:14px;padding:10px;display:none;grid-template-columns:repeat(8,1fr);gap:4px;z-index:50;box-shadow:0 8px 32px rgba(0,0,0,.55);max-width:320px;}
 .emoji-pick.on{display:grid;}
 .ep{font-size:22px;cursor:pointer;padding:4px;border-radius:7px;text-align:center;line-height:1;transition:background .1s;}
 .ep:hover{background:var(--gb);}
-.cin{flex:1;width:100%;box-sizing:border-box;background:var(--s2);border:0.5px solid var(--bdr2);border-radius:14px;padding:13px 16px;color:var(--text);font-size:14px;outline:none;font-family:inherit;resize:none;min-height:80px;max-height:220px;transition:border-color .15s;line-height:1.65;}
+.cin{display:block;width:100%;box-sizing:border-box;background:var(--s2);border:0.5px solid var(--bdr2);border-radius:14px;padding:14px 16px;color:var(--text);font-size:14px;outline:none;font-family:inherit;resize:none;height:110px;min-height:110px;max-height:260px;transition:border-color .15s;line-height:1.7;}
 .cin:focus{border-color:var(--gbr);}
 .chat-attach,.chat-mic{background:none;border:none;cursor:pointer;color:var(--t2);padding:6px;border-radius:8px;transition:color .15s;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .chat-attach:hover,.chat-mic:hover{color:var(--gold);}
@@ -736,7 +736,7 @@ window._fbOnSnapshot = onSnapshot;
               <div class="chat-wrap" style="height:340px">
                 <div class="cmsg" id="fs-chat" style="padding:8px 14px"></div>
                 <div class="cinp">
-                  <div style="position:relative;flex:1"><textarea class="cin" id="fs-cin" placeholder="Mensagem interna..." onkeydown="fsCkd(event)" rows="1"></textarea></div>
+                  <div style="position:relative;flex:1"><textarea class="cin" id="fs-cin" placeholder="Mensagem interna..." onkeydown="fsCkd(event)"></textarea></div>
                   <button class="csend" onclick="fsSendMsg()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
                 </div>
               </div>
@@ -800,7 +800,7 @@ window._fbOnSnapshot = onSnapshot;
             <input type="file" id="chat-file-inp" accept="image/*,video/*,audio/*,.pdf,.doc,.docx" style="display:none" onchange="handleChatFile(this)">
             <div style="position:relative;flex:1">
               <div class="emoji-pick" id="emoji-pick-main">😀 😂 🤣 😊 😍 🥰 😘 😎 🤔 😢 😭 😡 🤯 🥳 😴 🤗 👍 👎 👏 🙌 🤝 💪 🙏 ✌️ 🎉 🔥 ⭐ 💡 ✅ ❌ ⚠️ 📌 🚀 💰 🏆 📊 📈 ⏰ 💬 📧 📱 💻 🔗 📂 📝 🎯 💼 📞 🌟 ❤️ 💛 👀 😅 🤦 🤷 💥 🙈 🎁 🍕</div>
-              <textarea class="cin" id="cin" placeholder="Mensagem... use @ para mencionar" onkeydown="ckd(event)" oninput="checkMention(event)" rows="1"></textarea>
+              <textarea class="cin" id="cin" placeholder="Mensagem... use @ para mencionar" onkeydown="ckd(event)" oninput="checkMention(event)"></textarea>
               <div class="mention-drop" id="mention-drop"></div>
             </div>
             <button class="csend" onclick="sendMsg()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
