@@ -1923,9 +1923,23 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
         const _isAdminFS=S.role==='admin'&&S.eid==='flowsales';
         const isClient=S.role==='client';
         const firmNm=(FIRMS.find(f=>f.id===S.eid)||{}).name||'Escritório';
+        // Opções de atribuição para cliente: FlowSales + próprios envolvidos
+        const _demClientAsg=()=>{
+          const f=FIRMS.find(x=>x.id===S.eid)||{};
+          const seen=new Set();const names=[];
+          const _add=n=>{const t=(n||'').trim();if(t&&!seen.has(t)){seen.add(t);names.push(t);}};
+          _add('Thiago');_add('Carlos');
+          _add(f.contact);
+          if(S.user&&S.user.name)_add(S.user.name);
+          const _d=ld();
+          (_d.partners||[]).forEach(p=>_add(p.name));
+          (_fbDynUsers||[]).filter(u=>u.eid===S.eid&&u.role==='client'&&u.name).forEach(u=>_add(u.name));
+          return names.map(n=>`<option${data&&data.assign===n?' selected':''}>${n}</option>`).join('');
+        };
+        const _demAsgOpts=isClient?_demClientAsg():`<option>Thiago</option><option>Carlos</option>`;
         const respSel=isClient?'':`<div class="fg"><label>Responsável</label><select class="fi" id="m-rsp" onchange="_updateTaskAsg()">${_isAdminFS?`<option value="flowsales"${!data||data.resp==='Flow Sales'?' selected':''}>Flow Sales</option>${_allFirmsA.map(fw=>`<option value="${fw.id}"${data&&data.resp===fw.name?' selected':''}>${fw.name}</option>`).join('')}<option value="ambos"${data&&data.resp==='Ambos'?' selected':''}>Ambos</option>`:`<option${!data||data.resp==='Flow Sales'?' selected':''}>Flow Sales</option><option value="${firmNm}"${data&&(data.resp===firmNm||data.resp==='Escritório')?' selected':''}>${firmNm}</option><option${data&&data.resp==='Ambos'?' selected':''}>Ambos</option>`}</select></div>`;
-        setTimeout(()=>_updateTaskAsg(),0);
-        return `<div class="fg"><label>Título</label><input class="fi" id="m-ttl" value="${data?data.title:''}" placeholder="Descreva a demanda..."></div><div class="fg"><label>Detalhes</label><textarea class="fi" id="m-dsc" placeholder="Contexto, impacto, urgência..." style="min-height:80px;resize:vertical">${data?data.desc||'':''}</textarea></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Prioridade</label><select class="fi" id="m-pri"><option value="high"${!data||data.pri==='high'?' selected':''}>Alta - Bloqueia o progresso</option><option value="med"${data&&data.pri==='med'?' selected':''}>Média</option><option value="low"${data&&data.pri==='low'?' selected':''}>Baixa</option></select></div></div>${respSel}<div class="fg"><label>Atribuída a</label><select class="fi" id="m-asg"><option>Thiago</option><option>Carlos</option></select></div>`;
+        if(!isClient)setTimeout(()=>_updateTaskAsg(),0);
+        return `<div class="fg"><label>Título</label><input class="fi" id="m-ttl" value="${data?data.title:''}" placeholder="Descreva a demanda..."></div><div class="fg"><label>Detalhes</label><textarea class="fi" id="m-dsc" placeholder="Contexto, impacto, urgência..." style="min-height:80px;resize:vertical">${data?data.desc||'':''}</textarea></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Prioridade</label><select class="fi" id="m-pri"><option value="high"${!data||data.pri==='high'?' selected':''}>Alta - Bloqueia o progresso</option><option value="med"${data&&data.pri==='med'?' selected':''}>Média</option><option value="low"${data&&data.pri==='low'?' selected':''}>Baixa</option></select></div></div>${respSel}<div class="fg"><label>Atribuída a</label><select class="fi" id="m-asg">${_demAsgOpts}</select></div>`;
       },
       save:()=>{const _dt=v('m-ttl').trim();const _dd=v('m-dsc').trim();if(!_dt){_showToast('Preencha o título da demanda','var(--red)');return;}if(!_dd){_showToast('Preencha os detalhes','var(--red)');return;}const isClient=S.role==='client';const resp=isClient?'Escritório':(v('m-rsp')||'Flow Sales');const d=ld();const dm={id:data?data.id:'d'+Date.now(),title:_dt,desc:_dd,pri:v('m-pri'),resp,assign:v('m-asg'),status:data?data.status:'open',created:data?data.created:new Date().toISOString().split('T')[0]};if(data){const i=d.demands.findIndex(x=>x.id===data.id);if(i>=0)d.demands[i]=dm;}else{d.demands.push(dm);if(dm.pri==='high')d.notifs.unshift({id:'nd_'+dm.id,title:'Nova demanda urgente',sub:dm.title,read:false});activ(d,'Demanda criada: '+dm.title,'var(--red)');}sv(d);renderAll();cModal(null,1);}
     },
