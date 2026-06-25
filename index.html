@@ -2264,52 +2264,56 @@ function rFlow(){
   }).join('')||'<div class="empty">Sem tasks.</div>';
   rFSChat(d);
 }
+// cache de pessoas por firma (evitar múltiplas chamadas Firebase na mesma sessão)
+const _firmPeopleCache={};
+async function _getFirmPeople(firmId){
+  if(_firmPeopleCache[firmId])return _firmPeopleCache[firmId];
+  const fw=FIRMS.find(x=>x.id===firmId)||{};
+  const norm=s=>(s||'').trim().toLowerCase();
+  const names=[];const has=n=>names.some(x=>norm(x)===norm(n));
+  // 1. Sempre buscar do Firebase para garantir dado atualizado
+  let fd=null;
+  if(window._waitFB){
+    try{
+      await _waitFB();
+      const snap=await window._fbGetDoc(window._fbDoc(window._fbDB,'flowsales_crm',firmId));
+      if(snap&&snap.exists()){fd=snap.data();localStorage.setItem('fs_'+firmId,JSON.stringify(fd));}
+    }catch(e){}
+  }
+  // 2. Fallback para localStorage se Firebase falhou
+  if(!fd){try{const raw=localStorage.getItem('fs_'+firmId);if(raw)fd=JSON.parse(raw);}catch(e){}}
+  // 3. respName do firmExtra (responsável do formulário)
+  const rn=(fd?.firmExtra?.respName||fd?.firmExtra?.resp||'').trim();
+  if(rn&&!has(rn))names.push(rn);
+  // 4. contact do FIRMS (primeiro parceiro ou nome da firma como fallback)
+  if(fw.contact&&!has(fw.contact))names.push(fw.contact);
+  // 5. partners (sócios)
+  (fd?.partners||[]).forEach(p=>{if(p.name&&!has(p.name))names.push(p.name);});
+  // 6. usuários dinâmicos / locais
+  (_fbDynUsers||[]).filter(u=>u.eid===firmId&&u.role==='client'&&u.name&&!has(u.name)).forEach(u=>names.push(u.name));
+  (window.USERS||[]).filter(u=>u.eid===firmId&&u.role==='client'&&u.name&&!has(u.name)).forEach(u=>names.push(u.name));
+  _firmPeopleCache[firmId]=names;
+  return names;
+}
 async function _updateFsAssign(){
   const rspVal=document.getElementById('m-rsp')?.value;
-  const asgSel=document.getElementById('m-asg');
-  if(!asgSel)return;
-  const curVal=asgSel.value;
   const flowPeople=['Thiago','Carlos'];
   let names=[];
-  const norm=s=>(s||'').trim().toLowerCase();
-  const hasName=n=>names.some(x=>norm(x)===norm(n));
   if(!rspVal||rspVal==='flowsales'){
     names=[...flowPeople];
   } else if(rspVal==='ambos'){
     names=[...flowPeople];
-    FIRMS.forEach(fw=>{
-      if(fw.contact&&!hasName(fw.contact))names.push(fw.contact);
-      try{const fd=JSON.parse(localStorage.getItem('fs_'+fw.id)||'{}');
-        (fd.partners||[]).forEach(p=>{if(p.name&&!hasName(p.name))names.push(p.name);});
-      }catch(e){}
-    });
+    for(const fw of FIRMS){
+      const pp=await _getFirmPeople(fw.id);
+      const norm=s=>(s||'').trim().toLowerCase();
+      pp.forEach(n=>{if(!names.some(x=>norm(x)===norm(n)))names.push(n);});
+    }
   } else {
-    // firma específica — SÓ pessoas da firma
-    const fw=FIRMS.find(x=>x.id===rspVal)||{};
-    // Tenta localStorage primeiro
-    let localFd=null;
-    try{const raw=localStorage.getItem('fs_'+rspVal);if(raw)localFd=JSON.parse(raw);}catch(e){}
-    // Se não tem dado local, busca do Firebase
-    if(!localFd&&window._waitFB){
-      try{
-        await _waitFB();
-        const snap=await window._fbGetDoc(window._fbDoc(window._fbDB,'flowsales_crm',rspVal));
-        if(snap&&snap.exists()){localFd=snap.data();localStorage.setItem('fs_'+rspVal,JSON.stringify(localFd));}
-      }catch(e){}
-    }
-    if(fw.contact&&!hasName(fw.contact))names.push(fw.contact);
-    if(localFd){
-      (localFd.partners||[]).forEach(p=>{if(p.name&&!hasName(p.name))names.push(p.name);});
-      const rn=localFd.firmExtra?.respName||localFd.firmExtra?.resp||'';
-      if(rn&&!hasName(rn))names.push(rn);
-    }
-    (_fbDynUsers||[]).filter(u=>u.eid===rspVal&&u.role==='client'&&u.name&&!hasName(u.name)).forEach(u=>names.push(u.name));
-    (window.USERS||[]).filter(u=>u.eid===rspVal&&u.role==='client'&&u.name&&!hasName(u.name)).forEach(u=>names.push(u.name));
-    // Fallback: se ainda não achou ninguém, usa Thiago e Carlos
-    if(!names.length)names=[...flowPeople];
+    const pp=await _getFirmPeople(rspVal);
+    names=pp.length?pp:[...flowPeople];
   }
-  if(document.getElementById('m-asg'))
-    document.getElementById('m-asg').innerHTML=names.map(n=>`<option${n===curVal?' selected':''}>${n}</option>`).join('');
+  const asgEl=document.getElementById('m-asg');
+  if(asgEl){const cur=asgEl.value;asgEl.innerHTML=names.map(n=>`<option${n===cur?' selected':''}>${n}</option>`).join('');}
 }
 function loadFirmAndOpen(firmId){
   const firm=FIRMS.find(x=>x.id===firmId);
