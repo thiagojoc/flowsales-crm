@@ -1796,7 +1796,7 @@ function openM(type,data){
           return names.map(n=>`<option${data&&data.assign===n?' selected':''}>${n}</option>`).join('');
         };
         const _asgAdmin=()=>{
-          const baseOpts=ASSIGNEES.filter(a=>a!=='Ambos').map(a=>`<option${data&&data.assign===a?' selected':''}>${a}</option>`).join('');
+          const baseOpts=['Thiago','Carlos'].map(a=>`<option${data&&data.assign===a?' selected':''}>${a}</option>`).join('');
           if(S.eid==='flowsales')return baseOpts;
           const f=FIRMS.find(x=>x.id===S.eid)||{};
           const _d=ld();
@@ -1931,7 +1931,8 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
       body:()=>{
         const allFirms=FIRMS.length?FIRMS:(()=>{try{return JSON.parse(localStorage.getItem('fs_firms')||'[]');}catch(e){return[];}})();
         const firmOpts=allFirms.map(f=>'<option value="'+f.id+'">'+f.name+'</option>').join('');
-        return `<div class="fg"><label>Título</label><input class="fi" id="m-ttl" placeholder="O que precisa ser feito?"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Responsável</label><select class="fi" id="m-rsp" onchange="_updateFsAssign()"><option value="flowsales">Flow Sales</option>${firmOpts}<option value="ambos">Ambos</option></select></div><div class="fg"><label>Atribuída a</label><select class="fi" id="m-asg"><option>Thiago</option><option>Carlos</option><option>Ambos</option></select></div></div><div class="fg"><label>Prazo *</label><input class="fi" id="m-due" type="date" style="color-scheme:dark"></div>`;
+        setTimeout(()=>_updateFsAssign(),0);
+        return `<div class="fg"><label>Título</label><input class="fi" id="m-ttl" placeholder="O que precisa ser feito?"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Responsável</label><select class="fi" id="m-rsp" onchange="_updateFsAssign()"><option value="flowsales">Flow Sales</option>${firmOpts}<option value="ambos">Ambos</option></select></div><div class="fg"><label>Atribuída a</label><select class="fi" id="m-asg"><option>Thiago</option><option>Carlos</option></select></div></div><div class="fg"><label>Prazo *</label><input class="fi" id="m-due" type="date" style="color-scheme:dark"></div>`;
       },
       save:()=>{
         const due=v('m-due');if(!due){alert('Informe o prazo da task.');return;}
@@ -2268,28 +2269,28 @@ function _updateFsAssign(){
   asgSel.innerHTML=names.map(n=>`<option${n===curVal?' selected':''}>${n}</option>`).join('');
 }
 function _updateTaskAsg(){
-  const rsp=document.getElementById('m-rsp')?.value;
+  const rspEl=document.getElementById('m-rsp');
+  if(!rspEl)return; // cliente não tem select de responsável — não mexe em m-asg
+  const rsp=rspEl.value;
   const asgSel=document.getElementById('m-asg');
   if(!asgSel)return;
   const curVal=asgSel.value;
   const fw=FIRMS.find(x=>x.id===S.eid)||{};
   const fd=ld();
-  // pessoas da firma
   const firmPeople=[];
   if(fw.contact)firmPeople.push(fw.contact);
   (fd.partners||[]).forEach(p=>{if(p.name&&!firmPeople.includes(p.name))firmPeople.push(p.name);});
   (_fbDynUsers||[]).filter(u=>u.eid===S.eid&&u.role==='client'&&u.name&&!firmPeople.includes(u.name)).forEach(u=>firmPeople.push(u.name));
   const flowPeople=['Thiago','Carlos'];
   let names=[];
-  if(!rsp||rsp==='Flow Sales'){
+  if(rsp==='Flow Sales'){
     names=[...flowPeople];
   } else if(rsp==='Ambos'){
     names=[...flowPeople,...firmPeople];
   } else {
-    // escritório — só pessoas da firma
-    names=[...firmPeople];
+    // firma/escritório — só pessoas da firma
+    names=firmPeople.length?[...firmPeople]:[...flowPeople];
   }
-  if(!names.length)names=[...flowPeople]; // fallback
   asgSel.innerHTML=names.map(n=>`<option${n===curVal?' selected':''}>${n}</option>`).join('');
 }
 function setFSTaskFilter(val){_fsTaskFilter=val;rFlow();}
