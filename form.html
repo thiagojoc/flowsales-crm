@@ -355,6 +355,10 @@ textarea{resize:none;min-height:100px;line-height:1.65;}
           <div class="cred-row"><span class="cred-lbl">Senha</span><span class="cred-val" id="cred-pass">—</span></div>
           <div style="margin-top:12px;font-size:11px;color:var(--t2)">Acesse em: <a href="https://thiagojoc.github.io/flowsales-crm" target="_blank" style="color:var(--gold)">thiagojoc.github.io/flowsales-crm</a></div>
         </div>
+        <div id="cred-socios-wrap" style="display:none;margin-top:12px">
+          <div class="cred-box-ttl" style="margin-bottom:8px">🔐 Acesso dos sócios</div>
+          <div id="cred-socios"></div>
+        </div>
         <div class="success-divider"></div>
         <div class="success-info">Dúvidas? <a href="https://wa.me/5512991636548" target="_blank" style="color:var(--gold);text-decoration:none;">Fale com a equipe pelo WhatsApp</a></div>
       </div>
@@ -440,8 +444,8 @@ function socioCardHTML(idx){
         <div class="field-err" id="e-socio-num-${idx}">⚠ Número</div></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 80px 80px;gap:14px">
-      <div class="fg" style="margin-bottom:0"><label>Bairro <span class="req">*</span></label><input type="text" id="f-socio-bairro-${idx}" placeholder="Centro"></div>
-      <div class="fg" style="margin-bottom:0"><label>Cidade <span class="req">*</span></label><input type="text" id="f-socio-cidade-${idx}" placeholder="Belo Horizonte"></div>
+      <div class="fg" style="margin-bottom:0"><label>Bairro <span class="req">*</span></label><input type="text" id="f-socio-bairro-${idx}" placeholder="Centro"><div class="field-err" id="e-socio-bairro-${idx}">&#x26A0; Bairro obrigatório</div></div>
+      <div class="fg" style="margin-bottom:0"><label>Cidade <span class="req">*</span></label><input type="text" id="f-socio-cidade-${idx}" placeholder="Belo Horizonte"><div class="field-err" id="e-socio-cidade-${idx}">&#x26A0; Cidade obrigatória</div></div>
       <div class="fg" style="margin-bottom:0"><label>UF <span class="req">*</span></label>
         <select id="f-socio-uf-${idx}" style="width:100%;background:var(--s2);border:1px solid var(--bdr2);border-radius:var(--r);padding:13px 10px;color:var(--text);font-size:13px;outline:none;font-family:inherit">
           <option value="">UF</option>
@@ -452,8 +456,8 @@ function socioCardHTML(idx){
           <option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
           <option>RS</option><option>RO</option><option>RR</option><option>SC</option>
           <option>SP</option><option>SE</option><option>TO</option>
-        </select></div>
-      <div class="fg" style="margin-bottom:0"><label>CEP <span class="req">*</span></label><input type="text" id="f-socio-cep-${idx}" placeholder="00000"></div>
+        </select><div class="field-err" id="e-socio-uf-${idx}">&#x26A0; UF obrigatório</div></div>
+      <div class="fg" style="margin-bottom:0"><label>CEP <span class="req">*</span></label><input type="text" id="f-socio-cep-${idx}" placeholder="00000-000" maxlength="9"><div class="field-err" id="e-socio-cep-${idx}">&#x26A0; CEP inválido</div></div>
     </div>
     <div class="fg" style="margin-top:14px"><label>Complemento</label>
       <input type="text" id="f-socio-comp-${idx}" placeholder="Sala, bloco..."></div>
@@ -638,6 +642,19 @@ function validate(step){
         const snum = (document.getElementById('f-socio-num-'+idx)||{}).value||'';
         setErr('f-socio-num-'+idx,'e-socio-num-'+idx, !snum.trim());
         if(!snum.trim()) ok=false;
+        const sbairro=(document.getElementById('f-socio-bairro-'+idx)||{}).value||'';
+        setErr('f-socio-bairro-'+idx,'e-socio-bairro-'+idx,!sbairro.trim());
+        if(!sbairro.trim())ok=false;
+        const scidade=(document.getElementById('f-socio-cidade-'+idx)||{}).value||'';
+        setErr('f-socio-cidade-'+idx,'e-socio-cidade-'+idx,!scidade.trim());
+        if(!scidade.trim())ok=false;
+        const sufEl=document.getElementById('f-socio-uf-'+idx);
+        const suf=(sufEl&&sufEl.value)||'';
+        if(sufEl){sufEl.classList.toggle('err',!suf);document.getElementById('e-socio-uf-'+idx)?.classList.toggle('on',!suf);}
+        if(!suf)ok=false;
+        const scepVal=((document.getElementById('f-socio-cep-'+idx)||{}).value||'').replace(/\D/g,'');
+        setErr('f-socio-cep-'+idx,'e-socio-cep-'+idx,scepVal.length!==8);
+        if(scepVal.length!==8)ok=false;
       });
     }
   }
@@ -710,6 +727,14 @@ document.getElementById('f-resp-cep').addEventListener('input',function(){
   let v=this.value.replace(/\D/g,'');
   if(v.length>5) v=v.replace(/(\d{5})(\d{0,3})/,'$1-$2');
   this.value=v;
+});
+// CEP mask delegado para sócios (campos criados dinamicamente)
+document.addEventListener('input',function(e){
+  if(e.target&&e.target.id&&e.target.id.match(/^f-socio-cep-/)){
+    let v=e.target.value.replace(/\D/g,'');
+    if(v.length>5) v=v.replace(/(\d{5})(\d{0,3})/,'$1-$2');
+    e.target.value=v;
+  }
 });
 
 // ── SUBMIT ────────────────────────────────────────────────────
@@ -897,6 +922,18 @@ async function submitForm(){
   document.getElementById('success').classList.add('on');
   document.getElementById('cred-email').textContent = email;
   document.getElementById('cred-pass').textContent  = clientPass;
+  if(socioUsers.length>0){
+    const wrap=document.getElementById('cred-socios-wrap');
+    const box=document.getElementById('cred-socios');
+    if(wrap&&box){
+      wrap.style.display='block';
+      box.innerHTML=socioUsers.map(u=>`
+        <div class="cred-box" style="margin-bottom:8px">
+          <div class="cred-row"><span class="cred-lbl">Login</span><span class="cred-val">${u.email}</span></div>
+          <div class="cred-row"><span class="cred-lbl">Senha</span><span class="cred-val">${u.pass}</span></div>
+        </div>`).join('');
+    }
+  }
   document.querySelectorAll('.ls').forEach(el=>{
     el.classList.remove('active'); el.classList.add('done');
     el.querySelector('.ls-num').innerHTML='✓';
