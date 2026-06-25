@@ -111,7 +111,7 @@ input[type="date"].fi::-webkit-calendar-picker-indicator:hover{opacity:1;}
 .notifbtn{position:relative;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:7px;cursor:pointer;border:0.5px solid var(--bdr);background:transparent;color:var(--t2);}
 .notifbtn:hover{border-color:var(--bdr2);color:var(--text);}
 .ndot{position:absolute;top:6px;right:6px;width:6px;height:6px;background:var(--red);border-radius:50%;border:1.5px solid var(--s1);}
-.sb-toggle-top{background:none;border:none;cursor:pointer;color:var(--gold);padding:6px;border-radius:7px;display:flex;align-items:center;flex-shrink:0;transition:color .15s,background .15s;}.sb-toggle-top:hover{background:rgba(201,168,67,.1);}.hamb{display:none;background:none;border:none;cursor:pointer;color:var(--t2);padding:5px;}
+.sb-toggle-top{background:none;border:none;cursor:pointer;color:var(--gold);padding:6px;border-radius:7px;display:none;align-items:center;flex-shrink:0;transition:color .15s,background .15s;}.sb-toggle-top:hover{background:rgba(201,168,67,.1);}.hamb{display:none;background:none;border:none;cursor:pointer;color:var(--t2);padding:5px;}
 
 /* CALENDAR PANEL */
 .cal-panel{display:none;position:fixed;top:54px;left:var(--sw);right:0;background:var(--s1);border-bottom:0.5px solid var(--bdr);z-index:60;padding:14px 18px;}
@@ -773,7 +773,7 @@ window._fbOnSnapshot = onSnapshot;
               <div id="firm-info"></div>
             </div>
             <div class="card">
-              <div class="ch"><div class="ct">Contrato e pagamentos</div><button class="ca" id="pay-btn" onclick="openM('payment')">+ Pagamento</button></div>
+              <div class="ch"><div class="ct">Contrato e pagamentos</div><div style="display:flex;gap:6px"><button class="ca" id="contrato-edit-btn" onclick="openM('contrato')" style="display:none">Editar</button><button class="ca" id="pay-btn" onclick="openM('payment')">+ Pagamento</button></div></div>
               <div id="pay-info"></div>
             </div>
           </div>
@@ -1730,7 +1730,7 @@ function rPerfil(d){
     if(rc)rc.style.display='';
   }
   document.getElementById('pay-info').innerHTML=`<div class="traf-row"><span class="traf-lbl">Início do programa</span><span class="traf-val">${fd(f.start)}</span></div><div class="traf-row"><span class="traf-lbl">Vencimento</span><span class="traf-val">${fd(f.due)}</span></div><div class="traf-row"><span class="traf-lbl">Semana atual</span><span class="traf-val">${f.week} de ${f.total}</span></div><div class="div"></div><div style="font-size:10px;font-weight:600;color:var(--t2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Pagamentos</div>${(d.payments||[]).map(p=>`<div class="payment-row"><div><div class="pay-lbl">${fd(p.date)}</div>${p.ref?`<div style="font-size:10px;color:var(--t2)">${p.ref}</div>`:''}<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">${(p.files||[]).map(f=>`<a href="${f.data}" download="${f.name}" style="font-size:10px;color:var(--blue);display:flex;align-items:center;gap:3px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>${f.name}</a>`).join('')}</div></div><span class="b bg">R$ ${p.amount.toLocaleString('pt-BR')}</span></div>`).join('')||'<div class="empty" style="padding:12px">Sem pagamentos registrados.</div>'}`;
-  if(S.role==='client')document.getElementById('pay-btn').style.display='none';
+  if(S.role==='client')document.getElementById('pay-btn').style.display='none';else{const _ceb=document.getElementById('contrato-edit-btn');if(_ceb)_ceb.style.display='';}
   const partners=d.partners||[];
   const _pBtns=(p)=>S.role==='admin'
     ?'<div style="display:flex;gap:6px;margin-top:8px"><button class="ib edit" data-pid="'+p.id+'" onclick="editPartner(this.dataset.pid)" title="Editar"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="ib del" data-pid="'+p.id+'" onclick="delPartner(this.dataset.pid)" title="Excluir"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div>'
@@ -1916,6 +1916,10 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
     dem:{title:data?'Editar demanda':'Nova demanda',
       body:`<div class="fg"><label>Título</label><input class="fi" id="m-ttl" value="${data?data.title:''}" placeholder="Descreva a demanda..."></div><div class="fg"><label>Detalhes</label><textarea id="m-dsc" placeholder="Contexto, impacto, urgência...">${data?data.desc||'':''}</textarea></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Prioridade</label><select class="fi" id="m-pri"><option value="high"${!data||data.pri==='high'?' selected':''}>Alta - Bloqueia o progresso</option><option value="med"${data&&data.pri==='med'?' selected':''}>Média</option><option value="low"${data&&data.pri==='low'?' selected':''}>Baixa</option></select></div><div class="fg"><label>Atribuída a</label><select class="fi" id="m-asg">${asgOpts}</select></div></div>`,
       save:()=>{const _dt=v('m-ttl').trim();const _dd=v('m-dsc').trim();if(!_dt){_showToast('Preencha o título da demanda','var(--red)');return;}if(!_dd){_showToast('Preencha os detalhes','var(--red)');return;}const d=ld();const dm={id:data?data.id:'d'+Date.now(),title:_dt,desc:_dd,pri:v('m-pri'),assign:v('m-asg'),status:data?data.status:'open',created:data?data.created:new Date().toISOString().split('T')[0]};if(data){const i=d.demands.findIndex(x=>x.id===data.id);if(i>=0)d.demands[i]=dm;}else{d.demands.push(dm);if(dm.pri==='high')d.notifs.unshift({id:'nd_'+dm.id,title:'Nova demanda urgente',sub:dm.title,read:false});activ(d,'Demanda criada: '+dm.title,'var(--red)');}sv(d);renderAll();cModal(null,1);}
+    },
+    contrato:{title:'Editar contrato',
+      body:()=>{const f=FIRMS.find(x=>x.id===S.eid)||{};return`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Início do programa</label><input class="fi" id="ct-start" type="date" value="${f.start||''}" style="color-scheme:dark"></div><div class="fg"><label>Vencimento mensal</label><input class="fi" id="ct-due" type="date" value="${f.due||''}" style="color-scheme:dark"></div><div class="fg"><label>Mensalidade (R$)</label><input class="fi" id="ct-fee" type="number" value="${f.fee||3500}"></div><div class="fg"><label>Semana atual</label><input class="fi" id="ct-wk" type="number" min="1" value="${f.week||1}"></div><div class="fg"><label>Total de semanas</label><input class="fi" id="ct-tot" type="number" min="1" value="${f.total||26}"></div></div>`;},
+      save:()=>{const f=FIRMS.find(x=>x.id===S.eid);if(!f)return;f.start=v('ct-start');f.due=v('ct-due');f.fee=+(v('ct-fee')||f.fee);f.week=+(v('ct-wk')||f.week);f.total=+(v('ct-tot')||f.total);_saveFirms();const d=ld();rPerfil(d);cModal(null,1);_showToast('Contrato atualizado ✅','var(--green)');}
     },
     impl:{title:'Novo entregável',
       body:`<div class="fg"><label>Título</label><input class="fi" id="m-ttl" placeholder="O que foi implementado ou está em andamento?"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Semana</label><input class="fi" id="m-wk" type="number" min="1" max="26" value="1"></div><div class="fg" style="display:flex;align-items:center;gap:8px;margin-top:20px"><input type="checkbox" id="m-urg"><label style="text-transform:none;letter-spacing:0;font-size:12px;color:var(--text)">Já concluído</label></div></div>`,
@@ -2416,6 +2420,8 @@ function toggleSidebar(){
   const collapsed=sb.classList.contains('collapsed');
   const tab=document.getElementById('sb-expand-tab');
   if(tab)tab.classList.toggle('on',collapsed);
+  const _stt=document.querySelector('.sb-toggle-top');
+  if(_stt)_stt.style.display=collapsed?'flex':'none';
 }
 function rFSChat(d){
   const el=document.getElementById('fs-chat');if(!el)return;
