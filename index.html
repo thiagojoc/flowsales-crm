@@ -2012,8 +2012,7 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
         const rspLabel=(allFirms.find(f=>f.id===rspVal)||{}).name||rspVal;
         const ft={id:'ft'+Date.now(),title:_fttl,desc:_fdsc,assign:v('m-asg'),resp:rspLabel,due,done:false,created:_localDate()};
         d.tasks.push(ft);svFS(d);
-        _clickupTask({title:ft.title,assign:ft.assign,due:ft.due,desc:_fdsc+'
-Responsável: '+rspLabel,urgent:false});
+        _clickupTask({title:ft.title,assign:ft.assign,due:ft.due,desc:_fdsc+'\nResponsável: '+rspLabel,urgent:false});
         cModal(null,1);try{rFlow();}catch(e){console.warn('rFlow err',e);}
       }
     },
