@@ -2475,7 +2475,19 @@ window.addEventListener('DOMContentLoaded',()=>{
   if(_lpw)_lpw.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
   const _lem=document.getElementById('l-em');
   if(_lem)_lem.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
-  document.addEventListener('click',()=>{const fd=document.getElementById('firm-drop');if(fd)fd.classList.remove('on');});
+  document.addEventListener('click',(e)=>{
+    // firm dropdown
+    const fd=document.getElementById('firm-drop');
+    if(fd&&!document.getElementById('sfirm')?.contains(e.target))fd.classList.remove('on');
+    // calendar panel
+    const cp=document.getElementById('cal-panel');
+    const ct=document.getElementById('cal-toggle');
+    if(cp&&cp.classList.contains('on')&&!cp.contains(e.target)&&!ct?.contains(e.target))closeCal();
+    // notifications panel
+    const np=document.getElementById('np');
+    const nb=document.querySelector('.notifbtn');
+    if(np&&np.classList.contains('on')&&!np.contains(e.target)&&!nb?.contains(e.target))np.classList.remove('on');
+  });
 });
 </script>
 </body>
