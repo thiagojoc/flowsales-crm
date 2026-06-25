@@ -17,7 +17,7 @@
   --green:#1D9E75;--red:#C0392B;--blue:#3498DB;
   --sw:220px;
 }
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',sans-serif;font-size:14px;line-height:1.5;overflow:hidden;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',sans-serif;font-size:14px;line-height:1.5;overflow:hidden;;text-shadow:0 0 18px rgba(201,168,67,0.07),0 1px 3px rgba(0,0,0,0.45);}
 ::-webkit-scrollbar{width:3px;height:3px;}
 ::-webkit-scrollbar-thumb{background:var(--s3);border-radius:2px;}
 
@@ -218,6 +218,10 @@ input[type="date"].fi::-webkit-calendar-picker-indicator:hover{opacity:1;}
 .traf-row:last-child{border:none;}
 .traf-lbl{font-size:12px;color:var(--t2);}
 .traf-val{font-size:13px;font-weight:500;}
+.traf-lbl{text-shadow:0 0 12px rgba(201,168,67,0.1),0 1px 2px rgba(0,0,0,0.5);}
+.traf-val{text-shadow:0 0 14px rgba(201,168,67,0.1),0 1px 2px rgba(0,0,0,0.5);}
+/* sidebar nav */
+.nav-item,.ls,.ls-lbl,.ct,.ch,.card-ttl,.sec-ttl,.tb2,.tt,.ti,.b,.bpr,.bgh,.ca,.ci{text-shadow:0 0 14px rgba(201,168,67,0.09),0 1px 2px rgba(0,0,0,0.5);}
 
 /* TASKS */
 .tbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
@@ -767,15 +771,15 @@ if(window._fbResolve) window._fbResolve();
               <div id="pay-info"></div>
             </div>
           </div>
+          <div class="card" id="resp-card">
+            <div class="ch"><div class="ct">Responsável</div></div>
+            <div id="resp-info"></div>
+          </div>
           <div class="card">
             <div class="ch"><div class="ct">Sócios e equipe</div><button class="ca" id="partner-add-btn" onclick="openM('partner')">+ Sócio</button></div>
             <div class="prof-grid" id="partners-list"></div>
           </div>
-          <div class="card">
-            <div class="ch"><div class="ct">Formulário de onboarding</div></div>
-            <div style="font-size:12px;color:var(--t2);margin-bottom:12px">Compartilhe este link para o cliente preencher os dados iniciais. As respostas chegam automaticamente ao painel.</div>
-            <div id="form-link-area"></div>
-          </div>
+        
         </div>
       </div>
 
@@ -1663,6 +1667,26 @@ function rPerfil(d){
   const f=FIRMS.find(x=>x.id===S.eid)||{};const fe=d.firmExtra||{};
   document.getElementById('firm-info').innerHTML=`<div class="traf-row"><span class="traf-lbl">Escritório</span><span class="traf-val">${f.name||''}</span></div><div class="traf-row"><span class="traf-lbl">Área</span><span class="traf-val">${f.area||''}</span></div><div class="traf-row"><span class="traf-lbl">Cidade</span><span class="traf-val">${f.city||''}</span></div><div class="traf-row"><span class="traf-lbl">Endereço</span><span class="traf-val">${fe.address||f.address||'--'}</span></div><div class="traf-row"><span class="traf-lbl">OAB</span><span class="traf-val">${f.oab||'--'}</span></div><div class="traf-row"><span class="traf-lbl">E-mail</span><span class="traf-val">${f.email||''}</span></div><div class="traf-row"><span class="traf-lbl">Telefone</span><span class="traf-val">${f.phone||''}</span></div><div class="traf-row"><span class="traf-lbl">Website</span><span class="traf-val">${fe.website||'--'}</span></div>`;
   if(S.role==='client')document.getElementById('perfil-edit-btn').style.display='none';
+  // Responsável
+  const respEl=document.getElementById('resp-info');
+  if(respEl){
+    const ru=S.user||{};
+    const respName=fe.respName||f.contact||ru.name||'';
+    const respPhone=fe.respPhone||f.contactPhone||ru.phone||'';
+    const respWa=fe.respWhatsapp||fe.whatsapp||'';
+    const respEmail=fe.respEmail||f.contactEmail||ru.email||'';
+    const respOAB=fe.respOAB||ru.oab||f.oab||'';
+    const respAreas=fe.respAreas||ru.area||f.area||'';
+    const respAddr=fe.respAddress||ru.address||'';
+    const respPhoto=fe.respPhoto||ru.photo||'';
+    const tr=(lbl,val)=>val?`<div class="traf-row"><span class="traf-lbl">${lbl}</span><span class="traf-val">${val}</span></div>`:'';
+    respEl.innerHTML=(respPhoto?`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><img src="${respPhoto}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:1px solid var(--bdr)"><div style="font-size:14px;font-weight:600">${respName}</div></div>`:tr('Nome',respName))
+      +tr('Telefone',respPhone)+tr('WhatsApp',respWa)+tr('E-mail',respEmail)
+      +tr('OAB',respOAB)+tr('Áreas',respAreas)+tr('Endereço',respAddr);
+    // mostrar card só se for cliente
+    const rc=document.getElementById('resp-card');
+    if(rc)rc.style.display=S.role==='client'?'':'none';
+  }
   document.getElementById('pay-info').innerHTML=`<div class="traf-row"><span class="traf-lbl">Início do programa</span><span class="traf-val">${fd(f.start)}</span></div><div class="traf-row"><span class="traf-lbl">Vencimento</span><span class="traf-val">${fd(f.due)}</span></div><div class="traf-row"><span class="traf-lbl">Semana atual</span><span class="traf-val">${f.week} de ${f.total}</span></div><div class="div"></div><div style="font-size:10px;font-weight:600;color:var(--t2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Pagamentos</div>${(d.payments||[]).map(p=>`<div class="payment-row"><div><div class="pay-lbl">${fd(p.date)}</div>${p.ref?`<div style="font-size:10px;color:var(--t2)">${p.ref}</div>`:''}<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">${(p.files||[]).map(f=>`<a href="${f.data}" download="${f.name}" style="font-size:10px;color:var(--blue);display:flex;align-items:center;gap:3px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>${f.name}</a>`).join('')}</div></div><span class="b bg">R$ ${p.amount.toLocaleString('pt-BR')}</span></div>`).join('')||'<div class="empty" style="padding:12px">Sem pagamentos registrados.</div>'}`;
   if(S.role==='client')document.getElementById('pay-btn').style.display='none';
   const partners=d.partners||[];
@@ -1823,9 +1847,9 @@ function openM(type,data){
       }
     },
     edFirmAdmin:{title:'Editar escritório',
-      body:()=>`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Nome</label><input class="fi" id="ef-nm" value="${data?data.name||'':''}"></div><div class="fg"><label>Área</label><input class="fi" id="ef-area" value="${data?data.area||'':''}"></div><div class="fg"><label>Cidade / UF</label><input class="fi" id="ef-city" value="${data?data.city||'':''}"></div><div class="fg"><label>Telefone</label><input class="fi" id="ef-ph" value="${data?data.phone||'':''}"></div><div class="fg"><label>E-mail de contato</label><input class="fi" id="ef-em" type="email" value="${data?data.email||'':''}"></div><div class="fg"><label>Mensalidade (R$)</label><input class="fi" id="ef-fee" type="number" value="${data?data.fee||3500:3500}"></div><div class="fg"><label>OAB</label><input class="fi" id="ef-oab" value="${data?data.oab||'':''}"></div><div class="fg"><label>Início do contrato</label><input class="fi" id="ef-start" type="date" value="${data?data.start||'':''}"></div></div><div style="margin-top:12px;padding-top:12px;border-top:0.5px solid var(--bdr)"><div style="font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Integrações</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>GHL API Key</label><input class="fi" id="ef-ghl" placeholder="Cole a API key do GoHighLevel" value="${data?data.ghlKey||'':''}"></div><div class="fg"><label>Meta BM Token</label><input class="fi" id="ef-meta" placeholder="Token da Business Manager" value="${data?data.metaToken||'':''}"></div><div class="fg" style="grid-column:1/-1"><label>Link da pasta no Google Drive</label><input class="fi" id="ef-drive" placeholder="https://drive.google.com/drive/folders/..." value="${data?data.driveUrl||'':''}"></div></div></div>
+      body:()=>`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Nome</label><input class="fi" id="ef-nm" value="${data?data.name||'':''}"></div><div class="fg"><label>Área</label><input class="fi" id="ef-area" value="${data?data.area||'':''}"></div><div class="fg"><label>Cidade / UF</label><input class="fi" id="ef-city" value="${data?data.city||'':''}"></div><div class="fg"><label>Telefone</label><input class="fi" id="ef-ph" value="${data?data.phone||'':''}"></div><div class="fg"><label>E-mail de contato</label><input class="fi" id="ef-em" type="email" value="${data?data.email||'':''}"></div><div class="fg"><label>Mensalidade (R$)</label><input class="fi" id="ef-fee" type="number" value="${data?data.fee||3500:3500}"></div><div class="fg"><label>OAB</label><input class="fi" id="ef-oab" value="${data?data.oab||'':''}"></div><div class="fg"><label>Início do contrato</label><input class="fi" id="ef-start" type="date" value="${data?data.start||'':''}"></div><div class="fg"><label>Vencimento mensal</label><input class="fi" id="ef-due" type="date" value="${data?data.due||'':''}"></div></div><div style="margin-top:12px;padding-top:12px;border-top:0.5px solid var(--bdr)"><div style="font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Integrações</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>GHL API Key</label><input class="fi" id="ef-ghl" placeholder="Cole a API key do GoHighLevel" value="${data?data.ghlKey||'':''}"></div><div class="fg"><label>Meta BM Token</label><input class="fi" id="ef-meta" placeholder="Token da Business Manager" value="${data?data.metaToken||'':''}"></div><div class="fg" style="grid-column:1/-1"><label>Link da pasta no Google Drive</label><input class="fi" id="ef-drive" placeholder="https://drive.google.com/drive/folders/..." value="${data?data.driveUrl||'':''}"></div></div></div>
 <div style='margin-top:12px;padding-top:12px;border-top:0.5px solid var(--bdr)'><div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:8px'><div style='font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.07em'>Sócios</div><button class='ca' onclick="cModal(null,1);setTimeout(()=>openM('partner'),150)">+ Sócio</button></div><div id='ef-partners'>${(()=>{try{const _fd=JSON.parse(localStorage.getItem('fs_'+data.id)||'{}');return(_fd.partners||[]).map(p=>`<div style='display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--bdr)'><div style='width:26px;height:26px;border-radius:50%;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0'>${(p.name||'?')[0].toUpperCase()}</div><div style='flex:1;min-width:0'><div style='font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis'>${p.name}</div><div style='font-size:10px;color:var(--t2)'>${p.role||'Sócio'}${p.oab?' · '+p.oab:''}</div></div><button class='ib edit' data-pid='${p.id}' data-fid='${data.id}' onclick='_editFirmPartner(this.dataset.fid,this.dataset.pid)'  style='flex-shrink:0'><svg width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7'/><path d='M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z'/></svg></button><button class='ib del' data-pid='${p.id}' onclick='delPartner(this.dataset.pid)' style='flex-shrink:0'><svg width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><polyline points='3 6 5 6 21 6'/><path d='M19 6l-1 14H6L5 6'/></svg></button></div>`).join('')||'<div style=\'color:var(--t2);font-size:11px;padding:8px 0\'>Nenhum sócio cadastrado.</div>';}catch(e){return '';}})()}</div></div>`,
-      save:()=>{const f=FIRMS.find(x=>x.id===data.id);if(!f)return;f.name=v('ef-nm')||f.name;f.area=v('ef-area');f.city=v('ef-city');f.phone=v('ef-ph');f.email=v('ef-em');f.fee=+(v('ef-fee')||f.fee);f.oab=v('ef-oab');f.start=v('ef-start');f.ghlKey=v('ef-ghl');f.metaToken=v('ef-meta');f.driveUrl=v('ef-drive');_saveFirms();setupFirmSelect();rFirms();_showToast('Escritório atualizado ✅','var(--green)');cModal(null,1);}
+      save:()=>{const f=FIRMS.find(x=>x.id===data.id);if(!f)return;f.name=v('ef-nm')||f.name;f.area=v('ef-area');f.city=v('ef-city');f.phone=v('ef-ph');f.email=v('ef-em');f.fee=+(v('ef-fee')||f.fee);f.oab=v('ef-oab');f.start=v('ef-start');f.due=v('ef-due');f.ghlKey=v('ef-ghl');f.metaToken=v('ef-meta');f.driveUrl=v('ef-drive');_saveFirms();setupFirmSelect();rFirms();_showToast('Escritório atualizado ✅','var(--green)');cModal(null,1);}
     },
     meet:{title:data?'Editar reunião':'Nova reunião',
       body:(()=>{const isPast=data!=null;return`<div class="fg"><label>Título</label><input class="fi" id="m-ttl" value="${data?data.title:''}"></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px"><div class="fg"><label>Data</label><input class="fi" id="m-dt" type="date" value="${data?data.date:new Date().toISOString().split('T')[0]}"></div><div class="fg"><label>Horário</label><input class="fi" id="m-hr" type="time" value="${data?data.time||'10:00':'10:00'}"></div><div class="fg"><label>Duração</label><select class="fi" id="m-dur"><option value="30"${data&&data.duration==='30'?' selected':''}>30 min</option><option value="60"${!data||data.duration==='60'||!data.duration?' selected':''}>1 hora</option><option value="90"${data&&data.duration==='90'?' selected':''}>1h30</option><option value="120"${data&&data.duration==='120'?' selected':''}>2 horas</option></select></div></div><div class="fg"><label>Tipo</label><select class="fi" id="m-tp"><option${!data||data.type==='Check semanal'?' selected':''}>Check semanal</option><option${data&&data.type==='Onboarding'?' selected':''}>Onboarding</option><option${data&&data.type==='Revisão quinzenal'?' selected':''}>Revisão quinzenal</option><option${data&&data.type==='Alinhamento'?' selected':''}>Alinhamento</option><option${data&&data.type==='Treinamento'?' selected':''}>Treinamento</option><option${data&&data.type==='Emergência'?' selected':''}>Emergência</option></select></div><div class="fg"><label>Convidados</label><div id="m-guests-chips" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px">${(data&&data.guests?data.guests.split(',').map(g=>g.trim()).filter(Boolean):[]).map(g=>`<span class="guest-chip" style="display:flex;align-items:center;gap:4px;background:var(--gb);border:0.5px solid var(--bdr);border-radius:6px;padding:3px 8px;font-size:11px">${g}<button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:var(--t2);font-size:12px;line-height:1;padding:0 0 0 2px">×</button></span>`).join('')}</div><div style="display:flex;gap:6px"><input class="fi" id="m-guest-inp" placeholder="email@convidado.com" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();_addGuest();}"><button type="button" class="ca" onclick="_addGuest()" style="flex-shrink:0;padding:0 12px">+</button></div></div><div class="fg"><label>Notas</label><textarea id="m-nt" style="min-height:60px">${data?data.notes||'':''}</textarea></div><div class="fg"><label>Próximos passos (um por linha)</label><textarea id="m-ac">${data&&data.actions?data.actions.join('\n'):''}</textarea></div>${isPast?`<div class="fg"><label>URL da gravação</label><input class="fi" id="m-rec" type="url" placeholder="https://drive.google.com/..." value="${data?data.recording||'':''}"></div><div class="fg"><label>Resumo gerado</label><textarea id="m-sum" placeholder="Cole aqui o resumo automático da reunião...">${data?data.summary||'':''}</textarea></div>`:''}`})(),
@@ -2032,7 +2056,7 @@ function rFirms(){
       +'<div style="font-size:10px;color:var(--t2);margin-top:2px">'+(f.area||'')+' · '+(f.city||'')+'</div></div>'
       +'<div style="display:flex;gap:6px;align-items:center">'
       +'<span style="font-size:9px;font-weight:700;color:'+hc+';background:'+hc+'22;border:0.5px solid '+hc+'44;border-radius:4px;padding:2px 6px">'+hl+(health!==null?' '+health+'%':'')+'</span>'
-      +'<button class="ca" data-fd="'+f.id+'" data-mtype="firmDetail" onclick="openM(this.dataset.mtype,FIRMS.find(x=>x.id===this.dataset.fd))" style="font-size:10px;padding:3px 8px;background:var(--gb);color:var(--text);border:0.5px solid var(--bdr)">Dados</button>'
+      +'<button class="ca" data-fd="'+f.id+'" onclick="loadFirmAndOpen(this.dataset.fd)" style="font-size:10px;padding:3px 8px;background:var(--gb);color:var(--text);border:0.5px solid var(--bdr)">Dados</button>'
       +'<button class="ca" data-fid="'+f.id+'" onclick="selectFirmAndNav(this.dataset.fid)" style="font-size:10px;padding:3px 10px">Ver painel</button>'
       +'<button class="ca" data-fid2="'+f.id+'" style="background:var(--gb);color:var(--text);border:0.5px solid var(--bdr);font-size:10px;padding:3px 8px" onclick="edFirm(this.dataset.fid2)">Editar</button>'
       +'<button class="bda" data-fid3="'+f.id+'" style="font-size:10px;padding:3px 8px" onclick="removeFirm(this.dataset.fid3)">Excluir</button>'
@@ -2260,13 +2284,30 @@ function _updateFsAssign(){
   } else {
     // firma específica — SÓ pessoas da firma
     const fw=FIRMS.find(x=>x.id===rspVal)||{};
-    if(fw.contact)names.push(fw.contact);
+    const norm=s=>(s||'').trim().toLowerCase();
+    const hasName=n=>names.some(x=>norm(x)===norm(n));
+    if(fw.contact&&!hasName(fw.contact))names.push(fw.contact);
     try{const fd=JSON.parse(localStorage.getItem('fs_'+rspVal)||'{}');
-      (fd.partners||[]).forEach(p=>{if(p.name&&!names.includes(p.name))names.push(p.name);});
+      (fd.partners||[]).forEach(p=>{if(p.name&&!hasName(p.name))names.push(p.name);});
     }catch(e){}
-    (_fbDynUsers||[]).filter(u=>u.eid===rspVal&&u.role==='client'&&u.name&&!names.includes(u.name)).forEach(u=>names.push(u.name));
+    (_fbDynUsers||[]).filter(u=>u.eid===rspVal&&u.role==='client'&&u.name&&!hasName(u.name)).forEach(u=>names.push(u.name));
+    // Checar também USERS locais (firmas criadas via addfirm)
+    (window.USERS||[]).filter(u=>u.eid===rspVal&&u.role==='client'&&u.name&&u.name!==fw.name&&!hasName(u.name)).forEach(u=>names.push(u.name));
+    // Fallback: se nenhuma pessoa encontrada, usar Thiago e Carlos
+    if(!names.length)names=[...flowPeople];
   }
   asgSel.innerHTML=names.map(n=>`<option${n===curVal?' selected':''}>${n}</option>`).join('');
+}
+function loadFirmAndOpen(firmId){
+  const firm=FIRMS.find(x=>x.id===firmId);
+  if(!firm)return;
+  const existing=localStorage.getItem('fs_'+firmId);
+  const openNow=()=>openM('firmDetail',firm);
+  if(existing){try{const p=JSON.parse(existing);if(p&&p.partners)return openNow();}catch(e){}}
+  _waitFB&&_waitFB().then(()=>window._fbGetDoc(window._fbDoc(window._fbDB,'flowsales_crm',firmId))).then(snap=>{
+    if(snap&&snap.exists())localStorage.setItem('fs_'+firmId,JSON.stringify(snap.data()));
+    openNow();
+  }).catch(()=>openNow());
 }
 function _updateTaskAsg(){
   const rspEl=document.getElementById('m-rsp');
@@ -2278,9 +2319,11 @@ function _updateTaskAsg(){
   const fw=FIRMS.find(x=>x.id===S.eid)||{};
   const fd=ld();
   const firmPeople=[];
-  if(fw.contact)firmPeople.push(fw.contact);
-  (fd.partners||[]).forEach(p=>{if(p.name&&!firmPeople.includes(p.name))firmPeople.push(p.name);});
-  (_fbDynUsers||[]).filter(u=>u.eid===S.eid&&u.role==='client'&&u.name&&!firmPeople.includes(u.name)).forEach(u=>firmPeople.push(u.name));
+  const _norm=s=>(s||'').trim().toLowerCase();
+  const _has=n=>firmPeople.some(x=>_norm(x)===_norm(n));
+  if(fw.contact&&!_has(fw.contact))firmPeople.push(fw.contact);
+  (fd.partners||[]).forEach(p=>{if(p.name&&!_has(p.name))firmPeople.push(p.name);});
+  (_fbDynUsers||[]).filter(u=>u.eid===S.eid&&u.role==='client'&&u.name&&!_has(u.name)).forEach(u=>firmPeople.push(u.name));
   const flowPeople=['Thiago','Carlos'];
   let names=[];
   if(rsp==='Flow Sales'){

@@ -250,7 +250,10 @@ textarea{resize:none;min-height:100px;line-height:1.65;}
             <input type="text" id="f-oab" placeholder="000000/MG">
             <div class="field-err" id="e-oab">Digite o número da OAB</div>
           </div>
-          <div class="fg"></div>
+          <div class="fg">
+            <label>Instagram</label>
+            <div class="inp-group"><span class="inp-addon" style="font-size:13px;">@</span><input type="text" id="f-resp-ig" placeholder="advogado.silva"></div>
+          </div>
         </div>
         <div class="fg">
           <label>Área de atuação <span class="req">*</span></label>
@@ -434,6 +437,7 @@ function socioCardHTML(idx){
       <div class="fg"><label>OAB <span class="req">*</span></label><input type="text" id="f-socio-oab-${idx}" placeholder="000000/MG">
         <div class="field-err" id="e-socio-oab-${idx}">⚠ OAB obrigatória</div></div>
       <div class="fg"><label>Área de atuação</label><input type="text" id="f-socio-area-${idx}" placeholder="Ex: Trabalhista, Cível"></div>
+      <div class="fg"><label>Instagram</label><div class="inp-group"><span class="inp-addon" style="font-size:13px;">@</span><input type="text" id="f-socio-ig-${idx}" placeholder="advogado.nome"></div></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 120px;gap:14px;margin-bottom:14px">
       <div class="fg" style="margin-bottom:0"><label>Rua / Avenida <span class="req">*</span></label>
@@ -500,6 +504,7 @@ function getSocios(){
       nomeCompleto: (nome+' '+sobrenome).trim(),
       oab: _sv('f-socio-oab-'+idx),
       area: _sv('f-socio-area-'+idx),
+      ig: (_sv('f-socio-ig-'+idx)).replace('@',''),
       email: _sv('f-socio-email-'+idx),
       tel: _sv('f-socio-tel-'+idx),
       addr: saddr, rua:srua, num:snum, bairro:sbairro, cidade:scidade, uf:suf, cep:scep, comp:scomp,
@@ -782,7 +787,7 @@ async function submitForm(){
   // Gerar ID e senha da firma
   const firmId   = 'f' + Date.now().toString(36);
   const primeiroNome = responsavel.split(' ')[0].toLowerCase().replace(/[^a-z]/g,'') || 'cliente';
-  const clientPass   = primeiroNome + '2026';
+  const clientPass   = 'flow2026';
   const initials     = responsavel.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
 
   // Dados iniciais da firma
@@ -792,9 +797,9 @@ async function submitForm(){
     implementations:[],meetings:[],files:[],links:[],msgs:[],demands:[],
     metas:{day:[],wk:[],mo:[]},
     notifs:[],activity:[],note:'',unreadChat:0,
-    partners:getSocios().map((s,i)=>({id:'p'+Date.now()+i,name:s.nomeCompleto,role:'Sócio(a)',email:s.email,phone:s.tel,oab:s.oab,area:s.area,address:s.addr,photo:s.photo||''})),
+    partners:getSocios().map((s,i)=>({id:'p'+Date.now()+i,name:s.nomeCompleto,role:'Sócio(a)',email:s.email,phone:s.tel,oab:s.oab,area:s.area,ig:s.ig||'',address:s.addr,photo:s.photo||''})),
     payments:[],
-    firmExtra:{address:escEndereco,website:site,instagram:instagram?'@'+instagram:'',respPhoto:fotoRespB64,respAddress:respEndereco,respOAB:oab,respAreas:areas},
+    firmExtra:{address:escEndereco,website:site,instagram:instagram?'@'+instagram:'',respPhoto:fotoRespB64,respAddress:respEndereco,respOAB:oab,respAreas:areas,respInstagram:fv('f-resp-ig').trim().replace('@','')},
     __ts: Date.now()
   };
 
@@ -816,7 +821,7 @@ async function submitForm(){
   const sociosList = getSocios();
   const socioUsers = sociosList.map(s => {
     const sFirst = s.nome.split(' ')[0].toLowerCase().replace(/[^a-z]/g,'') || 'socio';
-    const sPass  = sFirst + '2026';
+    const sPass  = 'flow2026';
     const sInit  = s.nome.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
     return {email:s.email.toLowerCase(), pass:sPass, name:s.nome, role:'client', eid:firmId, init:sInit};
   }).filter(u => u.email);
