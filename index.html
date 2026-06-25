@@ -295,8 +295,8 @@ input[type="date"].fi::-webkit-calendar-picker-indicator:hover{opacity:1;}
 .bbl.in{background:var(--s2);}
 .bbl .mention{color:var(--gold);font-weight:600;}
 .mmeta{font-size:12px;color:var(--t2);margin-top:3px;display:flex;align-items:center;gap:6px;}
-.chat-msg-acts{display:flex;gap:3px;opacity:0;transition:opacity .15s;}
-.mrow:hover .chat-msg-acts{opacity:1;}
+.chat-msg-acts{display:flex;gap:3px;}
+
 .chat-msg-acts button{background:none;border:none;cursor:pointer;color:var(--t2);padding:2px;border-radius:3px;transition:color .12s;display:flex;align-items:center;}
 .chat-msg-acts button:hover{color:var(--gold);}
 .cinp{display:flex;gap:8px;align-items:flex-end;padding:14px 16px;background:var(--s1);border-top:0.5px solid var(--bdr);position:relative;flex-shrink:0;}
@@ -1698,7 +1698,7 @@ function insertMention(name){
 // ── DEMANDS ───────────────────────────────────────────────────
 function rDem(d){
   const ord={high:0,med:1,low:2};const s=[...d.demands].sort((a,b)=>(ord[a.pri]||2)-(ord[b.pri]||2));
-  document.getElementById('dlist').innerHTML=s.map(dm=>`<div class="dm"><div class="db ${dm.pri==='high'?'hi':dm.pri==='med'?'me':'lo'}"></div><div class="dbo"><div class="dtt">${dm.title}</div><div class="dde">${dm.desc}</div><div class="dft"><span class="b ${dm.status==='open'?'br':'bg'}">${dm.status==='open'?'Aberta':'Resolvida'}</span><span class="b ${dm.pri==='high'?'br':dm.pri==='med'?'bgo':'bgr'}">${dm.pri==='high'?'Alta':dm.pri==='med'?'Média':'Baixa'} prioridade</span>${dm.assign?`<span style="font-size:12px;color:var(--t2)">Atribuída: ${dm.assign}</span>`:''}<span style="font-size:12px;color:var(--t3)">${fd(dm.created)}</span>${S.role==='admin'?`<div class="dac"><button class="ca" onclick="resolvDem('${dm.id}')">${dm.status==='open'?'Resolver':'Reabrir'}</button><button class="ca" onclick="edDem('${dm.id}')">Editar</button><button class="bda" style="font-size:10px;padding:3px 8px" onclick="delDem('${dm.id}')">Excluir</button></div>`:''}</div></div></div>`).join('')||'<div class="empty">Sem demandas.</div>';
+  document.getElementById('dlist').innerHTML=s.map(dm=>`<div class="dm"><div class="db ${dm.pri==='high'?'hi':dm.pri==='med'?'me':'lo'}"></div><div class="dbo"><div class="dtt">${dm.title}</div><div class="dde">${dm.desc}</div><div class="dft"><span class="b ${dm.status==='open'?'br':'bg'}">${dm.status==='open'?'Aberta':'Resolvida'}</span><span class="b ${dm.pri==='high'?'br':dm.pri==='med'?'bgo':'bgr'}">${dm.pri==='high'?'Alta':dm.pri==='med'?'Média':'Baixa'} prioridade</span>${dm.assign?`<span style="font-size:12px;color:var(--t2)">Atribuída: ${dm.assign}</span>`:''}<span style="font-size:12px;color:var(--t2)">${fd(dm.created)}</span>${S.role==='admin'?`<div class="dac"><button class="ca" onclick="resolvDem('${dm.id}')">${dm.status==='open'?'Resolver':'Reabrir'}</button><button class="ca" onclick="edDem('${dm.id}')">Editar</button><button class="bda" style="font-size:10px;padding:3px 8px" onclick="delDem('${dm.id}')">Excluir</button></div>`:''}</div></div></div>`).join('')||'<div class="empty">Sem demandas.</div>';
 }
 function resolvDem(id){const d=ld();const dm=d.demands.find(x=>x.id===id);if(dm){dm.status=dm.status==='open'?'resolved':'open';activ(d,(dm.status==='resolved'?'Demanda resolvida: ':'Demanda reaberta: ')+dm.title,dm.status==='resolved'?'var(--green)':'var(--red)');sv(d);renderAll();}}
 function edDem(id){const d=ld();const dm=d.demands.find(x=>x.id===id);openM('dem',dm);}
