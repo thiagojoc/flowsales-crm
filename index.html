@@ -1874,7 +1874,9 @@ function openM(type,data){
           return allNames.map(n=>`<option${data&&data.assign===n?' selected':''}>${n}</option>`).join('');
         };
         const asgOptsLocal=S.role==='client'?_buildClientAsg():_asgAdmin();
-        const respSel=isClient?'':`<div class="fg"><label>Responsável</label><select class="fi" id="m-rsp" onchange="_updateTaskAsg()"><option${!data||data.resp==='Flow Sales'?' selected':''}>Flow Sales</option><option value="${firmNm}"${data&&(data.resp===firmNm||data.resp==='Escritório')?' selected':''}>${firmNm}</option><option${data&&data.resp==='Ambos'?' selected':''}>Ambos</option></select></div>`;
+        const _allFirmsA=FIRMS.length?FIRMS:(()=>{try{return JSON.parse(localStorage.getItem('fs_firms')||'[]');}catch(e){return[];}})();
+        const _isAdminFS=S.role==='admin'&&S.eid==='flowsales';
+        const respSel=isClient?'':`<div class="fg"><label>Responsável</label><select class="fi" id="m-rsp" onchange="_updateTaskAsg()">${_isAdminFS?`<option value="flowsales"${!data||data.resp==='Flow Sales'?' selected':''}>Flow Sales</option>${_allFirmsA.map(fw=>`<option value="${fw.id}"${data&&data.resp===fw.name?' selected':''}>${fw.name}</option>`).join('')}<option value="ambos"${data&&data.resp==='Ambos'?' selected':''}>Ambos</option>`:`<option${!data||data.resp==='Flow Sales'?' selected':''}>Flow Sales</option><option value="${firmNm}"${data&&(data.resp===firmNm||data.resp==='Escritório')?' selected':''}>${firmNm}</option><option${data&&data.resp==='Ambos'?' selected':''}>Ambos</option>`}</select></div>`;
         setTimeout(()=>_updateTaskAsg(),0);
         return `<div class="fg"><label>Título</label><input class="fi" id="m-ttl" value="${data?data.title:''}"></div><div class="fg"><label>Descrição</label><textarea id="m-dsc">${data?data.desc||'':''}</textarea></div><div style="display:grid;grid-template-columns:${isClient?'1fr':'1fr 1fr'};gap:10px">${respSel}<div class="fg"><label>Atribuída a</label><select class="fi" id="m-asg">${asgOptsLocal}</select></div></div><div class="fg"><label>Prazo *</label><input class="fi" id="m-due" type="date" value="${data?data.due:''}" style="color-scheme:dark"></div><div class="fg"><label>Status</label><select class="fi" id="m-sta"><option value="pending"${!data||data.status==='pending'?' selected':''}>Pendente</option><option value="done"${data&&data.status==='done'?' selected':''}>Concluída</option><option value="late"${data&&data.status==='late'?' selected':''}>Atrasada</option></select></div><div class="fg" style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="tck-cb" id="m-urg" ${data&&data.urgent?'checked':''}><label style="text-transform:none;letter-spacing:0;font-size:12px;color:var(--text)">Marcar como urgente</label></div>`;
       },
@@ -1891,9 +1893,9 @@ function openM(type,data){
       }
     },
     edFirmAdmin:{title:'Editar escritório',
-      body:()=>`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Nome</label><input class="fi" id="ef-nm" value="${data?data.name||'':''}"></div><div class="fg"><label>Área</label><input class="fi" id="ef-area" value="${data?data.area||'':''}"></div><div class="fg"><label>Cidade / UF</label><input class="fi" id="ef-city" value="${data?data.city||'':''}"></div><div class="fg"><label>Telefone</label><input class="fi" id="ef-ph" value="${data?data.phone||'':''}"></div><div class="fg"><label>E-mail de contato</label><input class="fi" id="ef-em" type="email" value="${data?data.email||'':''}"></div><div class="fg"><label>Mensalidade (R$)</label><input class="fi" id="ef-fee" type="number" value="${data?data.fee||3500:3500}"></div><div class="fg"><label>OAB</label><input class="fi" id="ef-oab" value="${data?data.oab||'':''}"></div><div class="fg"><label>Início do contrato</label><input class="fi" id="ef-start" type="date" value="${data?data.start||'':''}"></div><div class="fg"><label>Vencimento mensal</label><input class="fi" id="ef-due" type="date" value="${data?data.due||'':''}"></div></div><div style="margin-top:12px;padding-top:12px;border-top:0.5px solid var(--bdr)"><div style="font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Integrações</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>GHL API Key</label><input class="fi" id="ef-ghl" placeholder="Cole a API key do GoHighLevel" value="${data?data.ghlKey||'':''}"></div><div class="fg"><label>Meta BM Token</label><input class="fi" id="ef-meta" placeholder="Token da Business Manager" value="${data?data.metaToken||'':''}"></div><div class="fg" style="grid-column:1/-1"><label>Link da pasta no Google Drive</label><input class="fi" id="ef-drive" placeholder="https://drive.google.com/drive/folders/..." value="${data?data.driveUrl||'':''}"></div></div></div>
+      body:()=>{const _efe=(()=>{try{return JSON.parse(localStorage.getItem('fs_'+data.id)||'{}').firmExtra||{};}catch(e){return{};}})();return`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Nome</label><input class="fi" id="ef-nm" value="${data?data.name||'':''}"></div><div class="fg"><label>Área</label><input class="fi" id="ef-area" value="${data?data.area||'':''}"></div><div class="fg"><label>Cidade / UF</label><input class="fi" id="ef-city" value="${data?data.city||'':''}"></div><div class="fg"><label>Telefone</label><input class="fi" id="ef-ph" value="${data?data.phone||'':''}"></div><div class="fg"><label>E-mail de contato</label><input class="fi" id="ef-em" type="email" value="${data?data.email||'':''}"></div><div class="fg"><label>Mensalidade (R$)</label><input class="fi" id="ef-fee" type="number" value="${data?data.fee||3500:3500}"></div><div class="fg"><label>OAB</label><input class="fi" id="ef-oab" value="${data?data.oab||'':''}"></div><div class="fg"><label>Início do contrato</label><input class="fi" id="ef-start" type="date" value="${data?data.start||'':''}"></div><div class="fg"><label>Vencimento mensal</label><input class="fi" id="ef-due" type="date" value="${data?data.due||'':''}"></div></div><div style="margin-top:12px;padding-top:12px;border-top:0.5px solid var(--bdr)"><div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Responsável</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Nome</label><input class="fi" id="ef-resp-nm" value="${data.contact||_efe.respName||''}"></div><div class="fg"><label>Telefone</label><input class="fi" id="ef-resp-ph" value="${data.contactPhone||_efe.respPhone||''}"></div><div class="fg"><label>WhatsApp</label><input class="fi" id="ef-resp-wa" value="${_efe.respWhatsapp||''}"></div><div class="fg"><label>E-mail</label><input class="fi" id="ef-resp-em" type="email" value="${data.contactEmail||_efe.respEmail||''}"></div><div class="fg"><label>OAB</label><input class="fi" id="ef-resp-oab" value="${_efe.respOAB||''}"></div><div class="fg"><label>Áreas de atuação</label><input class="fi" id="ef-resp-areas" value="${_efe.respAreas||''}"></div></div></div>`;}<div style="margin-top:12px;padding-top:12px;border-top:0.5px solid var(--bdr)"><div style="font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Integrações</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>GHL API Key</label><input class="fi" id="ef-ghl" placeholder="Cole a API key do GoHighLevel" value="${data?data.ghlKey||'':''}"></div><div class="fg"><label>Meta BM Token</label><input class="fi" id="ef-meta" placeholder="Token da Business Manager" value="${data?data.metaToken||'':''}"></div><div class="fg" style="grid-column:1/-1"><label>Link da pasta no Google Drive</label><input class="fi" id="ef-drive" placeholder="https://drive.google.com/drive/folders/..." value="${data?data.driveUrl||'':''}"></div></div></div>
 <div style='margin-top:12px;padding-top:12px;border-top:0.5px solid var(--bdr)'><div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:8px'><div style='font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.07em'>Sócios</div><button class='ca' onclick="cModal(null,1);setTimeout(()=>openM('partner'),150)">+ Sócio</button></div><div id='ef-partners'>${(()=>{try{const _fd=JSON.parse(localStorage.getItem('fs_'+data.id)||'{}');return(_fd.partners||[]).map(p=>`<div style='display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--bdr)'><div style='width:26px;height:26px;border-radius:50%;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0'>${(p.name||'?')[0].toUpperCase()}</div><div style='flex:1;min-width:0'><div style='font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis'>${p.name}</div><div style='font-size:10px;color:var(--t2)'>${p.role||'Sócio'}${p.oab?' · '+p.oab:''}</div></div><button class='ib edit' data-pid='${p.id}' data-fid='${data.id}' onclick='_editFirmPartner(this.dataset.fid,this.dataset.pid)'  style='flex-shrink:0'><svg width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7'/><path d='M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z'/></svg></button><button class='ib del' data-pid='${p.id}' onclick='delPartner(this.dataset.pid)' style='flex-shrink:0'><svg width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><polyline points='3 6 5 6 21 6'/><path d='M19 6l-1 14H6L5 6'/></svg></button></div>`).join('')||'<div style=\'color:var(--t2);font-size:11px;padding:8px 0\'>Nenhum sócio cadastrado.</div>';}catch(e){return '';}})()}</div></div>`,
-      save:()=>{const f=FIRMS.find(x=>x.id===data.id);if(!f)return;f.name=v('ef-nm')||f.name;f.area=v('ef-area');f.city=v('ef-city');f.phone=v('ef-ph');f.email=v('ef-em');f.fee=+(v('ef-fee')||f.fee);f.oab=v('ef-oab');f.start=v('ef-start');f.due=v('ef-due');f.ghlKey=v('ef-ghl');f.metaToken=v('ef-meta');f.driveUrl=v('ef-drive');_saveFirms();setupFirmSelect();rFirms();_showToast('Escritório atualizado ✅','var(--green)');cModal(null,1);}
+      save:()=>{const f=FIRMS.find(x=>x.id===data.id);if(!f)return;f.name=v('ef-nm')||f.name;f.area=v('ef-area');f.city=v('ef-city');f.phone=v('ef-ph');f.email=v('ef-em');f.fee=+(v('ef-fee')||f.fee);f.oab=v('ef-oab');f.start=v('ef-start');f.due=v('ef-due');f.ghlKey=v('ef-ghl');f.metaToken=v('ef-meta');f.driveUrl=v('ef-drive');f.contact=v('ef-resp-nm');f.contactPhone=v('ef-resp-ph');f.contactEmail=v('ef-resp-em');_saveFirms();try{const _efd=JSON.parse(localStorage.getItem('fs_'+data.id)||'{}');_efd.firmExtra=_efd.firmExtra||{};_efd.firmExtra.respName=v('ef-resp-nm');_efd.firmExtra.respPhone=v('ef-resp-ph');_efd.firmExtra.respWhatsapp=v('ef-resp-wa');_efd.firmExtra.respEmail=v('ef-resp-em');_efd.firmExtra.respOAB=v('ef-resp-oab');_efd.firmExtra.respAreas=v('ef-resp-areas');localStorage.setItem('fs_'+data.id,JSON.stringify(_efd));if(window._waitFB)_waitFB().then(()=>window._fbSetDoc(window._fbDoc(window._fbDB,'flowsales_crm',data.id),_efd)).catch(()=>{});}catch(e){}setupFirmSelect();rFirms();_showToast('Escritório atualizado ✅','var(--green)');cModal(null,1);}
     },
     meet:{title:data?'Editar reunião':'Nova reunião',
       body:(()=>{const isPast=data!=null;return`<div class="fg"><label>Título</label><input class="fi" id="m-ttl" value="${data?data.title:''}"></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px"><div class="fg"><label>Data</label><input class="fi" id="m-dt" type="date" value="${data?data.date:new Date().toISOString().split('T')[0]}"></div><div class="fg"><label>Horário</label><input class="fi" id="m-hr" type="time" value="${data?data.time||'10:00':'10:00'}"></div><div class="fg"><label>Duração</label><select class="fi" id="m-dur"><option value="30"${data&&data.duration==='30'?' selected':''}>30 min</option><option value="60"${!data||data.duration==='60'||!data.duration?' selected':''}>1 hora</option><option value="90"${data&&data.duration==='90'?' selected':''}>1h30</option><option value="120"${data&&data.duration==='120'?' selected':''}>2 horas</option></select></div></div><div class="fg"><label>Tipo</label><select class="fi" id="m-tp"><option${!data||data.type==='Check semanal'?' selected':''}>Check semanal</option><option${data&&data.type==='Onboarding'?' selected':''}>Onboarding</option><option${data&&data.type==='Revisão quinzenal'?' selected':''}>Revisão quinzenal</option><option${data&&data.type==='Alinhamento'?' selected':''}>Alinhamento</option><option${data&&data.type==='Treinamento'?' selected':''}>Treinamento</option><option${data&&data.type==='Emergência'?' selected':''}>Emergência</option></select></div><div class="fg"><label>Convidados</label><div id="m-guests-chips" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px">${(data&&data.guests?data.guests.split(',').map(g=>g.trim()).filter(Boolean):[]).map(g=>`<span class="guest-chip" style="display:flex;align-items:center;gap:4px;background:var(--gb);border:0.5px solid var(--bdr);border-radius:6px;padding:3px 8px;font-size:11px">${g}<button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:var(--t2);font-size:12px;line-height:1;padding:0 0 0 2px">×</button></span>`).join('')}</div><div style="display:flex;gap:6px"><input class="fi" id="m-guest-inp" placeholder="email@convidado.com" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();_addGuest();}"><button type="button" class="ca" onclick="_addGuest()" style="flex-shrink:0;padding:0 12px">+</button></div></div><div class="fg"><label>Notas</label><textarea id="m-nt" style="min-height:60px">${data?data.notes||'':''}</textarea></div><div class="fg"><label>Próximos passos (um por linha)</label><textarea id="m-ac">${data&&data.actions?data.actions.join('\n'):''}</textarea></div>${isPast?`<div class="fg"><label>URL da gravação</label><input class="fi" id="m-rec" type="url" placeholder="https://drive.google.com/..." value="${data?data.recording||'':''}"></div><div class="fg"><label>Resumo gerado</label><textarea id="m-sum" placeholder="Cole aqui o resumo automático da reunião...">${data?data.summary||'':''}</textarea></div>`:''}`})(),
@@ -2094,32 +2096,32 @@ function rFirms(){
     var rev=k.rev||0;var revG=k.revG||0;
     var revPct=revG?Math.min(Math.round(rev/revG*100),100):null;
     var revC=revPct!==null?(revPct>=100?'var(--green)':revPct>=60?'var(--gold)':'var(--red)'):'var(--t2)';
-    var hBar=health!==null?'<div style="margin-top:8px"><div style="display:flex;justify-content:space-between;font-size:9px;color:var(--t2);margin-bottom:3px"><span>Saúde</span><span style="color:'+hc+'">'+health+'%</span></div><div style="height:4px;background:var(--s3);border-radius:2px"><div style="height:100%;width:'+health+'%;background:'+hc+';border-radius:2px;transition:width .4s"></div></div></div>':'';
-    var cBar='<div style="margin-top:6px"><div style="display:flex;justify-content:space-between;font-size:9px;color:var(--t2);margin-bottom:3px"><span>Contrato</span><span>'+wkPct+'%</span></div><div style="height:4px;background:var(--s3);border-radius:2px"><div style="height:100%;width:'+wkPct+'%;background:'+(wkPct>=85?'var(--green)':wkPct>=50?'var(--blue)':'var(--gold)')+';border-radius:2px;transition:width .4s"></div></div></div>';
+    var hBar=health!==null?'<div style="margin-top:8px"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t2);margin-bottom:3px"><span>Saúde</span><span style="color:'+hc+'">'+health+'%</span></div><div style="height:4px;background:var(--s3);border-radius:2px"><div style="height:100%;width:'+health+'%;background:'+hc+';border-radius:2px;transition:width .4s"></div></div></div>':'';
+    var cBar='<div style="margin-top:6px"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t2);margin-bottom:3px"><span>Contrato</span><span>'+wkPct+'%</span></div><div style="height:4px;background:var(--s3);border-radius:2px"><div style="height:100%;width:'+wkPct+'%;background:'+(wkPct>=85?'var(--green)':wkPct>=50?'var(--blue)':'var(--gold)')+';border-radius:2px;transition:width .4s"></div></div></div>';
     return '<div class="card" style="padding:14px 16px;margin-bottom:8px">'
       +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">'
       +'<div><div style="font-size:13px;font-weight:600">'+f.name+'</div>'
       +'<div style="font-size:10px;color:var(--t2);margin-top:2px">'+(f.area||'')+' · '+(f.city||'')+'</div></div>'
       +'<div style="display:flex;gap:6px;align-items:center">'
-      +'<span style="font-size:9px;font-weight:700;color:'+hc+';background:'+hc+'22;border:0.5px solid '+hc+'44;border-radius:4px;padding:2px 6px">'+hl+(health!==null?' '+health+'%':'')+'</span>'
+      +'<span style="font-size:11px;font-weight:700;color:'+hc+';background:'+hc+'22;border:0.5px solid '+hc+'44;border-radius:4px;padding:2px 6px">'+hl+(health!==null?' '+health+'%':'')+'</span>'
       +'<button class="ca" data-fd="'+f.id+'" onclick="loadFirmAndOpen(this.dataset.fd)" style="font-size:10px;padding:3px 8px;background:var(--gb);color:var(--text);border:0.5px solid var(--bdr)">Dados</button>'
       +'<button class="ca" data-fid="'+f.id+'" onclick="selectFirmAndNav(this.dataset.fid)" style="font-size:10px;padding:3px 10px">Ver painel</button>'
       +'<button class="ca" data-fid2="'+f.id+'" style="background:var(--gb);color:var(--text);border:0.5px solid var(--bdr);font-size:10px;padding:3px 8px" onclick="edFirm(this.dataset.fid2)">Editar</button>'
       +'<button class="bda" data-fid3="'+f.id+'" style="font-size:10px;padding:3px 8px" onclick="removeFirm(this.dataset.fid3)">Excluir</button>'
       +'</div></div>'
       +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px">'
-      +'<div style="background:var(--s2);border-radius:6px;padding:8px 10px"><div style="font-size:8px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em">Faturamento</div>'
+      +'<div style="background:var(--s2);border-radius:6px;padding:8px 10px"><div style="font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em">Faturamento</div>'
       +'<div style="font-size:13px;font-weight:600;margin-top:3px">R$ '+rev.toLocaleString('pt-BR')+'</div>'
-      +'<div style="font-size:9px;color:'+revC+'">'+(revPct!==null?revPct+'% da meta':'sem meta')+'</div></div>'
-      +'<div style="background:var(--s2);border-radius:6px;padding:8px 10px"><div style="font-size:8px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em">Semana</div>'
+      +'<div style="font-size:11px;color:'+revC+'">'+(revPct!==null?revPct+'% da meta':'sem meta')+'</div></div>'
+      +'<div style="background:var(--s2);border-radius:6px;padding:8px 10px"><div style="font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em">Semana</div>'
       +'<div style="font-size:13px;font-weight:600;margin-top:3px">'+(f.week||1)+'/'+(f.total||52)+'</div>'
-      +'<div style="font-size:9px;color:var(--t2)">'+(( (f.total||52)-(f.week||1) ))+' restantes</div></div>'
-      +'<div style="background:var(--s2);border-radius:6px;padding:8px 10px"><div style="font-size:8px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em">Vence em</div>'
+      +'<div style="font-size:11px;color:var(--t2)">'+(( (f.total||52)-(f.week||1) ))+' restantes</div></div>'
+      +'<div style="background:var(--s2);border-radius:6px;padding:8px 10px"><div style="font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em">Vence em</div>'
       +'<div style="font-size:13px;font-weight:600;margin-top:3px;color:'+dc+'">'+(dLeft!==null?dLeft+'d':'--')+'</div>'
-      +'<div style="font-size:9px;color:var(--t2)">'+(dLeft!==null?'dias':'não definido')+'</div></div>'
-      +'<div style="background:var(--s2);border-radius:6px;padding:8px 10px"><div style="font-size:8px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em">Mensalidade</div>'
+      +'<div style="font-size:11px;color:var(--t2)">'+(dLeft!==null?'dias':'não definido')+'</div></div>'
+      +'<div style="background:var(--s2);border-radius:6px;padding:8px 10px"><div style="font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em">Mensalidade</div>'
       +'<div style="font-size:13px;font-weight:600;margin-top:3px">R$ '+(f.fee||0).toLocaleString('pt-BR')+'</div>'
-      +'<div style="font-size:9px;color:var(--t2)">/ mês</div></div>'
+      +'<div style="font-size:11px;color:var(--t2)">/ mês</div></div>'
       +'</div>'
       +cBar+hBar
       +(f.driveUrl?'<div style="margin-top:8px"><a href="'+f.driveUrl+'" target="_blank" style="display:inline-flex;align-items:center;gap:5px;font-size:10px;color:var(--blue);padding:4px 10px;border:0.5px solid var(--blue)33;border-radius:5px;background:var(--blue)11;text-decoration:none"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Pasta no Drive</a></div>':'')+'</div>';
@@ -2208,19 +2210,19 @@ function rFlow(){
         +'<div><div style="font-size:12px;font-weight:600">'+f.name+'</div>'
         +'<div style="font-size:10px;color:var(--t2)">'+(f.area||'')+' · '+(f.city||'')+'</div></div>'
         +'<div style="display:flex;gap:5px;align-items:center">'
-        +'<span style="font-size:9px;font-weight:700;color:'+hc+';background:'+hc+'22;border:0.5px solid '+hc+'44;border-radius:4px;padding:2px 6px">'+hl+(health!==null?' '+health+'%':'')+'</span>'
+        +'<span style="font-size:11px;font-weight:700;color:'+hc+';background:'+hc+'22;border:0.5px solid '+hc+'44;border-radius:4px;padding:2px 6px">'+hl+(health!==null?' '+health+'%':'')+'</span>'
         +'<button class="ib" onclick="selectFirm(this.dataset.fid)" data-fid="'+f.id+'" style="padding:3px 8px;font-size:10px" title="Acessar">▶</button>'
         +'</div></div>'
         +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px">'
-        +'<div style="background:var(--s2);border-radius:5px;padding:6px 8px"><div style="font-size:8px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em">Faturamento</div>'
+        +'<div style="background:var(--s2);border-radius:5px;padding:6px 8px"><div style="font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em">Faturamento</div>'
         +'<div style="font-size:12px;font-weight:600;margin-top:2px">R$ '+rev.toLocaleString('pt-BR')+'</div>'
-        +'<div style="font-size:9px;color:'+revC+'">'+(revPct!==null?revPct+'% meta':'sem meta')+'</div></div>'
-        +'<div style="background:var(--s2);border-radius:5px;padding:6px 8px"><div style="font-size:8px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em">Semana</div>'
+        +'<div style="font-size:11px;color:'+revC+'">'+(revPct!==null?revPct+'% meta':'sem meta')+'</div></div>'
+        +'<div style="background:var(--s2);border-radius:5px;padding:6px 8px"><div style="font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em">Semana</div>'
         +'<div style="font-size:12px;font-weight:600;margin-top:2px">'+(f.week||1)+'/'+(f.total||52)+'</div>'
         +'<div style="font-size:9px;color:var(--t2)">'+wkLeft+' restantes</div></div>'
-        +'<div style="background:var(--s2);border-radius:5px;padding:6px 8px"><div style="font-size:8px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em">Vence em</div>'
+        +'<div style="background:var(--s2);border-radius:5px;padding:6px 8px"><div style="font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em">Vence em</div>'
         +'<div style="font-size:12px;font-weight:600;margin-top:2px;color:'+dc+'">'+(dLeft!==null?dLeft+'d':'--')+'</div>'
-        +'<div style="font-size:9px;color:var(--t2)">'+(dLeft!==null?'dias':'não definido')+'</div></div>'
+        +'<div style="font-size:11px;color:var(--t2)">'+(dLeft!==null?'dias':'não definido')+'</div></div>'
         +'</div>'
         +'<div><div style="display:flex;justify-content:space-between;font-size:9px;color:var(--t2);margin-bottom:2px"><span>Contrato</span><span>'+wkPct+'%</span></div>'
         +'<div style="height:3px;background:var(--s3);border-radius:2px"><div style="height:100%;width:'+wkPct+'%;background:'+(wkPct>=85?'var(--green)':wkPct>=50?'var(--blue)':'var(--gold)')+';border-radius:2px;transition:width .4s"></div></div></div>'
@@ -2371,30 +2373,39 @@ function loadFirmAndOpen(firmId){
     openNow();
   }).catch(()=>openNow());
 }
-function _updateTaskAsg(){
+async function _updateTaskAsg(){
   const rspEl=document.getElementById('m-rsp');
-  if(!rspEl)return; // cliente não tem select de responsável — não mexe em m-asg
+  if(!rspEl)return;
   const rsp=rspEl.value;
   const asgSel=document.getElementById('m-asg');
   if(!asgSel)return;
   const curVal=asgSel.value;
-  const fw=FIRMS.find(x=>x.id===S.eid)||{};
-  const fd=ld();
-  const firmPeople=[];
-  const _norm=s=>(s||'').trim().toLowerCase();
-  const _has=n=>firmPeople.some(x=>_norm(x)===_norm(n));
-  if(fw.contact&&!_has(fw.contact))firmPeople.push(fw.contact);
-  (fd.partners||[]).forEach(p=>{if(p.name&&!_has(p.name))firmPeople.push(p.name);});
-  (_fbDynUsers||[]).filter(u=>u.eid===S.eid&&u.role==='client'&&u.name&&!_has(u.name)).forEach(u=>firmPeople.push(u.name));
   const flowPeople=['Thiago','Carlos'];
   let names=[];
-  if(rsp==='Flow Sales'){
+  // Verifica se rsp é um ID de firma (não é Flow Sales, Ambos, flowsales)
+  const isFirmId=rsp&&rsp!=='Flow Sales'&&rsp!=='Ambos'&&rsp!=='flowsales'&&FIRMS.some(fw=>fw.id===rsp);
+  if(!rsp||rsp==='Flow Sales'||rsp==='flowsales'){
     names=[...flowPeople];
-  } else if(rsp==='Ambos'){
-    names=[...flowPeople,...firmPeople];
+  } else if(rsp==='Ambos'||rsp==='ambos'){
+    names=[...flowPeople];
+    const _fd=ld();const _fw=FIRMS.find(x=>x.id===S.eid)||{};
+    const _nm=s=>(s||'').trim().toLowerCase();
+    const _has=n=>names.some(x=>_nm(x)===_nm(n));
+    if(_fw.contact&&!_has(_fw.contact))names.push(_fw.contact);
+    (_fd.partners||[]).forEach(p=>{if(p.name&&!_has(p.name))names.push(p.name);});
+    (_fbDynUsers||[]).filter(u=>u.eid===S.eid&&u.role==='client'&&u.name&&!_has(u.name)).forEach(u=>names.push(u.name));
+  } else if(isFirmId){
+    // Admin selecionou um escritório específico — busca pessoas desse escritório
+    const pp=await _getFirmPeople(rsp);
+    names=pp.length?pp:[...flowPeople];
   } else {
-    // firma/escritório — só pessoas da firma
-    names=firmPeople.length?[...firmPeople]:[...flowPeople];
+    // Nome de firma (não ID) — comportamento legado
+    const _fd=ld();const _fw=FIRMS.find(x=>x.id===S.eid)||{};
+    const _nm=s=>(s||'').trim().toLowerCase();const _has=n=>names.some(x=>_nm(x)===_nm(n));
+    if(_fw.contact&&!_has(_fw.contact))names.push(_fw.contact);
+    (_fd.partners||[]).forEach(p=>{if(p.name&&!_has(p.name))names.push(p.name);});
+    (_fbDynUsers||[]).filter(u=>u.eid===S.eid&&u.role==='client'&&u.name&&!_has(u.name)).forEach(u=>names.push(u.name));
+    if(!names.length)names=[...flowPeople];
   }
   asgSel.innerHTML=names.map(n=>`<option${n===curVal?' selected':''}>${n}</option>`).join('');
 }
