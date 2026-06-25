@@ -1853,24 +1853,28 @@ function openM(type,data){
         // Para clientes: listar o próprio usuário + sócios do escritório
         const _buildClientAsg=()=>{
           const f=FIRMS.find(x=>x.id===S.eid)||{};
-          const names=[];
-          if(f.contact&&!names.includes(f.contact))names.push(f.contact);
-          if(S.user&&S.user.name&&!names.includes(S.user.name))names.push(S.user.name);
+          const seen=new Set();const names=[];
+          const _add=n=>{const t=(n||'').trim();if(t&&!seen.has(t)){seen.add(t);names.push(t);}};
+          // FlowSales team sempre disponível para clientes atribuírem
+          _add('Thiago');_add('Carlos');
+          // pessoas do escritório
+          _add(f.contact);
+          if(S.user&&S.user.name)_add(S.user.name);
           const _d=ld();
-          (_d.partners||[]).forEach(p=>{if(p.name&&!names.includes(p.name))names.push(p.name);});
-          (_fbDynUsers||[]).filter(u=>u.eid===S.eid&&u.role==='client'&&u.name&&!names.includes(u.name)).forEach(u=>names.push(u.name));
+          (_d.partners||[]).forEach(p=>_add(p.name));
+          (_fbDynUsers||[]).filter(u=>u.eid===S.eid&&u.role==='client'&&u.name).forEach(u=>_add(u.name));
           return names.map(n=>`<option${data&&data.assign===n?' selected':''}>${n}</option>`).join('');
         };
         const _asgAdmin=()=>{
-          const baseOpts=['Thiago','Carlos'].map(a=>`<option${data&&data.assign===a?' selected':''}>${a}</option>`).join('');
-          if(S.eid==='flowsales')return baseOpts;
+          if(S.eid==='flowsales')return['Thiago','Carlos'].map(a=>`<option${data&&data.assign===a?' selected':''}>${a}</option>`).join('');
           const f=FIRMS.find(x=>x.id===S.eid)||{};
           const _d=ld();
-          const cNames=[];
-          if(f.contact)cNames.push(f.contact);
-          (_d.partners||[]).forEach(p=>{if(p.name&&!cNames.includes(p.name))cNames.push(p.name);});
-          (_fbDynUsers||[]).filter(u=>u.eid===S.eid&&u.role==='client'&&u.name&&!cNames.includes(u.name)).forEach(u=>cNames.push(u.name));
-          const allNames=[...ASSIGNEES.filter(a=>a!=='Ambos'),...cNames];
+          const seen=new Set();const allNames=[];
+          const _add=n=>{const t=(n||'').trim();if(t&&!seen.has(t)){seen.add(t);allNames.push(t);}};
+          _add('Thiago');_add('Carlos');
+          _add(f.contact);
+          (_d.partners||[]).forEach(p=>_add(p.name));
+          (_fbDynUsers||[]).filter(u=>u.eid===S.eid&&u.role==='client'&&u.name).forEach(u=>_add(u.name));
           return allNames.map(n=>`<option${data&&data.assign===n?' selected':''}>${n}</option>`).join('');
         };
         const asgOptsLocal=S.role==='client'?_buildClientAsg():_asgAdmin();
