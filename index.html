@@ -515,7 +515,7 @@ window._fbOnSnapshot = onSnapshot;
       <div class="ni client-nav" onclick="nav('arq')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Arquivos</div>
       <div class="sb-sec">Comunicação</div>
       <div class="ni client-nav" onclick="nav('chat')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Chat<span class="nb r" id="bdgc" style="display:none">0</span></div>
-      <div class="ni client-nav" onclick="nav('dem')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Demandas<span class="nb g" id="bdgd" style="display:none">0</span></div>
+      <div class="ni client-nav" onclick="nav('dem')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Entregas<span class="nb g" id="bdgd" style="display:none">0</span></div>
       <div class="sb-sec">Gestão</div>
       <div class="ni client-nav" id="ni-perfil" onclick="nav('perfil')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Perfil do cliente</div>
       <div class="ni admin-only" id="ni-firms" onclick="nav('firms')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Escritórios</div>
@@ -608,7 +608,6 @@ window._fbOnSnapshot = onSnapshot;
         <div class="sec" id="s-kpis">
           <div class="fr" style="justify-content:flex-end;gap:8px;">
             <button class="ca" onclick="openM('kpi')">Atualizar métricas</button>
-            <button class="ca" onclick="openM('impl')">+ Entregável</button>
           </div>
           <div class="kpi-hero" id="kpi-hero"></div>
           <div class="kpi-g6" id="kpi-g6"></div>
@@ -617,16 +616,7 @@ window._fbOnSnapshot = onSnapshot;
             <div class="ch"><div class="ct">Funil de resultados</div></div>
             <div class="funnel-wrap" id="kpi-funnel"></div>
           </div>
-          <div class="g2">
-            <div class="card">
-              <div class="ch"><div class="ct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>O que implementamos</div><button class="ca" onclick="openM('impl')">+</button></div>
-              <div id="kpi-impl"></div>
-            </div>
-            <div class="card">
-              <div class="ch"><div class="ct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/></svg>Em construção</div></div>
-              <div id="kpi-wip"></div>
-            </div>
-          </div>
+
           <div class="card">
             <div class="ch"><div class="ct">Investimento em tráfego</div></div>
             <div id="kpi-traf"></div>
@@ -637,13 +627,9 @@ window._fbOnSnapshot = onSnapshot;
           </div>
         </div>
 
-        <!-- METAS -->
+        <!-- METAS DINÂMICAS -->
         <div class="sec" id="s-metas">
-          <div class="g3">
-            <div class="card"><div class="ch"><div class="ct">Hoje</div><button class="ca" onclick="openM('mday')">+ Meta</button></div><div id="mday"></div></div>
-            <div class="card"><div class="ch"><div class="ct">Esta semana</div><button class="ca" onclick="openM('mwk')">+ Meta</button></div><div id="mwk"></div></div>
-            <div class="card"><div class="ch"><div class="ct">Este mês</div><button class="ca" onclick="openM('mmo')">+ Meta</button></div><div id="mmo"></div></div>
-          </div>
+          <div id="metas-din-wrap"></div>
         </div>
 
         <!-- TASKS -->
@@ -706,7 +692,10 @@ window._fbOnSnapshot = onSnapshot;
 
         <!-- DEMANDAS -->
         <div class="sec" id="s-dem">
-          <div style="display:flex;justify-content:flex-end"><button class="ca" onclick="openM('dem')">+ Nova demanda</button></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <div style="font-size:11px;color:var(--t2)">O que foi construído para o seu escritório</div>
+            <button class="ca" id="btn-nova-entrega" onclick="openM('entrega')" style="display:none">+ Nova entrega</button>
+          </div>
           <div id="dlist"></div>
         </div>
 
@@ -1011,7 +1000,9 @@ function dflEmpty(){
     links:[],
     msgs:[],
     demands:[],
+    entregas:[],
     metas:{day:[],wk:[],mo:[]},
+    metasDin:{calls:{monthly:0,current:0},vendas:{monthly:0,current:0},fat:{monthly:0,current:0}},
     notifs:[],
     activity:[],
     note:'',
@@ -1260,7 +1251,7 @@ function loadFirm(){
 function populateWkFilter(){const sel=document.getElementById('wk-sel');if(!sel)return;const d=ld();const weeks=[...new Set(d.tasks.map(t=>t.week))].sort((a,b)=>a-b);sel.innerHTML='<option value="all">Todas</option>'+weeks.map(w=>`<option value="${w}">Semana ${w}</option>`).join('');}
 
 // ── NAV ───────────────────────────────────────────────────────
-const TITLES={ov:'Overview',kpis:'KPIs',metas:'Metas',tasks:'Tasks',meet:'Reuniões',arq:'Arquivos',chat:'Chat',dem:'Demandas',perfil:'Perfil do cliente',flow:'Painel Flow Sales',firms:'Escritórios'};
+const TITLES={ov:'Overview',kpis:'KPIs',metas:'Metas',tasks:'Tasks',meet:'Reuniões',arq:'Arquivos',chat:'Chat',dem:'Entregas',perfil:'Perfil do cliente',flow:'Painel Flow Sales',firms:'Escritórios'};
 
 function nav(id){
   S.sec=id;
@@ -1435,27 +1426,38 @@ function doneImpl(id){const d=ld();const i=d.implementations.find(x=>x.id===id);
 
 // ── METAS ─────────────────────────────────────────────────────
 function rMetas(d){
-  const k=d.kpis||{};
-  [['day','mday'],['wk','mwk'],['mo','mmo']].forEach(([p,id])=>{
-    const el=document.getElementById(id);
-    const items=d.metas[p]||[];
-    el.innerHTML=items.length?items.map(m=>{
-      let bar='';
-      if(m.kpiKey&&k[m.kpiKey]!==undefined){
-        const cur=k[m.kpiKey];const goal=m.kpiGoal||k[m.kpiKey+'G']||1;
-        const pct=Math.min(Math.round(cur/goal*100),100);
-        const c=pct>=100?'var(--green)':pct>=60?'var(--gold)':'var(--red)';
-        bar=`<div style="margin-top:6px"><div class="ktr"><div class="kf" style="width:${pct}%;background:${c};transition:width .4s"></div></div><div class="kbl" style="font-size:10px"><span style="color:${c}">${cur} / ${goal}</span><span style="color:${c};font-weight:600">${pct}%</span></div></div>`;
-      }
-      return`<div class="trow" style="flex-direction:column;align-items:stretch;gap:0"><div style="display:flex;align-items:center;gap:9px"><div class="tck${m.done?' on':''}" onclick="tgMeta('${p}','${m.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tb2"><div class="tt${m.done?' dn':''}">${m.title}</div></div>${S.role==='admin'?`<div class="tacts"><button class="ib del" onclick="delMeta('${p}','${m.id}')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div>`:''}</div>${bar}</div>`;
-    }).join(''):'<div class="empty">Sem metas. Adicione uma.</div>';
-  });
+  const md=d.metasDin||{calls:{monthly:0,current:0},vendas:{monthly:0,current:0},fat:{monthly:0,current:0}};
+  const defs=[
+    {key:'calls',label:'Reuniões',icon:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.64 18.56 19.5 19.5 0 0 1 4.44 11.36 19.79 19.79 0 0 1 1.61 4.68 2 2 0 0 1 3.6 2.5h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6.09 6.09l.06-.87a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',fmt:v=>v,unit:'calls'},
+    {key:'vendas',label:'Vendas',icon:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',fmt:v=>v,unit:'vendas'},
+    {key:'fat',label:'Faturamento',icon:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>',fmt:v=>'R$ '+v.toLocaleString('pt-BR'),unit:''}
+  ];
+  const wrap=document.getElementById('metas-din-wrap');if(!wrap)return;
+  const isAdm=S.role==='admin';
+  wrap.innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">${defs.map(def=>{
+    const m=md[def.key]||{monthly:0,current:0};
+    const monthly=m.monthly||0;const cur=m.current||0;
+    const daily=monthly?+(monthly/30).toFixed(1):0;
+    const weekly=monthly?+(monthly/4.3).toFixed(1):0;
+    const pct=monthly?Math.min(Math.round(cur/monthly*100),100):0;
+    const cl=pct>=100?'var(--green)':pct>=60?'var(--gold)':'var(--red)';
+    const clDim=pct===0?'var(--t2)':cl;
+    return `<div class="card"><div class="ch"><div class="ct" style="display:flex;align-items:center;gap:6px">${def.icon}${def.label}</div>${isAdm?`<button class="ca" onclick="openM('metaDin',{key:'${def.key}',monthly:${monthly},current:${cur}})" style="font-size:10px;padding:2px 8px">Editar</button>`:''}</div>
+      <div style="margin:10px 0 6px;font-size:22px;font-weight:700;color:${monthly?'var(--text)':'var(--t2)'}">${def.fmt(cur)}</div>
+      <div style="font-size:11px;color:var(--t2);margin-bottom:10px">de ${def.fmt(monthly)} mensais</div>
+      <div style="height:4px;background:var(--s3);border-radius:2px;margin-bottom:8px"><div style="height:100%;width:${pct}%;background:${clDim};border-radius:2px;transition:width .5s"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t2)"><span style="color:${clDim};font-weight:600">${pct}%</span><span style="color:var(--t2)">${pct>=100?'✓ Meta atingida':'da meta mensal'}</span></div>
+      <div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--bdr);display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div style="background:var(--s2);border-radius:6px;padding:7px 9px"><div style="font-size:10px;color:var(--t2);margin-bottom:2px">Meta diária</div><div style="font-size:13px;font-weight:600">${def.fmt(daily)}</div></div>
+        <div style="background:var(--s2);border-radius:6px;padding:7px 9px"><div style="font-size:10px;color:var(--t2);margin-bottom:2px">Meta semanal</div><div style="font-size:13px;font-weight:600">${def.fmt(weekly)}</div></div>
+      </div></div>`;
+  }).join('')}</div>`;
 }
 function tgMeta(p,id){const d=ld();const m=(d.metas[p]||[]).find(x=>x.id===id);if(m){m.done=!m.done;sv(d);renderAll();}}
 function delMeta(p,id){const d=ld();d.metas[p]=(d.metas[p]||[]).filter(x=>x.id!==id);sv(d);renderAll();}
 
 // ── TASKS ─────────────────────────────────────────────────────
-const slbl={done:'<span class="b bg">Concluída</span>',pending:'<span class="b bgo">Pendente</span>',late:'<span class="b br">Atrasada</span>'};
+const slbl={done:'<span class="b bg">Concluída</span>',pending:'<span class="b bgo">Pendente</span>',late:'<span class="b br">Atrasada</span>'};const prlbl={high:'<span class="b br" style="font-size:10px">▲ Alta</span>',med:'<span class="b bgo" style="font-size:10px">● Média</span>',low:'<span class="b bgr" style="font-size:10px">▼ Baixa</span>'};
 function rTasks(d){
   // Include FlowSales tasks assigned to this firm
   const _firmNm=(FIRMS.find(f=>f.id===S.eid)||{}).name||'';
@@ -1469,7 +1471,7 @@ function rTasks(d){
   if(S.calFrom)tasks=tasks.filter(t=>!t.due||inRange(t.due));
   const el=document.getElementById('tlist');
   if(!tasks.length){el.innerHTML='<div class="empty">Nenhuma task.</div>';return;}
-  el.innerHTML=tasks.map(t=>`<div class="trow"><input type="checkbox" class="tck-cb" ${S.selTasks.has(t.id)?'checked':''} onchange="toggleSel('${t.id}',this)"><div class="tck${t.status==='done'?' on':''}" onclick="tgTask('${t.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tb2"><div class="tt${t.status==='done'?' dn':''}">${t.urgent?'<span style="color:var(--red);font-size:9px;font-weight:700;margin-right:5px;letter-spacing:.05em">URGENTE</span>':''}${t.title}</div><div class="ti"><span>${t.assign||t.resp}</span>${t.created?`<span style="color:var(--t3)">|</span><span title="Criada em">📅 ${fd(t.created)}</span>`:''}${t.due?`<span style="color:var(--t3)">|</span><span title="Prazo" style="color:${t.status!=='done'&&t.due<_localDate()?'var(--red)':'inherit'}">⏰ ${fd(t.due)}</span>`:''}${slbl[t.status]||''}</div></div>${S.role==='admin'?`<div class="tacts"><button class="ib edit" onclick="edTask('${t.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="ib del" onclick="delTask('${t.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div>`:''}</div>`).join('');
+  el.innerHTML=tasks.map(t=>`<div class="trow"><input type="checkbox" class="tck-cb" ${S.selTasks.has(t.id)?'checked':''} onchange="toggleSel('${t.id}',this)"><div class="tck${t.status==='done'?' on':''}" onclick="tgTask('${t.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tb2"><div class="tt${t.status==='done'?' dn':''}">${t.urgent?'<span style="color:var(--red);font-size:9px;font-weight:700;margin-right:5px;letter-spacing:.05em">URGENTE</span>':''}${t.title}</div><div class="ti"><span>${t.assign||t.resp}</span>${t.created?`<span style="color:var(--t3)">|</span><span title="Criada em">📅 ${fd(t.created)}</span>`:''}${t.due?`<span style="color:var(--t3)">|</span><span title="Prazo" style="color:${t.status!=='done'&&t.due<_localDate()?'var(--red)':'inherit'}">⏰ ${fd(t.due)}</span>`:''}${slbl[t.status]||''}${t.pri&&t.pri!=='med'?prlbl[t.pri]||'':''}</div></div>${S.role==='admin'?`<div class="tacts"><button class="ib edit" onclick="edTask('${t.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="ib del" onclick="delTask('${t.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div>`:''}</div>`).join('');
 }
 function fown(f){if(!S.hasOwnProperty('ownf'))S.ownf='all';S.ownf=f;['all','mine'].forEach(x=>{const b=document.getElementById('fo-'+x);if(b){b.style.borderColor='';b.style.color='';}});const a=document.getElementById('fo-'+f);if(a){a.style.borderColor='var(--gbr)';a.style.color='var(--gold)';}rTasks(ld());}
 function ftask(f){S.tf=f;['all','pend','done','late'].forEach(x=>{const b=document.getElementById('ft-'+x);if(b){b.style.borderColor='';b.style.color='';}});const a=document.getElementById('ft-'+f);if(a){a.style.borderColor='var(--gbr)';a.style.color='var(--gold)';}rTasks(ld());}
@@ -1691,18 +1693,63 @@ function showMentionDrop(q){
   drop.classList.add('on');
 }
 function closeMentionDrop(){document.getElementById('mention-drop').classList.remove('on');}
+// ── CHAT FILE + AUDIO ─────────────────────────────────────────
+function chatAttach(){document.getElementById('chat-file-inp').click();}
+function handleChatFile(inp){
+  const file=inp.files[0];if(!file)return;
+  const MAX=5*1024*1024;
+  if(file.size>MAX){_showToast('Arquivo muito grande (máx 5MB)','var(--red)');inp.value='';return;}
+  const r=new FileReader();
+  r.onload=e=>{
+    const d=ld();
+    const msg={id:'m'+Date.now(),text:'',from:S.user.name,role:S.role,time:new Date().toISOString(),media:{name:file.name,type:file.type,data:e.target.result}};
+    d.msgs=d.msgs||[];d.msgs.push(msg);
+    activ(d,'Arquivo enviado: '+file.name,'var(--blue)');sv(d);rChat(d);inp.value='';
+  };
+  r.readAsDataURL(file);
+}
+let _mediaRec=null,_recChunks=[];
+function toggleAudio(){
+  const btn=document.getElementById('mic-btn');
+  if(_mediaRec&&_mediaRec.state==='recording'){_mediaRec.stop();btn.classList.remove('rec');return;}
+  if(!navigator.mediaDevices){_showToast('Áudio não suportado neste dispositivo','var(--red)');return;}
+  navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+    _recChunks=[];
+    _mediaRec=new MediaRecorder(stream);
+    _mediaRec.ondataavailable=e=>{if(e.data.size>0)_recChunks.push(e.data);};
+    _mediaRec.onstop=()=>{
+      stream.getTracks().forEach(t=>t.stop());
+      const blob=new Blob(_recChunks,{type:'audio/webm'});
+      const fr=new FileReader();
+      fr.onload=ev=>{
+        const d=ld();
+        const msg={id:'m'+Date.now(),text:'',from:S.user.name,role:S.role,time:new Date().toISOString(),media:{name:'audio_'+Date.now()+'.webm',type:'audio/webm',data:ev.target.result}};
+        d.msgs=d.msgs||[];d.msgs.push(msg);
+        activ(d,'Áudio enviado','var(--gold)');sv(d);rChat(d);
+      };
+      fr.readAsDataURL(blob);
+    };
+    _mediaRec.start();btn.classList.add('rec');_showToast('Gravando... clique novamente para parar','var(--gold)');
+  }).catch(()=>_showToast('Permissão de microfone negada','var(--red)'));
+}
 function insertMention(name){
   const inp=document.getElementById('cin');const v=inp.value;const pos=inp.selectionStart;const before=v.substring(0,pos).replace(/@\w*$/,'@'+name+' ');inp.value=before+v.substring(pos);closeMentionDrop();inp.focus();
 }
 
-// ── DEMANDS ───────────────────────────────────────────────────
+// ── ENTREGAS DE VALOR ─────────────────────────────────────────
 function rDem(d){
-  const ord={high:0,med:1,low:2};const s=[...d.demands].sort((a,b)=>(ord[a.pri]||2)-(ord[b.pri]||2));
-  document.getElementById('dlist').innerHTML=s.map(dm=>`<div class="dm"><div class="db ${dm.pri==='high'?'hi':dm.pri==='med'?'me':'lo'}"></div><div class="dbo"><div class="dtt">${dm.title}</div><div class="dde">${dm.desc}</div><div class="dft"><span class="b ${dm.status==='open'?'br':'bg'}">${dm.status==='open'?'Aberta':'Resolvida'}</span><span class="b ${dm.pri==='high'?'br':dm.pri==='med'?'bgo':'bgr'}">${dm.pri==='high'?'Alta':dm.pri==='med'?'Média':'Baixa'} prioridade</span>${dm.assign?`<span style="font-size:12px;color:var(--t2)">Atribuída: ${dm.assign}</span>`:''}<span style="font-size:12px;color:var(--t2)">${fd(dm.created)}</span>${S.role==='admin'?`<div class="dac"><button class="ca" onclick="resolvDem('${dm.id}')">${dm.status==='open'?'Resolver':'Reabrir'}</button><button class="ca" onclick="edDem('${dm.id}')">Editar</button><button class="bda" style="font-size:10px;padding:3px 8px" onclick="delDem('${dm.id}')">Excluir</button></div>`:''}</div></div></div>`).join('')||'<div class="empty">Sem demandas.</div>';
+  const btn=document.getElementById('btn-nova-entrega');
+  if(btn)btn.style.display=S.role==='admin'?'':'none';
+  const entregas=(d.entregas||[]).slice().reverse();
+  const catClr={GHL:'var(--blue)',IA:'#7c3aed',Website:'var(--green)',Campanha:'var(--gold)',Reunião:'var(--t2)',Outro:'var(--t2)'};
+  document.getElementById('dlist').innerHTML=entregas.map(e=>{
+    const cc=catClr[e.category]||'var(--gold)';
+    const fhtml=(e.files||[]).map(fl=>`<div style="margin-top:6px;padding:7px 10px;background:var(--s1);border-radius:6px;border:0.5px solid var(--bdr)"><div style="display:flex;align-items:center;gap:7px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg><a href="${fl.data}" download="${fl.name}" style="font-size:11px;color:var(--gold);text-decoration:none;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${fl.name}</a></div>${fl.desc?`<div style="font-size:11px;color:var(--t2);margin-top:3px;line-height:1.4">${fl.desc}</div>`:''}</div>`).join('');
+    return `<div class="card" style="margin-bottom:10px;border-left:3px solid ${cc}"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="font-size:10px;font-weight:700;color:${cc};text-transform:uppercase;letter-spacing:.06em">${e.category||'Entrega'}</span><span style="font-size:11px;color:var(--t2)">${fd(e.date)}</span></div><div style="font-size:14px;font-weight:600;margin-bottom:5px">${e.title}</div>${e.desc?`<div style="font-size:12px;color:var(--t2);line-height:1.5;white-space:pre-wrap">${e.desc}</div>`:''} ${fhtml}</div>${S.role==='admin'?`<div style="display:flex;gap:4px;flex-shrink:0"><button class="ib edit" onclick="edEntrega('${e.id}')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="ib del" onclick="delEntrega('${e.id}')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div>`:''}  </div></div>`;
+  }).join('')||'<div style="padding:30px;text-align:center;color:var(--t2)"><div style="font-size:28px;margin-bottom:10px">🎁</div><div style="font-size:13px">Nenhuma entrega registrada.</div><div style="font-size:11px;margin-top:4px">Aqui aparecem tudo que foi construído para o escritório.</div></div>';
 }
-function resolvDem(id){const d=ld();const dm=d.demands.find(x=>x.id===id);if(dm){dm.status=dm.status==='open'?'resolved':'open';activ(d,(dm.status==='resolved'?'Demanda resolvida: ':'Demanda reaberta: ')+dm.title,dm.status==='resolved'?'var(--green)':'var(--red)');sv(d);renderAll();}}
-function edDem(id){const d=ld();const dm=d.demands.find(x=>x.id===id);openM('dem',dm);}
-function delDem(id){if(!confirm('Excluir?'))return;const d=ld();d.demands=d.demands.filter(x=>x.id!==id);sv(d);renderAll();}
+function edEntrega(id){const d=ld();const e=(d.entregas||[]).find(x=>x.id===id);openM('entrega',e);}
+function delEntrega(id){if(!confirm('Excluir entrega?'))return;const d=ld();d.entregas=(d.entregas||[]).filter(x=>x.id!==id);sv(d);renderAll();}
 
 // ── PERFIL DO CLIENTE ─────────────────────────────────────────
 function rPerfil(d){
@@ -1729,7 +1776,7 @@ function rPerfil(d){
     const rc=document.getElementById('resp-card');
     if(rc)rc.style.display='';
   }
-  document.getElementById('pay-info').innerHTML=`<div class="traf-row"><span class="traf-lbl">Início do programa</span><span class="traf-val">${fd(f.start)}</span></div><div class="traf-row"><span class="traf-lbl">Vencimento</span><span class="traf-val">${fd(f.due)}</span></div><div class="traf-row"><span class="traf-lbl">Semana atual</span><span class="traf-val">${f.week} de ${f.total}</span></div><div class="div"></div><div style="font-size:10px;font-weight:600;color:var(--t2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Pagamentos</div>${(d.payments||[]).map(p=>`<div class="payment-row"><div><div class="pay-lbl">${fd(p.date)}</div>${p.ref?`<div style="font-size:10px;color:var(--t2)">${p.ref}</div>`:''}<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">${(p.files||[]).map(f=>`<a href="${f.data}" download="${f.name}" style="font-size:10px;color:var(--blue);display:flex;align-items:center;gap:3px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>${f.name}</a>`).join('')}</div></div><span class="b bg">R$ ${p.amount.toLocaleString('pt-BR')}</span></div>`).join('')||'<div class="empty" style="padding:12px">Sem pagamentos registrados.</div>'}`;
+  document.getElementById('pay-info').innerHTML=`<div class="traf-row"><span class="traf-lbl">Início do programa</span><span class="traf-val">${fd(f.start)}</span></div><div class="traf-row"><span class="traf-lbl">Vencimento</span><span class="traf-val">${fd(f.due)}${(()=>{if(!f.due)return '';try{const _dn=Math.round((new Date(f.due+'T12:00:00')-new Date())/864e5);if(_dn<=0)return '<span style="margin-left:6px;font-size:10px;color:#fff;background:var(--red);border-radius:3px;padding:1px 5px">Vence hoje</span>';if(_dn===1)return '<span style="margin-left:6px;font-size:10px;color:#fff;background:var(--red);border-radius:3px;padding:1px 5px">Amanhã</span>';if(_dn<=7)return '<span style="margin-left:6px;font-size:10px;color:var(--gold);background:rgba(201,168,67,.15);border:0.5px solid var(--gold);border-radius:3px;padding:1px 5px">Em '+_dn+' dias</span>';}catch(e){}return '';})()}</span></div><div class="traf-row"><span class="traf-lbl">Semana atual</span><span class="traf-val">${f.week} de ${f.total}</span></div><div class="div"></div><div style="font-size:10px;font-weight:600;color:var(--t2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Pagamentos</div>${(d.payments||[]).map(p=>`<div class="payment-row"><div><div class="pay-lbl">${fd(p.date)}</div>${p.ref?`<div style="font-size:10px;color:var(--t2)">${p.ref}</div>`:''}<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">${(p.files||[]).map(f=>`<a href="${f.data}" download="${f.name}" style="font-size:10px;color:var(--blue);display:flex;align-items:center;gap:3px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>${f.name}</a>`).join('')}</div></div><span class="b bg">R$ ${p.amount.toLocaleString('pt-BR')}</span></div>`).join('')||'<div class="empty" style="padding:12px">Sem pagamentos registrados.</div>'}`;
   if(S.role==='client')document.getElementById('pay-btn').style.display='none';else{const _ceb=document.getElementById('contrato-edit-btn');if(_ceb)_ceb.style.display='';}
   const _rawP=d.partners||[];const _seenP=new Set();const partners=_rawP.filter(p=>{const k=(p.name||'').trim().toLowerCase();if(!k||_seenP.has(k))return false;_seenP.add(k);return true;});
   const _pBtns=(p)=>S.role==='admin'
@@ -1771,7 +1818,7 @@ function saveKpiHistory(){const d=ld();const k=d.kpis;const week=Math.max(0,...(
 
 function rBadges(d){
   const pt=d.tasks.filter(t=>t.status==='pending'||t.status==='late').length;const bt=document.getElementById('bdgt');bt.textContent=pt;bt.style.display=pt?'flex':'none';
-  const od=d.demands.filter(x=>x.status==='open').length;const bd=document.getElementById('bdgd');bd.textContent=od;bd.style.display=od?'flex':'none';
+  const oe=(d.entregas||[]).length;const bd=document.getElementById('bdgd');bd.textContent=oe;bd.style.display=oe?'flex':'none';
   const uc=d.unreadChat||0;const bc=document.getElementById('bdgc');bc.textContent=uc;bc.style.display=uc?'flex':'none';
 }
 
@@ -1882,7 +1929,7 @@ function openM(type,data){
         const _isAdminFS=S.role==='admin'&&S.eid==='flowsales';
         const respSel=isClient?'':`<div class="fg"><label>Responsável</label><select class="fi" id="m-rsp" onchange="_updateTaskAsg()">${_isAdminFS?`<option value="flowsales"${!data||data.resp==='Flow Sales'?' selected':''}>Flow Sales</option>${_allFirmsA.map(fw=>`<option value="${fw.id}"${data&&data.resp===fw.name?' selected':''}>${fw.name}</option>`).join('')}<option value="ambos"${data&&data.resp==='Ambos'?' selected':''}>Ambos</option>`:`<option${!data||data.resp==='Flow Sales'?' selected':''}>Flow Sales</option><option value="${firmNm}"${data&&(data.resp===firmNm||data.resp==='Escritório')?' selected':''}>${firmNm}</option><option${data&&data.resp==='Ambos'?' selected':''}>Ambos</option>`}</select></div>`;
         setTimeout(()=>_updateTaskAsg(),0);
-        return `<div class="fg"><label>Título</label><input class="fi" id="m-ttl" value="${data?data.title:''}"></div><div class="fg"><label>Descrição</label><textarea id="m-dsc">${data?data.desc||'':''}</textarea></div><div style="display:grid;grid-template-columns:${isClient?'1fr':'1fr 1fr'};gap:10px">${respSel}<div class="fg"><label>Atribuída a</label><select class="fi" id="m-asg">${asgOptsLocal}</select></div></div><div class="fg"><label>Prazo *</label><input class="fi" id="m-due" type="date" value="${data?data.due:''}" style="color-scheme:dark"></div><div class="fg"><label>Status</label><select class="fi" id="m-sta"><option value="pending"${!data||data.status==='pending'?' selected':''}>Pendente</option><option value="done"${data&&data.status==='done'?' selected':''}>Concluída</option><option value="late"${data&&data.status==='late'?' selected':''}>Atrasada</option></select></div><div class="fg" style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="tck-cb" id="m-urg" ${data&&data.urgent?'checked':''}><label style="text-transform:none;letter-spacing:0;font-size:12px;color:var(--text)">Marcar como urgente</label></div>`;
+        return `<div class="fg"><label>Título</label><input class="fi" id="m-ttl" value="${data?data.title:''}"></div><div class="fg"><label>Descrição</label><textarea id="m-dsc">${data?data.desc||'':''}</textarea></div><div style="display:grid;grid-template-columns:${isClient?'1fr':'1fr 1fr'};gap:10px">${respSel}<div class="fg"><label>Atribuída a</label><select class="fi" id="m-asg">${asgOptsLocal}</select></div></div><div class="fg"><label>Prazo *</label><input class="fi" id="m-due" type="date" value="${data?data.due:''}" style="color-scheme:dark"></div><div class="fg"><label>Status</label><select class="fi" id="m-sta"><option value="pending"${!data||data.status==='pending'?' selected':''}>Pendente</option><option value="done"${data&&data.status==='done'?' selected':''}>Concluída</option><option value="late"${data&&data.status==='late'?' selected':''}>Atrasada</option></select></div><div class="fg" style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="tck-cb" id="m-urg" ${data&&data.urgent?'checked':''}><label style="text-transform:none;letter-spacing:0;font-size:12px;color:var(--text)">Marcar como urgente</label></div><div class="fg"><label>Prioridade</label><select class="fi" id="m-pri"><option value="high"${data&&data.pri==='high'?' selected':''}>Alta</option><option value="med"${!data||data.pri==='med'||!data.pri?' selected':''}>Média</option><option value="low"${data&&data.pri==='low'?' selected':''}>Baixa</option></select></div>`;
       },
       save:()=>{
         const _ttl=v('m-ttl').trim();const _dsc=v('m-dsc').trim();
@@ -1890,7 +1937,7 @@ function openM(type,data){
         const due=v('m-due');if(!due){alert('Informe o prazo da task.');return;}
         const firmNm=(FIRMS.find(f=>f.id===S.eid)||{}).name||'Escritório';
         const resp=document.getElementById('m-rsp')?v('m-rsp'):firmNm;
-        const d=ld();const t={id:data?data.id:'t'+Date.now(),title:v('m-ttl'),desc:v('m-dsc'),resp,assign:v('m-asg'),week:data?data.week:1,due,status:v('m-sta'),urgent:document.getElementById('m-urg').checked,created:data?data.created:_localDate()};
+        const d=ld();const t={id:data?data.id:'t'+Date.now(),title:v('m-ttl'),desc:v('m-dsc'),resp,assign:v('m-asg'),week:data?data.week:1,due,status:v('m-sta'),urgent:document.getElementById('m-urg').checked,pri:v('m-pri')||'med',created:data?data.created:_localDate()};
         if(data){const i=d.tasks.findIndex(x=>x.id===data.id);if(i>=0)d.tasks[i]=t;}
         else{d.tasks.push(t);activ(d,'Nova task: '+t.title,'var(--gold)');if(t.assign){const nid='nasgn_'+t.id;if(!d.notifs.find(n=>n.id===nid)){d.notifs.unshift({id:nid,title:'Nova task atribuída a '+t.assign,sub:t.title+(t.due?' · Prazo: '+fd(t.due):''),read:false});}if(t.assign!==S.user.name)_desktopNotif('📋 Task atribuída a '+t.assign,t.title);}_clickupTask(t);}
         cModal(null,1);sv(d);try{renderAll();populateWkFilter();}catch(e){console.warn("renderAll err",e);}
@@ -1917,31 +1964,33 @@ if(notifTargets.includes(S.user.email)){
 // abrir Google Agenda automaticamente
 setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=200,top=100'),300);}sv(d);renderAll();cModal(null,1);}
     },
-    dem:{title:data?'Editar demanda':'Nova demanda',
+    entrega:{title:data?'Editar entrega':'Nova entrega de valor',
       body:()=>{
-        const _allFirmsA=FIRMS.length?FIRMS:(()=>{try{return JSON.parse(localStorage.getItem('fs_firms')||'[]');}catch(e){return[];}})();
-        const _isAdminFS=S.role==='admin'&&S.eid==='flowsales';
-        const isClient=S.role==='client';
-        const firmNm=(FIRMS.find(f=>f.id===S.eid)||{}).name||'Escritório';
-        // Opções de atribuição para cliente: FlowSales + próprios envolvidos
-        const _demClientAsg=()=>{
-          const f=FIRMS.find(x=>x.id===S.eid)||{};
-          const seen=new Set();const names=[];
-          const _add=n=>{const t=(n||'').trim();if(t&&!seen.has(t.toLowerCase())){seen.add(t.toLowerCase());names.push(t);}};
-          _add('Thiago');_add('Carlos');
-          _add(f.contact);
-          if(S.user&&S.user.name)_add(S.user.name);
-          const _d=ld();
-          (_d.partners||[]).forEach(p=>_add(p.name));
-          (_fbDynUsers||[]).filter(u=>u.eid===S.eid&&u.role==='client'&&u.name).forEach(u=>_add(u.name));
-          return names.map(n=>`<option${data&&data.assign===n?' selected':''}>${n}</option>`).join('');
-        };
-        const _demAsgOpts=isClient?_demClientAsg():`<option>Thiago</option><option>Carlos</option>`;
-        const respSel=isClient?'':`<div class="fg"><label>Responsável</label><select class="fi" id="m-rsp" onchange="_updateTaskAsg()">${_isAdminFS?`<option value="flowsales"${!data||data.resp==='Flow Sales'?' selected':''}>Flow Sales</option>${_allFirmsA.map(fw=>`<option value="${fw.id}"${data&&data.resp===fw.name?' selected':''}>${fw.name}</option>`).join('')}<option value="ambos"${data&&data.resp==='Ambos'?' selected':''}>Ambos</option>`:`<option${!data||data.resp==='Flow Sales'?' selected':''}>Flow Sales</option><option value="${firmNm}"${data&&(data.resp===firmNm||data.resp==='Escritório')?' selected':''}>${firmNm}</option><option${data&&data.resp==='Ambos'?' selected':''}>Ambos</option>`}</select></div>`;
-        if(!isClient)setTimeout(()=>_updateTaskAsg(),0);
-        return `<div class="fg"><label>Título</label><input class="fi" id="m-ttl" value="${data?data.title:''}" placeholder="Descreva a demanda..."></div><div class="fg"><label>Detalhes</label><textarea class="fi" id="m-dsc" placeholder="Contexto, impacto, urgência..." style="min-height:80px;resize:vertical">${data?data.desc||'':''}</textarea></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Prioridade</label><select class="fi" id="m-pri"><option value="high"${!data||data.pri==='high'?' selected':''}>Alta - Bloqueia o progresso</option><option value="med"${data&&data.pri==='med'?' selected':''}>Média</option><option value="low"${data&&data.pri==='low'?' selected':''}>Baixa</option></select></div></div>${respSel}<div class="fg"><label>Atribuída a</label><select class="fi" id="m-asg">${_demAsgOpts}</select></div>`;
+        const cats=['GHL','IA','Website','Campanha','Reunião','Outro'];
+        return `<div class="fg"><label>Título</label><input class="fi" id="en-ttl" value="${data?data.title:''}" placeholder="Ex: Landing page criada, Campanha no ar..."></div><div class="fg"><label>Categoria</label><select class="fi" id="en-cat">${cats.map(ct=>`<option${data&&data.category===ct?' selected':''}>${ct}</option>`).join('')}</select></div><div class="fg"><label>Descrição</label><textarea class="fi" id="en-dsc" placeholder="Detalhes do que foi entregue..." style="min-height:80px;resize:vertical">${data?data.desc||'':''}</textarea></div><div class="fg"><label>Anexos (opcional)</label><input type="file" class="fi" id="en-files" multiple accept="image/*,.pdf,.doc,.docx,.mp4,.zip" style="padding:6px"><div id="en-file-list" style="margin-top:6px"></div></div>`;
       },
-      save:()=>{const _dt=v('m-ttl').trim();const _dd=v('m-dsc').trim();if(!_dt){_showToast('Preencha o título da demanda','var(--red)');return;}if(!_dd){_showToast('Preencha os detalhes','var(--red)');return;}const isClient=S.role==='client';const resp=isClient?'Escritório':(v('m-rsp')||'Flow Sales');const d=ld();const dm={id:data?data.id:'d'+Date.now(),title:_dt,desc:_dd,pri:v('m-pri'),resp,assign:v('m-asg'),status:data?data.status:'open',created:data?data.created:new Date().toISOString().split('T')[0]};if(data){const i=d.demands.findIndex(x=>x.id===data.id);if(i>=0)d.demands[i]=dm;}else{d.demands.push(dm);if(dm.pri==='high')d.notifs.unshift({id:'nd_'+dm.id,title:'Nova demanda urgente',sub:dm.title,read:false});activ(d,'Demanda criada: '+dm.title,'var(--red)');}sv(d);renderAll();cModal(null,1);}
+      save:()=>{
+        const ttl=(v('en-ttl')||'').trim();
+        if(!ttl){_showToast('Preencha o título','var(--red)');return;}
+        const inp=document.getElementById('en-files');
+        const files=inp&&inp.files.length?Array.from(inp.files):[];
+        const existing=(data&&data.files)||[];
+        const finish=(newFiles)=>{
+          const d=ld();
+          d.entregas=d.entregas||[];
+          const e={id:data?data.id:'en'+Date.now(),title:ttl,category:v('en-cat')||'Outro',desc:v('en-dsc')||'',files:[...existing,...newFiles],date:data?data.date:new Date().toISOString().split('T')[0]};
+          if(data){const i=d.entregas.findIndex(x=>x.id===data.id);if(i>=0)d.entregas[i]=e;else d.entregas.push(e);}
+          else{d.entregas.push(e);activ(d,'Entrega adicionada: '+e.title,'var(--gold)');}
+          sv(d);renderAll();cModal(null,1);
+        };
+        if(!files.length){finish([]);return;}
+        let done=0;const loaded=[];
+        files.forEach(file=>{
+          const r=new FileReader();
+          r.onload=ev=>{loaded.push({id:'ef'+Date.now()+Math.random(),name:file.name,type:file.type,data:ev.target.result,desc:''});done++;if(done===files.length)finish(loaded);};
+          r.readAsDataURL(file);
+        });
+      }
     },
     contrato:{title:'Editar contrato',
       body:()=>{const f=FIRMS.find(x=>x.id===S.eid)||{};return`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Início do programa</label><input class="fi" id="ct-start" type="date" value="${f.start||''}" style="color-scheme:dark"></div><div class="fg"><label>Vencimento mensal</label><input class="fi" id="ct-due" type="date" value="${f.due||''}" style="color-scheme:dark"></div><div class="fg"><label>Mensalidade (R$)</label><input class="fi" id="ct-fee" type="number" value="${f.fee||3500}"></div><div class="fg"><label>Semana atual</label><input class="fi" id="ct-wk" type="number" min="1" value="${f.week||1}"></div><div class="fg"><label>Total de semanas</label><input class="fi" id="ct-tot" type="number" min="1" value="${f.total||26}"></div></div>`;},
@@ -1954,6 +2003,10 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
     kpi:{title:'Atualizar métricas',
       body:()=>{const k=ld().kpis;return`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Investimento (R$)</label><input class="fi" id="k-inv" type="number" value="${k.invest}"></div><div class="fg"><label>Impressões</label><input class="fi" id="k-imp" type="number" value="${k.impressoes}"></div><div class="fg"><label>Cliques</label><input class="fi" id="k-cli" type="number" value="${k.cliques}"></div><div class="fg"><label>Custo por lead (R$)</label><input class="fi" id="k-cpl" type="number" value="${k.cpl}"></div><div class="fg"><label>Leads gerados</label><input class="fi" id="k-l" type="number" value="${k.leads}"></div><div class="fg"><label>Meta de leads</label><input class="fi" id="k-lg" type="number" value="${k.leadsG}"></div><div class="fg"><label>Reuniões agendadas</label><input class="fi" id="k-ra" type="number" value="${k.reunAgd}"></div><div class="fg"><label>Meta reun. agendadas</label><input class="fi" id="k-rag" type="number" value="${k.reunAgdG}"></div><div class="fg"><label>Reuniões realizadas</label><input class="fi" id="k-rr" type="number" value="${k.reunReal}"></div><div class="fg"><label>Meta reun. realizadas</label><input class="fi" id="k-rrg" type="number" value="${k.reunRealG}"></div><div class="fg"><label>Vendas fechadas</label><input class="fi" id="k-vd" type="number" value="${k.vendas}"></div><div class="fg"><label>Meta de vendas</label><input class="fi" id="k-vdg" type="number" value="${k.vendasG}"></div><div class="fg"><label>Faturamento (R$)</label><input class="fi" id="k-r" type="number" value="${k.rev}"></div><div class="fg"><label>Meta faturamento (R$)</label><input class="fi" id="k-rg" type="number" value="${k.revG}"></div></div>`;},
       save:()=>{const d=ld();d.kpis={...d.kpis,invest:+v('k-inv'),impressoes:+v('k-imp'),cliques:+v('k-cli'),cpl:+v('k-cpl'),leads:+v('k-l'),leadsG:+v('k-lg'),reunAgd:+v('k-ra'),reunAgdG:+v('k-rag'),reunReal:+v('k-rr'),reunRealG:+v('k-rrg'),vendas:+v('k-vd'),vendasG:+v('k-vdg'),rev:+v('k-r'),revG:+v('k-rg'),conv:d.kpis.conv};activ(d,'Métricas atualizadas','var(--blue)');sv(d);renderAll();cModal(null,1);}
+    },
+    metaDin:{title:'Metas do mês',
+      body:()=>{const def=data||{};const lbl=def.key==='calls'?'Reuniões':def.key==='vendas'?'Vendas':'Faturamento';return`<div style="font-size:12px;color:var(--t2);margin-bottom:12px">Configure as metas mensais. A meta diária e semanal são calculadas automaticamente.</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Meta mensal (${lbl})</label><input class="fi" id="md-monthly" type="number" min="0" value="${def.monthly||0}"></div><div class="fg"><label>Progresso atual</label><input class="fi" id="md-current" type="number" min="0" value="${def.current||0}"></div></div>`;},
+      save:()=>{const d=ld();d.metasDin=d.metasDin||{calls:{monthly:0,current:0},vendas:{monthly:0,current:0},fat:{monthly:0,current:0}};const k=(data||{}).key||'calls';d.metasDin[k]={monthly:+(v('md-monthly')||0),current:+(v('md-current')||0)};sv(d);renderAll();cModal(null,1);}
     },
     mday:{title:'Nova meta do dia',body:`<div class="fg"><label>Meta</label><input class="fi" id="m-ttl" placeholder="O que precisa ser feito hoje?"></div>`,save:()=>addMeta('day')},
     mwk:{title:'Nova meta da semana',body:`<div class="fg"><label>Meta</label><input class="fi" id="m-ttl" placeholder="O que precisa ser entregue essa semana?"></div>`,save:()=>addMeta('wk')},
@@ -2129,7 +2182,7 @@ function rFirms(){
     var cBar='<div style="margin-top:6px"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t2);margin-bottom:3px"><span>Contrato</span><span>'+wkPct+'%</span></div><div style="height:4px;background:var(--s3);border-radius:2px"><div style="height:100%;width:'+wkPct+'%;background:'+(wkPct>=85?'var(--green)':wkPct>=50?'var(--blue)':'var(--gold)')+';border-radius:2px;transition:width .4s"></div></div></div>';
     return '<div class="card" style="padding:14px 16px;margin-bottom:8px">'
       +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">'
-      +'<div><div style="font-size:13px;font-weight:600">'+f.name+'</div>'
+      +(function(){var _db='';if(f.due){try{var _dd=new Date(f.due+'T12:00:00');var _dn=Math.round((_dd-today)/864e5);if(_dn<=0)_db=' <span style="font-size:9px;font-weight:700;color:#fff;background:var(--red);border-radius:3px;padding:1px 5px">Vence hoje</span>';else if(_dn===1)_db=' <span style="font-size:9px;font-weight:700;color:#fff;background:var(--red);border-radius:3px;padding:1px 5px">Vence amanhã</span>';else if(_dn<=7)_db=' <span style="font-size:9px;font-weight:700;color:var(--gold);background:rgba(201,168,67,.15);border:0.5px solid var(--gold);border-radius:3px;padding:1px 5px">Vence em '+_dn+'d</span>';}catch(ex){}}return '<div><div style="font-size:13px;font-weight:600">'+f.name+_db+'</div>';})() 
       +'<div style="font-size:10px;color:var(--t2);margin-top:2px">'+(f.area||'')+' · '+(f.city||'')+'</div></div>'
       +'<div style="display:flex;gap:6px;align-items:center">'
       +'<span style="font-size:11px;font-weight:700;color:'+hc+';background:'+hc+'22;border:0.5px solid '+hc+'44;border-radius:4px;padding:2px 6px">'+hl+(health!==null?' '+health+'%':'')+'</span>'
