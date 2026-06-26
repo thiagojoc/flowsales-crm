@@ -1879,7 +1879,7 @@ function saveKpiHistory(){const d=ld();const k=d.kpis;const week=Math.max(0,...(
 
 function rBadges(d){
   const pt=d.tasks.filter(t=>t.status==='pending'||t.status==='late').length;const bt=document.getElementById('bdgt');bt.textContent=pt;bt.style.display=pt?'flex':'none';
-  const oe=(d.entregas||[]).length;const bd=document.getElementById('bdgd');bd.textContent=oe;bd.style.display=oe?'flex':'none';
+  const bd=document.getElementById('bdgd');if(bd)bd.style.display='none';
   const uc=d.unreadChat||0;const bc=document.getElementById('bdgc');bc.textContent=uc;bc.style.display=uc?'flex':'none';
 }
 
