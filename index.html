@@ -1981,11 +1981,12 @@ function openM(type,data){
           // FlowSales team sempre disponível para clientes atribuírem
           _add('Thiago');_add('Carlos');
           // pessoas do escritório
-          _add(f.contact);
           if(S.user&&S.user.name)_add(S.user.name);
           const _d=ld();
           (_d.partners||[]).forEach(p=>_add(p.name));
           (_fbDynUsers||[]).filter(u=>u.eid===S.eid&&u.role==='client'&&u.name).forEach(u=>_add(u.name));
+          // contact do FIRMS apenas como fallback
+          if(!names.length)_add(f.contact);
           return names.map(n=>`<option${data&&data.assign===n?' selected':''}>${n}</option>`).join('');
         };
         const _asgAdmin=()=>{
@@ -1995,9 +1996,10 @@ function openM(type,data){
           const seen=new Set();const allNames=[];
           const _add=n=>{const t=(n||'').trim();if(t&&!seen.has(t.toLowerCase())){seen.add(t.toLowerCase());allNames.push(t);}};
           _add('Thiago');_add('Carlos');
-          _add(f.contact);
           (_d.partners||[]).forEach(p=>_add(p.name));
           (_fbDynUsers||[]).filter(u=>u.eid===S.eid&&u.role==='client'&&u.name).forEach(u=>_add(u.name));
+          // contact do FIRMS apenas como fallback
+          if(!allNames.some(n=>n!=='Thiago'&&n!=='Carlos'))_add(f.contact);
           return allNames.map(n=>`<option${data&&data.assign===n?' selected':''}>${n}</option>`).join('');
         };
         const asgOptsLocal=S.role==='client'?_buildClientAsg():_asgAdmin();
@@ -2491,13 +2493,13 @@ async function _getFirmPeople(firmId){
   // 3. respName do firmExtra (responsável do formulário)
   const rn=(fd?.firmExtra?.respName||fd?.firmExtra?.resp||'').trim();
   if(rn&&!has(rn))names.push(rn);
-  // 4. contact do FIRMS (primeiro parceiro ou nome da firma como fallback)
-  if(fw.contact&&!has(fw.contact))names.push(fw.contact);
-  // 5. partners (sócios)
+  // 4. partners (sócios) — fonte principal
   (fd?.partners||[]).forEach(p=>{if(p.name&&!has(p.name))names.push(p.name);});
-  // 6. usuários dinâmicos / locais
+  // 5. usuários dinâmicos / locais
   (_fbDynUsers||[]).filter(u=>u.eid===firmId&&u.role==='client'&&u.name&&!has(u.name)).forEach(u=>names.push(u.name));
   (window.USERS||[]).filter(u=>u.eid===firmId&&u.role==='client'&&u.name&&!has(u.name)).forEach(u=>names.push(u.name));
+  // 6. contact do FIRMS apenas como fallback se lista ainda vazia
+  if(!names.length&&fw.contact)names.push(fw.contact);
   _firmPeopleCache[firmId]=names;
   return names;
 }
