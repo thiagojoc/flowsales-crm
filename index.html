@@ -499,7 +499,7 @@ window._fbOnSnapshot = onSnapshot;
       </div>
       <div class="sb-firm-wrap" id="firm-wrap">
         <div class="sb-firm" id="sfirm" onclick="toggleFirmDrop(event)">
-          <div class="sb-fn"><span id="sfn">Carregando...</span><svg id="firm-arr" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;color:var(--t2);display:none"><polyline points="6 9 12 15 18 9"/></svg></div>
+          <div class="sb-fn" style="display:flex;align-items:center;gap:8px"><img id="sfirm-photo" src="" style="width:26px;height:26px;border-radius:50%;object-fit:cover;display:none;border:0.5px solid var(--gbr);flex-shrink:0"><span id="sfn">Carregando...</span><svg id="firm-arr" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;color:var(--t2);display:none"><polyline points="6 9 12 15 18 9"/></svg></div>
           <div class="sb-fs" id="sfs"></div>
           <div class="sb-badge" id="sbdg"></div>
         </div>
@@ -598,10 +598,7 @@ window._fbOnSnapshot = onSnapshot;
                 <div class="ch"><div class="ct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Próxima reunião</div></div>
                 <div id="nxtmeet"></div>
               </div>
-              <div class="card" id="card-p90">
-                <div class="ch"><div class="ct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/></svg>Programa 6 meses</div><button class="ca" onclick="nav('tasks')">Demandas</button></div>
-                <div id="p90"></div>
-              </div>
+
             </div>
           </div>
 
@@ -1253,6 +1250,8 @@ function loadFirm(){
   document.getElementById('sfn').textContent=f.name;
   document.getElementById('sfs').textContent='';
   document.getElementById('sbdg').textContent='';
+  const _sphEl=document.getElementById('sfirm-photo');
+  if(_sphEl){const _sph=f.photo||(()=>{try{return JSON.parse(localStorage.getItem('fs_'+S.eid)||'{}').firmExtra?.firmPhoto||'';}catch(e){return '';}})();if(_sph){_sphEl.src=_sph;_sphEl.style.display='';}else _sphEl.style.display='none';}
 }
 function populateWkFilter(){const sel=document.getElementById('wk-sel');if(!sel)return;const d=ld();const weeks=[...new Set(d.tasks.map(t=>t.week))].sort((a,b)=>a-b);sel.innerHTML='<option value="all">Todas</option>'+weeks.map(w=>`<option value="${w}">Semana ${w}</option>`).join('');}
 
@@ -1977,7 +1976,7 @@ function openM(type,data){
         const _buildClientAsg=()=>{
           const f=FIRMS.find(x=>x.id===S.eid)||{};
           const seen=new Set();const names=[];
-          const _add=n=>{const t=(n||'').trim();if(t&&!seen.has(t.toLowerCase())){seen.add(t.toLowerCase());names.push(t);}};
+          const _add=n=>{const t=(n||'').trim();const tl=t.toLowerCase();const tf=tl.split(' ')[0];if(t&&!seen.has(tl)&&!names.some(x=>x.toLowerCase().split(' ')[0]===tf)){seen.add(tl);names.push(t);}};
           // FlowSales team sempre disponível para clientes atribuírem
           _add('Thiago');_add('Carlos');
           // pessoas do escritório
@@ -1994,7 +1993,7 @@ function openM(type,data){
           const f=FIRMS.find(x=>x.id===S.eid)||{};
           const _d=ld();
           const seen=new Set();const allNames=[];
-          const _add=n=>{const t=(n||'').trim();if(t&&!seen.has(t.toLowerCase())){seen.add(t.toLowerCase());allNames.push(t);}};
+          const _add=n=>{const t=(n||'').trim();const tl=t.toLowerCase();const tf=tl.split(' ')[0];if(t&&!seen.has(tl)&&!allNames.some(x=>x.toLowerCase().split(' ')[0]===tf)){seen.add(tl);allNames.push(t);}};
           _add('Thiago');_add('Carlos');
           (_d.partners||[]).forEach(p=>_add(p.name));
           (_fbDynUsers||[]).filter(u=>u.eid===S.eid&&u.role==='client'&&u.name).forEach(u=>_add(u.name));
@@ -2017,7 +2016,7 @@ function openM(type,data){
         const resp=document.getElementById('m-rsp')?v('m-rsp'):firmNm;
         const d=ld();const t={id:data?data.id:'t'+Date.now(),title:v('m-ttl'),desc:v('m-dsc'),resp,assign:v('m-asg'),week:data?data.week:1,due,status:v('m-sta'),urgent:document.getElementById('m-urg').checked,pri:_pri||'med',created:data?data.created:_localDate()};
         if(data){const i=d.tasks.findIndex(x=>x.id===data.id);if(i>=0)d.tasks[i]=t;}
-        else{d.tasks.push(t);activ(d,'Nova demanda: '+t.title,'var(--gold)');if(t.assign){const nid='nasgn_'+t.id;if(!d.notifs.find(n=>n.id===nid)){d.notifs.unshift({id:nid,title:'Nova demanda atribuída a '+t.assign,sub:t.title+(t.due?' · Prazo: '+fd(t.due):''),read:false});}if(t.assign!==S.user.name)_desktopNotif('📋 Demanda atribuída a '+t.assign,t.title);}_clickupTask(t);}
+        else{d.tasks.push(t);activ(d,'Nova demanda: '+t.title,'var(--gold)');if(t.assign){const _fnm=s=>(s||'').trim().split(' ')[0].toLowerCase();const _isMe=_fnm(t.assign)===_fnm(S.user&&S.user.name);if(_isMe){const nid='nasgn_'+t.id;if(!d.notifs.find(n=>n.id===nid)){d.notifs.unshift({id:nid,title:'Nova demanda atribuída a você',sub:t.title+(t.due?' · Prazo: '+fd(t.due):''),read:false});}}else _desktopNotif('📋 Demanda atribuída a '+t.assign,t.title);}_clickupTask(t);}
         cModal(null,1);sv(d);try{renderAll();populateWkFilter();}catch(e){console.warn("renderAll err",e);}
       }
     },

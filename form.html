@@ -145,6 +145,17 @@ textarea{resize:none;min-height:100px;line-height:1.65;}
           <div class="step-sub">Informações do escritório como pessoa jurídica.</div>
         </div>
         <div class="fg">
+          <label>Logo / Foto do escritório <span class="req">*</span></label>
+          <div class="photo-upload-wrap" id="photo-wrap-esc" onclick="document.getElementById('f-foto-esc').click()">
+            <div class="photo-preview" id="photo-preview-esc">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--t3)"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <span>Clique para adicionar logo ou foto</span>
+            </div>
+            <input type="file" id="f-foto-esc" accept="image/*" style="display:none" onchange="previewPhoto('esc',this)">
+          </div>
+          <div class="field-err" id="e-foto-esc">Adicione uma foto ou logo do escritório</div>
+        </div>
+        <div class="fg">
           <label>Nome do escritório <span class="req">*</span></label>
           <input type="text" id="f-escritorio" placeholder="Ex: Silva & Associados Advocacia">
           <div class="field-err" id="e-escritorio">Digite o nome do escritório</div>
@@ -571,6 +582,7 @@ function validate(step){
     const cepVal = fv('f-cep').replace(/\D/g,'');
     setErr('f-cep','e-cep', cepVal.length!==8);
     if(cepVal.length!==8) ok=false;
+    const fotoEscVal=(document.getElementById('f-foto-esc')||{}).dataset?.b64||'';const fotoEscWrap=document.getElementById('photo-wrap-esc');const fotoEscErr=document.getElementById('e-foto-esc');if(!fotoEscVal){if(fotoEscWrap)fotoEscWrap.classList.add('err');if(fotoEscErr)fotoEscErr.classList.add('on');ok=false;}else{if(fotoEscWrap)fotoEscWrap.classList.remove('err');if(fotoEscErr)fotoEscErr.classList.remove('on');}
   }
   if(step===2){
     // Foto do responsável
@@ -777,6 +789,7 @@ async function submitForm(){
   const respCep    = fv('f-resp-cep').trim();
   const respComp   = fv('f-resp-comp').trim();
   const respEndereco=[respRua+(respNum?', '+respNum:''), respBairro, respCidade+(respUF?' / '+respUF:''), respCep, respComp].filter(Boolean).join(' · ');
+  const fotoEscB64 = (document.getElementById('f-foto-esc')||{}).dataset?.b64||'';
   const fotoRespB64= (document.getElementById('f-foto-resp')||{}).dataset?.b64||'';
   // — Extras
   const site       = fv('f-site').trim();
@@ -799,7 +812,7 @@ async function submitForm(){
     notifs:[],activity:[],note:'',unreadChat:0,
     partners:getSocios().map((s,i)=>({id:'p'+Date.now()+i,name:s.nomeCompleto,role:'Sócio(a)',email:s.email,phone:s.tel,oab:s.oab,area:s.area,ig:s.ig||'',address:s.addr,photo:s.photo||''})),
     payments:[],
-    firmExtra:{address:escEndereco,website:site,instagram:instagram?'@'+instagram:'',respPhoto:fotoRespB64,respAddress:respEndereco,respOAB:oab,respAreas:areas,respInstagram:fv('f-resp-ig').trim().replace('@','')},
+    firmExtra:{address:escEndereco,website:site,instagram:instagram?'@'+instagram:'',firmPhoto:fotoEscB64,respPhoto:fotoRespB64,respAddress:respEndereco,respOAB:oab,respAreas:areas,respInstagram:fv('f-resp-ig').trim().replace('@','')},
     __ts: Date.now()
   };
 
@@ -808,7 +821,8 @@ async function submitForm(){
     contact:responsavel, phone:telEsc, email:emailEsc,
     contactPhone:telefone, contactEmail:email,
     fee:3500, start: new Date().toISOString().slice(0,10),
-    address:escEndereco, website:site, oab, due:''
+    address:escEndereco, website:site, oab, due:'',
+    photo:fotoEscB64
   };
 
   const novoUsuario = {
