@@ -2521,7 +2521,7 @@ function rFlow(){
           +(e.category?'<span style="font-size:12px;color:'+cc+';background:'+cc+'18;border-radius:4px;padding:1px 6px">'+e.category+'</span>':'')
           +(dateStr?'<span style="font-size:12px;color:var(--t2)">'+dateStr+'</span>':'')
           +'</div></div>'
-          +'<button class="ib" onclick="selectFirm(''+f.id+'')" title="Ver escritório" style="flex-shrink:0"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>'
+          +'<button class="ib" onclick="selectFirm(&quot;'+f.id+'&quot;)" title="Ver escritório" style="flex-shrink:0"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>'
           +'</div>';
       }).join('');
       const done=ents.filter(e=>e.done!==false).length;
