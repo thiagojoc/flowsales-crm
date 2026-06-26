@@ -728,7 +728,7 @@ function telMask(id){
   const el = document.getElementById(id);
   if(!el) return;
   el.addEventListener('input',function(){
-    let v=this.value.replace(/\D/g,'');
+    let v=this.value.replace(/\D/g,'').slice(0,11);
     if(v.length<=10) v=v.replace(/(\d{2})(\d{4})(\d{0,4})/,'($1) $2-$3');
     else v=v.replace(/(\d{2})(\d{5})(\d{0,4})/,'($1) $2-$3');
     this.value=v.trim().replace(/-$/,'');
