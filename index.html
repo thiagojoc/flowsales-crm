@@ -1930,10 +1930,10 @@ function openProfile(){
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
     
     +'<div class="fg"><label>WhatsApp</label><input class="fi" id="upf-wa" value="'+_wa+'" placeholder="(00) 00000-0000"></div>'
-    +'<div class="fg"><label>OAB</label><input class="fi" id="upf-oab" value="'+_oab+'" placeholder="OAB/UF 000000"></div>'
     +'<div class="fg"><label>Instagram</label><input class="fi" id="upf-ig" value="'+_ig+'" placeholder="@usuario"></div>'
+    +(S.role==='client'?'<div class="fg"><label>OAB</label><input class="fi" id="upf-oab" value="'+_oab+'" placeholder="OAB/UF 000000"></div>':'')
     +'</div>'
-    +'<div class="fg"><label>Áreas de atuação</label><input class="fi" id="upf-areas" value="'+_areas+'" placeholder="Cível, Trabalhista..."></div>'
+    +(S.role==='client'?'<div class="fg"><label>Áreas de atuação</label><input class="fi" id="upf-areas" value="'+_areas+'" placeholder="Cível, Trabalhista..."></div>':'')
     +'<div class="fg"><label>Endereço</label><input class="fi" id="upf-addr" value="'+_addr+'" placeholder="Rua, número, cidade/UF"></div>'
     +'<div class="fg"><label>Cargo / Título</label><input class="fi" id="upf-title" value="'+(saved.title||'')+'" placeholder="Advogado, Sócio..."></div>'
     +'<div style="border-top:0.5px solid var(--bdr);margin:16px 0;padding-top:16px">'
