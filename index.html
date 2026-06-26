@@ -599,8 +599,8 @@ window._fbOnSnapshot = onSnapshot;
             </div>
           </div>
           <div class="card" id="card-notetxt">
-            <div class="ch"><div class="ct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Resumo executivo</div><button class="ca" id="notebtn" onclick="openM('note')">Editar</button></div>
-            <div id="notetxt" class="note-view note-ph">Adicione um resumo executivo visível ao cliente.</div>
+            <div class="ch"><div class="ct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>Mensagem do dia</div></div>
+            <div id="daily-msg" style="font-size:13px;color:var(--text);line-height:1.75;font-style:italic;padding:2px 0"></div>
           </div>
         </div>
 
@@ -1336,8 +1336,7 @@ function rOv(d){
   const pct=total?Math.round(done/total*100):0;
   const weeks=[...new Set(d.tasks.map(t=>t.week))].sort((a,b)=>a-b);
   const _p90=document.getElementById('p90');if(_p90)_p90.innerHTML=`<div class="pi"><div class="ph"><div class="pl">Progresso geral</div><div class="pv">${done}/${total}</div></div><div class="ptr"><div class="pf" style="width:${pct}%;background:var(--gold)"></div></div></div>`+weeks.slice(0,5).map(w=>{const wt=d.tasks.filter(t=>t.week===w);const wd=wt.filter(t=>t.status==='done').length;const wp=wt.length?Math.round(wd/wt.length*100):0;const c=wp===100?'var(--green)':wp>0?'var(--gold)':'var(--s3)';return`<div class="pi"><div class="ph"><div class="pl" style="font-size:12px;color:var(--t2)">Semana ${w}</div><div class="pv" style="font-size:12px;color:${c}">${wp}%</div></div><div class="ptr" style="height:4px"><div class="pf" style="width:${wp}%;background:${c}"></div></div></div>`;}).join('');
-  const nt=document.getElementById('notetxt');if(nt){nt.textContent=d.note||'';nt.className='note-view'+(d.note?'':' note-ph');}
-  const notebtn=document.getElementById('notebtn');if(notebtn&&S.role==='client')notebtn.style.display='none';
+  (function(){const _M=['Todo cliente que entra pela porta hoje ja passou por outro escritorio que nao soube encanta-lo. Essa e a sua chance.','Processos vencem na mesa antes de vencem no tribunal. A estrategia que voce afina hoje importa mais do que parece.','O cliente nao compra advocacia, ele compra a sensacao de que alguem capaz esta do lado dele.','A diferenca entre um bom advogado e um excelente e que o excelente liga antes de o cliente perceber que precisa.','Reputacao se constroi caso a caso. Cada detalhe de hoje e parte de algo maior.','O mercado lembra de quem foi consistente, nao de quem teve um bom mes.','Clientes satisfeitos nao precisam de contrato de fidelidade.','A advocacia que nao se reinventa nao some da noite pro dia, ela vai desaparecendo devagar.','Excelencia nao e entregar o maximo quando esta motivado. E entregar o suficiente mesmo quando nao esta.','A confianca que o cliente deposita em voce e o ativo mais valioso do seu escritorio. Trate como tal.','Bons processos acontecem por acaso. Excelentes processos acontecem por sistema.','O cliente que voce atendeu bem hoje vai mandar tres amigos amanha.','Nao existe atalho para reputacao no direito. Existe consistencia.','A clareza que voce traz para um cliente confuso e, por si so, um servico inestimavel.','O diferencial do seu escritorio nao esta nos diplomas na parede, esta no que acontece depois que o cliente assina.','A advocacia de resultado comeca com a gestao que sustenta a entrega.','Escritorios que crescem tem uma coisa em comum: sabem exatamente onde estao e para onde vao.','O trabalho invisivel, o que nenhum cliente ve, e o que separa os bons dos excelentes.','Clareza de processo e respeito pelo tempo do seu cliente. E pelo seu.','Todo cliente bem atendido hoje e um caso novo que aparece amanha sem custo de aquisicao.','Seu escritorio e tao forte quanto o sistema que o sustenta quando voce esta ausente.','Cada reuniao bem conduzida e um tijolo a mais na reputacao que voce esta construindo.'];function _hd(s){let h=0;for(let i=0;i<s.length;i++){h=(Math.imul(31,h)+s.charCodeAt(i))|0;}return Math.abs(h);}const _today=new Date().toISOString().split('T')[0];const _dmk='fs_dailymsg_'+(S.eid||'x');let _dm=null;try{const _raw=localStorage.getItem(_dmk);if(_raw){const _o=JSON.parse(_raw);if(_o.date===_today)_dm=_o.msg;}}catch(e){}if(!_dm){_dm=_M[_hd(_today+(S.eid||''))%_M.length];try{localStorage.setItem(_dmk,JSON.stringify({date:_today,msg:_dm}));}catch(e){}}const _el=document.getElementById('daily-msg');if(_el)_el.textContent=_dm;})();
   // Programa 6 meses: oculto no painel admin (sem cliente selecionado)
   const cardP90=document.getElementById('card-p90');
   const cardNote=document.getElementById('card-notetxt');
@@ -1965,7 +1964,7 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
     entrega:{title:data?'Editar entrega':'Nova entrega de valor',
       body:()=>{
         const cats=['GHL','IA','Website','Campanha','Reunião','Outro'];
-        return `<div class="fg"><label>Título</label><input class="fi" id="en-ttl" value="${data?data.title:''}" placeholder="Ex: Landing page criada, Campanha no ar..."></div><div class="fg"><label>Categoria</label><select class="fi" id="en-cat">${cats.map(ct=>`<option${data&&data.category===ct?' selected':''}>${ct}</option>`).join('')}</select></div><div class="fg"><label>Descrição</label><textarea class="fi" id="en-dsc" placeholder="Detalhes do que foi entregue..." style="min-height:80px;resize:vertical">${data?data.desc||'':''}</textarea></div><div class="fg"><label>Anexos (opcional)</label><input type="file" class="fi" id="en-files" multiple accept="image/*,.pdf,.doc,.docx,.mp4,.zip" style="padding:6px"><div id="en-file-list" style="margin-top:6px"></div></div>`;
+        return `<div class="fg"><label>Título</label><input class="fi" id="en-ttl" value="${data?data.title:''}" placeholder="Ex: Landing page criada, Campanha no ar..."></div><div class="fg"><label>Categoria</label><select class="fi" id="en-cat">${cats.map(ct=>`<option${data&&data.category===ct?' selected':''}>${ct}</option>`).join('')}</select></div><div class="fg"><label>Descrição</label><textarea class="fi" id="en-dsc" placeholder="Detalhes do que foi entregue..." style="min-height:80px;resize:vertical">${data?data.desc||'':''}</textarea></div><div class="fg"><label>Anexos (opcional)</label><input type="file" class="fi" id="en-files" multiple accept="image/*,.pdf,.doc,.docx,.mp4,.zip" style="padding:6px;cursor:pointer"><div id="en-file-list" style="margin-top:6px"></div></div>`;
       },
       save:()=>{
         const ttl=(v('en-ttl')||'').trim();
@@ -1978,7 +1977,7 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
           d.entregas=d.entregas||[];
           const e={id:data?data.id:'en'+Date.now(),title:ttl,category:v('en-cat')||'Outro',desc:v('en-dsc')||'',files:[...existing,...newFiles],date:data?data.date:new Date().toISOString().split('T')[0]};
           if(data){const i=d.entregas.findIndex(x=>x.id===data.id);if(i>=0)d.entregas[i]=e;else d.entregas.push(e);}
-          else{d.entregas.push(e);activ(d,'Entrega adicionada: '+e.title,'var(--gold)');}
+          else{d.entregas.push(e);d.notifs=d.notifs||[];const _nid='nent_'+e.id;if(!d.notifs.find(n=>n.id===_nid)){d.notifs.unshift({id:_nid,title:'Nova entrega de valor',sub:e.title,read:false});}}
           sv(d);renderAll();cModal(null,1);
         };
         if(!files.length){finish([]);return;}
@@ -2223,7 +2222,7 @@ function edFirm(id){
   const f=FIRMS.find(x=>x.id===id);if(!f)return;
   openM('edFirmAdmin',f);
 }
-async function removeFirm(id){if(!confirm('Remover este escritório?'))return;const idx=FIRMS.findIndex(f=>f.id===id);if(idx>=0)FIRMS.splice(idx,1);localStorage.setItem('fs_firms',JSON.stringify(FIRMS));rFirms();setupFirmSelect();try{await _waitFB();await window._fbSetDoc(window._fbDoc(window._fbDB,'flowsales_crm','__config'),{firms:FIRMS,__ts:Date.now()},{merge:true});_showToast('Escritório removido ✅','var(--green)');}catch(e){console.error('[FB] remove err:',e);}}
+async function removeFirm(id){if(!confirm('Remover este escritório?'))return;const idx=FIRMS.findIndex(f=>f.id===id);if(idx>=0)FIRMS.splice(idx,1);delete _firmPeopleCache[id];localStorage.setItem('fs_firms',JSON.stringify(FIRMS));rFirms();setupFirmSelect();try{await _waitFB();await window._fbSetDoc(window._fbDoc(window._fbDB,'flowsales_crm','__config'),{firms:FIRMS,__ts:Date.now()},{merge:true});_showToast('Escritório removido ✅','var(--green)');}catch(e){console.error('[FB] remove err:',e);}}
 
 // ── FLOWSALES INTERNAL ─────────────────────────────────────────
 function ldFS(){const s=localStorage.getItem('fs_internal');return s?JSON.parse(s):{tasks:[],msgs:[],pipeline:[],goals:[{id:'g1',title:'MRR R$ 21.000 (6 clientes)',done:false},{id:'g2',title:'Fechar 2 novos clientes no mês',done:false},{id:'g3',title:'NPS dos clientes > 8',done:false}]};}
@@ -2395,7 +2394,7 @@ function rFlow(){
 // cache de pessoas por firma (evitar múltiplas chamadas Firebase na mesma sessão)
 const _firmPeopleCache={};
 async function _getFirmPeople(firmId){
-  if(_firmPeopleCache[firmId])return _firmPeopleCache[firmId];
+  if(_firmPeopleCache[firmId]&&FIRMS.some(x=>x.id===firmId))return _firmPeopleCache[firmId];
   const fw=FIRMS.find(x=>x.id===firmId)||{};
   const norm=s=>(s||'').trim().toLowerCase();
   const names=[];const has=n=>names.some(x=>norm(x)===norm(n));
