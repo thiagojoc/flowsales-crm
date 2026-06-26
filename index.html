@@ -2551,21 +2551,17 @@ async function _updateTaskAsg(){
     const _fd=ld();const _fw=FIRMS.find(x=>x.id===S.eid)||{};
     const _nm=s=>(s||'').trim().toLowerCase();
     const _has=n=>names.some(x=>_nm(x)===_nm(n));
-    if(_fw.contact&&!_has(_fw.contact))names.push(_fw.contact);
     (_fd.partners||[]).forEach(p=>{if(p.name&&!_has(p.name))names.push(p.name);});
     (_fbDynUsers||[]).filter(u=>u.eid===S.eid&&u.role==='client'&&u.name&&!_has(u.name)).forEach(u=>names.push(u.name));
+    if(!names.some(n=>n!=='Thiago'&&n!=='Carlos')&&_fw.contact&&!_has(_fw.contact))names.push(_fw.contact);
   } else if(isFirmId){
     // Admin selecionou um escritório específico — busca pessoas desse escritório
     const pp=await _getFirmPeople(rsp);
     names=pp.length?pp:[...flowPeople];
   } else {
-    // Nome de firma (não ID) — comportamento legado
-    const _fd=ld();const _fw=FIRMS.find(x=>x.id===S.eid)||{};
-    const _nm=s=>(s||'').trim().toLowerCase();const _has=n=>names.some(x=>_nm(x)===_nm(n));
-    if(_fw.contact&&!_has(_fw.contact))names.push(_fw.contact);
-    (_fd.partners||[]).forEach(p=>{if(p.name&&!_has(p.name))names.push(p.name);});
-    (_fbDynUsers||[]).filter(u=>u.eid===S.eid&&u.role==='client'&&u.name&&!_has(u.name)).forEach(u=>names.push(u.name));
-    if(!names.length)names=[...flowPeople];
+    // Nome de firma (não ID) — usa _getFirmPeople pelo eid atual
+    const pp=await _getFirmPeople(S.eid);
+    names=pp.length?pp:[...flowPeople];
   }
   asgSel.innerHTML=names.map(n=>`<option value="${n}"${n===curVal?' selected':''}>${n.trim().split(' ')[0]}</option>`).join('');
 }
