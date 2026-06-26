@@ -1862,7 +1862,11 @@ function rPerfil(d){
 function copyFormLink(){const v=document.getElementById('form-link-inp')?.value||'';if(!v)return;navigator.clipboard?.writeText(v).then(()=>{const b=event.target;const old=b.textContent;b.textContent='Copiado!';setTimeout(()=>b.textContent=old,1500);}).catch(()=>alert(v));}
 function delPartner(id){if(!confirm('Excluir sócio?'))return;const d=ld();d.partners=(d.partners||[]).filter(p=>p.id!==id);sv(d);renderAll();}
 function editPartner(id){const d=ld();const p=(d.partners||[]).find(x=>x.id===id);if(!p)return;window._partnerEditFirmId=null;openM('partnerEdit',p);}
-function _editFirmPartner(firmId,pid){try{const fd=JSON.parse(localStorage.getItem('fs_'+firmId)||'{}');const p=(fd.partners||[]).find(x=>x.id===pid);if(!p)return;window._partnerEditFirmId=firmId;openM('partnerEdit',p);}catch(e){console.error(e);}}
+function _editFirmPartner(firmId,pid){
+  const _doOpen=()=>{try{const fd=JSON.parse(localStorage.getItem('fs_'+firmId)||'{}');const p=(fd.partners||[]).find(x=>x.id===pid);if(!p)return;window._partnerEditFirmId=firmId;openM('partnerEdit',p);}catch(e){console.error(e);}};
+  if(!window._waitFB)return _doOpen();
+  _waitFB().then(()=>window._fbGetDoc(window._fbDoc(window._fbDB,'flowsales_crm',firmId))).then(snap=>{if(snap&&snap.exists())localStorage.setItem('fs_'+firmId,JSON.stringify(snap.data()));_doOpen();}).catch(()=>_doOpen());
+}
 function editPartnerPhoto(id){const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{const d=ld();const p=d.partners.find(x=>x.id===id);if(p){p.photo=ev.target.result;sv(d);rPerfil(d);}};r.readAsDataURL(f);};inp.click();}
 
 // ── NOTIFICATIONS ─────────────────────────────────────────────
@@ -2333,7 +2337,12 @@ function rFirms(){
 function selectFirmAndNav(id){selectFirm(id);nav('ov');}
 function edFirm(id){
   const f=FIRMS.find(x=>x.id===id);if(!f)return;
-  openM('edFirmAdmin',f);
+  const openNow=()=>openM('edFirmAdmin',f);
+  if(!window._waitFB)return openNow();
+  _waitFB().then(()=>window._fbGetDoc(window._fbDoc(window._fbDB,'flowsales_crm',id))).then(snap=>{
+    if(snap&&snap.exists())localStorage.setItem('fs_'+id,JSON.stringify(snap.data()));
+    openNow();
+  }).catch(()=>openNow());
 }
 async function removeFirm(id){if(!confirm('Remover este escritório?'))return;const idx=FIRMS.findIndex(f=>f.id===id);if(idx>=0)FIRMS.splice(idx,1);delete _firmPeopleCache[id];localStorage.setItem('fs_firms',JSON.stringify(FIRMS));rFirms();setupFirmSelect();try{await _waitFB();await window._fbSetDoc(window._fbDoc(window._fbDB,'flowsales_crm','__config'),{firms:FIRMS,__ts:Date.now()},{merge:true});_showToast('Escritório removido ✅','var(--green)');}catch(e){console.error('[FB] remove err:',e);}}
 
