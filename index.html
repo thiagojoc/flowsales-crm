@@ -1987,7 +1987,7 @@ function openM(type,data){
           (_fbDynUsers||[]).filter(u=>u.eid===S.eid&&u.role==='client'&&u.name).forEach(u=>_add(u.name));
           // contact do FIRMS apenas como fallback
           if(!names.length)_add(f.contact);
-          return names.map(n=>`<option${data&&data.assign===n?' selected':''}>${n}</option>`).join('');
+          return names.map(n=>`<option value="${n}"${data&&data.assign===n?' selected':''}>${n.trim().split(' ')[0]}</option>`).join('');
         };
         const _asgAdmin=()=>{
           if(S.eid==='flowsales')return['Thiago','Carlos'].map(a=>`<option${data&&data.assign===a?' selected':''}>${a}</option>`).join('');
@@ -2000,7 +2000,7 @@ function openM(type,data){
           (_fbDynUsers||[]).filter(u=>u.eid===S.eid&&u.role==='client'&&u.name).forEach(u=>_add(u.name));
           // contact do FIRMS apenas como fallback
           if(!allNames.some(n=>n!=='Thiago'&&n!=='Carlos'))_add(f.contact);
-          return allNames.map(n=>`<option${data&&data.assign===n?' selected':''}>${n}</option>`).join('');
+          return allNames.map(n=>`<option value="${n}"${data&&data.assign===n?' selected':''}>${n.trim().split(' ')[0]}</option>`).join('');
         };
         const asgOptsLocal=S.role==='client'?_buildClientAsg():_asgAdmin();
         const _allFirmsA=FIRMS.length?FIRMS:(()=>{try{return JSON.parse(localStorage.getItem('fs_firms')||'[]');}catch(e){return[];}})();
@@ -2521,7 +2521,7 @@ async function _updateFsAssign(){
     names=pp.length?pp:[...flowPeople];
   }
   const asgEl=document.getElementById('m-asg');
-  if(asgEl){const cur=asgEl.value;asgEl.innerHTML=names.map(n=>`<option${n===cur?' selected':''}>${n}</option>`).join('');}
+  if(asgEl){const cur=asgEl.value;asgEl.innerHTML=names.map(n=>`<option value="${n}"${n===cur?' selected':''}>${n.trim().split(' ')[0]}</option>`).join('');}
 }
 function loadFirmAndOpen(firmId){
   const firm=FIRMS.find(x=>x.id===firmId);
@@ -2567,7 +2567,7 @@ async function _updateTaskAsg(){
     (_fbDynUsers||[]).filter(u=>u.eid===S.eid&&u.role==='client'&&u.name&&!_has(u.name)).forEach(u=>names.push(u.name));
     if(!names.length)names=[...flowPeople];
   }
-  asgSel.innerHTML=names.map(n=>`<option${n===curVal?' selected':''}>${n}</option>`).join('');
+  asgSel.innerHTML=names.map(n=>`<option value="${n}"${n===curVal?' selected':''}>${n.trim().split(' ')[0]}</option>`).join('');
 }
 function setFSTaskFilter(val){_fsTaskFilter=val;rFlow();}
 let _fsTaskFilter='all';
