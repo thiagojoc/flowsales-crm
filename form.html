@@ -370,7 +370,6 @@ textarea{resize:none;min-height:100px;line-height:1.65;}
           <div style="margin-top:12px;font-size:11px;color:var(--t2)">Acesse em: <a href="https://thiagojoc.github.io/flowsales-crm" target="_blank" style="color:var(--gold)">thiagojoc.github.io/flowsales-crm</a></div>
         </div>
         <div id="cred-socios-wrap" style="display:none;margin-top:12px">
-          <div class="cred-box-ttl" style="margin-bottom:8px">🔐 Acesso dos sócios</div>
           <div id="cred-socios"></div>
         </div>
         <div class="success-divider"></div>
@@ -946,10 +945,12 @@ async function submitForm(){
     const box=document.getElementById('cred-socios');
     if(wrap&&box){
       wrap.style.display='block';
-      box.innerHTML=socioUsers.map(u=>`
+      box.innerHTML=socioUsers.map((u,i)=>`
         <div class="cred-box" style="margin-bottom:8px">
+          <div class="cred-box-ttl">🔐 Acesso ${socioUsers.length>1?'Sócio '+(i+1):'do sócio'}</div>
           <div class="cred-row"><span class="cred-lbl">Login</span><span class="cred-val">${u.email}</span></div>
           <div class="cred-row"><span class="cred-lbl">Senha</span><span class="cred-val">${u.pass}</span></div>
+          <div style="margin-top:12px;font-size:11px;color:var(--t2)">Acesse em: <a href="https://thiagojoc.github.io/flowsales-crm" target="_blank" style="color:var(--gold)">thiagojoc.github.io/flowsales-crm</a></div>
         </div>`).join('');
     }
   }
