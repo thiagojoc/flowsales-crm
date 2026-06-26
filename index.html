@@ -625,6 +625,10 @@ window._fbOnSnapshot = onSnapshot;
             <div class="ch"><div class="ct">Histórico por semana</div></div>
             <div id="kpi-hist"></div>
           </div>
+          <div class="card" id="ghl-kpis-card" style="display:none">
+            <div class="ch"><div class="ct"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:-2px"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>GoHighLevel — dados em tempo real</div><button class="ca" id="ghl-sync-btn" onclick="syncGHL()">Sincronizar</button></div>
+            <div id="ghl-kpis-content"><div class="empty">Clique em Sincronizar para buscar dados do GHL.</div></div>
+          </div>
         </div>
 
         <!-- METAS DINÂMICAS -->
@@ -1316,7 +1320,7 @@ function _clickupTask(t){
       createTask(li.id);
     }).catch(()=>{});
 }
-function renderAll(){const d=ld();const _td=_localDate();d.tasks.forEach(t=>{if(t.status==='pending'&&t.due&&t.due<_td)t.status='late';});rOv(d);rKpis(d);rScore(d);rMetas(d);rTasks(d);rMeet(d);rFiles(d);rChat(d);rDem(d);rTimeline(d);rPerfil(d);rNotif(d);rBadges(d);rFlow();rFirms();}
+function renderAll(){const d=ld();const _td=_localDate();d.tasks.forEach(t=>{if(t.status==='pending'&&t.due&&t.due<_td)t.status='late';});rOv(d);rKpis(d);rGhlKpis(d);rScore(d);rMetas(d);rTasks(d);rMeet(d);rFiles(d);rChat(d);rDem(d);rTimeline(d);rPerfil(d);rNotif(d);rBadges(d);rFlow();rFirms();}
 
 // ── OVERVIEW ──────────────────────────────────────────────────
 
@@ -1463,6 +1467,53 @@ function rKpis(d){
   document.getElementById('kpi-hist').innerHTML=`<table class="tbl"><thead><tr><th>Semana</th><th>Leads</th><th>Reun. Agd.</th><th>Vendas</th><th>Conversão</th>${S.role==='admin'?'<th></th>':''}</tr></thead><tbody>${histRows}<tr style="opacity:.6"><td>Sem. atual</td><td>${k.leads}</td><td>${k.reunAgd}</td><td>${k.vendas}</td><td>${k.conv}%</td>${S.role==='admin'?`<td><button class="ib ca" onclick="saveKpiHistory()" title="Registrar semana atual no histórico" style="font-size:12px;padding:4px 8px;width:auto">+Registrar</button></td>`:''}</tr></tbody></table>`;
 }
 function doneImpl(id){const d=ld();const i=d.implementations.find(x=>x.id===id);if(i){i.done=true;activ(d,'Entregável concluído: '+i.title,'var(--green)');}sv(d);renderAll();}
+function rGhlKpis(d){
+  const card=document.getElementById('ghl-kpis-card');
+  const el=document.getElementById('ghl-kpis-content');
+  if(!card||!el)return;
+  const fe=d.firmExtra||{};
+  const hasConfig=!!(fe.ghlToken&&fe.ghlLocationId);
+  if(!hasConfig&&!d.ghlKpis){card.style.display='none';return;}
+  card.style.display='';
+  const g=d.ghlKpis;
+  if(!g){el.innerHTML='<div class="empty">Clique em Sincronizar para buscar dados do GHL.</div>';return;}
+  const syncDate=new Date(g.syncedAt).toLocaleString('pt-BR');
+  const tags=Object.entries(g.tagBreakdown||{}).sort((a,b)=>b[1]-a[1]);
+  const tagHtml=tags.length?tags.map(([t,c])=>`<div class="traf-row"><span class="traf-lbl">${t}</span><span class="traf-val">${c} lead${c!==1?'s':''}</span></div>`).join(''):'<div class="empty" style="padding:8px 0">Nenhum lead ganho com tag registrada.</div>';
+  const showRate=g.reunAgd?Math.round(g.reunReal/g.reunAgd*100):0;
+  const convRate=g.reunReal?Math.round(g.vendas/g.reunReal*100):0;
+  el.innerHTML=`<div style="font-size:10px;color:var(--t2);margin-bottom:12px">Última sincronização: ${syncDate}</div><div class="kpi-g6" style="margin-bottom:14px"><div class="kpi-mc"><div class="kpi-lbl">Reuniões agendadas</div><div class="kpi-val" style="color:var(--gold)">${g.reunAgd}</div><div class="kpi-sub kpi-nt">${g.totalEvents} evento${g.totalEvents!==1?'s':''} no calendário</div></div><div class="kpi-mc"><div class="kpi-lbl">Reuniões realizadas</div><div class="kpi-val" style="color:var(--green)">${g.reunReal}</div><div class="kpi-sub kpi-nt">${showRate}% de show rate</div></div><div class="kpi-mc"><div class="kpi-lbl">Vendas ganhas</div><div class="kpi-val" style="color:var(--green)">${g.vendas}</div><div class="kpi-sub kpi-nt">${convRate}% conversão</div></div><div class="kpi-mc"><div class="kpi-lbl">Valor vendido</div><div class="kpi-val" style="color:var(--gold)">R$ ${(g.valorTotal||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${g.vendas} cliente${g.vendas!==1?'s':''} × MRR</div></div></div><div style="font-size:11px;font-weight:500;color:var(--t2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Produtos / Tags (leads ganhos)</div>${tagHtml}`;
+}
+async function syncGHL(){
+  const d=ld();const fe=d.firmExtra||{};
+  const token=fe.ghlToken;const locationId=fe.ghlLocationId;const calendarId=fe.ghlCalendarId;
+  if(!token||!locationId){alert('Configure o Token e Location ID do GHL em Editar dados do escritório.');return;}
+  const btn=document.getElementById('ghl-sync-btn');if(btn){btn.disabled=true;btn.textContent='Buscando...';}
+  const h={'Authorization':'Bearer '+token,'Version':'2021-07-28'};
+  const BASE='https://services.leadconnectorhq.com';
+  const from=S.calFrom?new Date(S.calFrom+'T00:00:00').getTime():Date.now()-30*24*3600000;
+  const to=S.calTo?new Date(S.calTo+'T23:59:59').getTime():Date.now();
+  try{
+    const [evR,oppsR]=await Promise.all([
+      calendarId?fetch(`${BASE}/calendars/events?locationId=${locationId}&calendarId=${calendarId}&startTime=${from}&endTime=${to}`,{headers:h}).then(r=>r.json()):Promise.resolve({events:[]}),
+      fetch(`${BASE}/opportunities/search?location_id=${locationId}&status=won&limit=100`,{headers:h}).then(r=>r.json())
+    ]);
+    const events=evR.events||[];
+    const agendadas=events.filter(e=>!['cancelled','no_show','invalid'].includes(e.appointmentStatus)).length;
+    const realizadas=events.filter(e=>['showed','attended','complete','completed'].includes(e.appointmentStatus)).length;
+    const wonOpps=oppsR.opportunities||[];
+    const vendas=wonOpps.length;
+    const valorTotal=wonOpps.reduce((s,o)=>s+(o.monetaryValue||3500),0);
+    const tagCounts={};
+    wonOpps.forEach(o=>(o.contact?.tags||[]).forEach(t=>{tagCounts[t]=(tagCounts[t]||0)+1;}));
+    d.ghlKpis={syncedAt:new Date().toISOString(),reunAgd:agendadas,reunReal:realizadas,vendas,valorTotal,tagBreakdown:tagCounts,totalEvents:events.length};
+    if(!d.kpis)d.kpis={};
+    d.kpis.reunAgd=agendadas;d.kpis.reunReal=realizadas;d.kpis.vendas=vendas;
+    if(valorTotal>0)d.kpis.rev=valorTotal;
+    sv(d);renderAll();
+  }catch(e){alert('Erro ao sincronizar GHL: '+e.message);}
+  finally{if(btn){btn.disabled=false;btn.textContent='Sincronizar';}}
+}
 
 // ── METAS ─────────────────────────────────────────────────────
 function rMetas(d){
@@ -2144,8 +2195,8 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
       }
     },
     firminfo:{title:'Editar dados do escritório',
-      body:()=>{const fe=ld().firmExtra||{};const f=FIRMS.find(x=>x.id===S.eid)||{};return`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Nome do escritório</label><input class="fi" id="fi-nm" value="${f.name||''}"></div><div class="fg"><label>Área</label><input class="fi" id="fi-area" value="${f.area||''}"></div><div class="fg"><label>Cidade</label><input class="fi" id="fi-city" value="${f.city||''}"></div><div class="fg"><label>Telefone</label><input class="fi" id="fi-ph" value="${f.phone||''}"></div><div class="fg"><label>E-mail de acesso</label><input class="fi" id="fi-em" type="email" value="${f.email||''}"></div><div class="fg"><label>OAB</label><input class="fi" id="fi-oab" value="${f.oab||''}"></div><div class="fg"><label>Início do contrato</label><input class="fi" id="fi-start" type="date" value="${f.start||''}"></div><div class="fg"><label>Vencimento mensal</label><input class="fi" id="fi-due" type="date" value="${f.due||''}"></div></div><div class="fg" style="margin-top:2px"><label>Endereço completo</label><input class="fi" id="fi-addr" value="${fe.address||''}"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Website</label><input class="fi" id="fi-web" type="url" value="${fe.website||''}" placeholder="https://..."></div><div class="fg"><label>Instagram</label><input class="fi" id="fi-ig" value="${fe.instagram||''}" placeholder="@escritorio"></div></div><div style="margin-top:12px;padding-top:12px;border-top:0.5px solid var(--bdr)"><div style="font-size:13px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Responsável</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Nome</label><input class="fi" id="fi-resp-nm" value="${fe.respName||f.contact||''}"></div><div class="fg"><label>WhatsApp</label><input class="fi" id="fi-resp-wa" value="${fe.respWhatsapp||''}"></div><div class="fg"><label>E-mail</label><input class="fi" id="fi-resp-em" type="email" value="${fe.respEmail||f.contactEmail||''}"></div><div class="fg"><label>OAB</label><input class="fi" id="fi-resp-oab" value="${fe.respOAB||''}"></div><div class="fg"><label>Áreas de atuação</label><input class="fi" id="fi-resp-areas" value="${fe.respAreas||''}"></div><div class="fg"><label>Instagram</label><input class="fi" id="fi-resp-ig" value="${fe.respIG||''}" placeholder="@responsavel"></div><div class="fg" style="grid-column:1/-1"><label>Endereço</label><input class="fi" id="fi-resp-addr" value="${fe.respAddress||''}" placeholder="Rua, número, cidade/UF"></div></div></div></div>`;},
-      save:()=>{const d=ld();d.firmExtra=Object.assign(d.firmExtra||{},{address:v('fi-addr'),website:v('fi-web'),instagram:v('fi-ig'),respName:v('fi-resp-nm'),respWhatsapp:v('fi-resp-wa'),respEmail:v('fi-resp-em'),respOAB:v('fi-resp-oab'),respAreas:v('fi-resp-areas'),respIG:v('fi-resp-ig'),respAddress:v('fi-resp-addr')});sv(d);const f=FIRMS.find(x=>x.id===S.eid);if(f){if(v('fi-nm'))f.name=v('fi-nm');if(v('fi-area'))f.area=v('fi-area');if(v('fi-city'))f.city=v('fi-city');f.phone=v('fi-ph');f.email=v('fi-em');f.oab=v('fi-oab');f.start=v('fi-start');if(v('fi-due'))f.due=v('fi-due');f.contact=v('fi-resp-nm');f.contactPhone=v('fi-resp-ph');f.contactEmail=v('fi-resp-em');}rPerfil(d);_saveFirms();setupFirmSelect();cModal(null,1);}
+      body:()=>{const fe=ld().firmExtra||{};const f=FIRMS.find(x=>x.id===S.eid)||{};const ghlFields=S.role==='admin'?`<div style="margin-top:14px;padding-top:12px;border-top:0.5px solid var(--bdr)"><div style="font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Integração GoHighLevel</div><div class="fg"><label>Token GHL (pit-...)</label><input class="fi" id="fi-ghl-token" value="${fe.ghlToken||''}" placeholder="pit-xxxxxxxx-..."></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px"><div class="fg"><label>Location ID</label><input class="fi" id="fi-ghl-loc" value="${fe.ghlLocationId||''}" placeholder="FmpUEamfD83q..."></div><div class="fg"><label>Calendar ID</label><input class="fi" id="fi-ghl-cal" value="${fe.ghlCalendarId||''}" placeholder="JIgIxoZjHRn1..."></div></div></div>`:'';return`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Nome do escritório</label><input class="fi" id="fi-nm" value="${f.name||''}"></div><div class="fg"><label>Área</label><input class="fi" id="fi-area" value="${f.area||''}"></div><div class="fg"><label>Cidade</label><input class="fi" id="fi-city" value="${f.city||''}"></div><div class="fg"><label>Telefone</label><input class="fi" id="fi-ph" value="${f.phone||''}"></div><div class="fg"><label>E-mail de acesso</label><input class="fi" id="fi-em" type="email" value="${f.email||''}"></div><div class="fg"><label>OAB</label><input class="fi" id="fi-oab" value="${f.oab||''}"></div><div class="fg"><label>Início do contrato</label><input class="fi" id="fi-start" type="date" value="${f.start||''}"></div><div class="fg"><label>Vencimento mensal</label><input class="fi" id="fi-due" type="date" value="${f.due||''}"></div></div><div class="fg" style="margin-top:2px"><label>Endereço completo</label><input class="fi" id="fi-addr" value="${fe.address||''}"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Website</label><input class="fi" id="fi-web" type="url" value="${fe.website||''}" placeholder="https://..."></div><div class="fg"><label>Instagram</label><input class="fi" id="fi-ig" value="${fe.instagram||''}" placeholder="@escritorio"></div></div><div style="margin-top:12px;padding-top:12px;border-top:0.5px solid var(--bdr)"><div style="font-size:13px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Responsável</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Nome</label><input class="fi" id="fi-resp-nm" value="${fe.respName||f.contact||''}"></div><div class="fg"><label>WhatsApp</label><input class="fi" id="fi-resp-wa" value="${fe.respWhatsapp||''}"></div><div class="fg"><label>E-mail</label><input class="fi" id="fi-resp-em" type="email" value="${fe.respEmail||f.contactEmail||''}"></div><div class="fg"><label>OAB</label><input class="fi" id="fi-resp-oab" value="${fe.respOAB||''}"></div><div class="fg"><label>Áreas de atuação</label><input class="fi" id="fi-resp-areas" value="${fe.respAreas||''}"></div><div class="fg"><label>Instagram</label><input class="fi" id="fi-resp-ig" value="${fe.respIG||''}" placeholder="@responsavel"></div><div class="fg" style="grid-column:1/-1"><label>Endereço</label><input class="fi" id="fi-resp-addr" value="${fe.respAddress||''}" placeholder="Rua, número, cidade/UF"></div></div></div></div>${ghlFields}`;},
+      save:()=>{const d=ld();const _prev=d.firmExtra||{};d.firmExtra=Object.assign(_prev,{address:v('fi-addr'),website:v('fi-web'),instagram:v('fi-ig'),respName:v('fi-resp-nm'),respWhatsapp:v('fi-resp-wa'),respEmail:v('fi-resp-em'),respOAB:v('fi-resp-oab'),respAreas:v('fi-resp-areas'),respIG:v('fi-resp-ig'),respAddress:v('fi-resp-addr')});if(S.role==='admin'){if(document.getElementById('fi-ghl-token')!==null){d.firmExtra.ghlToken=v('fi-ghl-token');d.firmExtra.ghlLocationId=v('fi-ghl-loc');d.firmExtra.ghlCalendarId=v('fi-ghl-cal');}}sv(d);const f=FIRMS.find(x=>x.id===S.eid);if(f){if(v('fi-nm'))f.name=v('fi-nm');if(v('fi-area'))f.area=v('fi-area');if(v('fi-city'))f.city=v('fi-city');f.phone=v('fi-ph');f.email=v('fi-em');f.oab=v('fi-oab');f.start=v('fi-start');if(v('fi-due'))f.due=v('fi-due');f.contact=v('fi-resp-nm');f.contactPhone=v('fi-resp-ph');f.contactEmail=v('fi-resp-em');}rPerfil(d);_saveFirms();setupFirmSelect();cModal(null,1);}
     },
     addfirm:{title:'Novo escritório',
       body:`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
