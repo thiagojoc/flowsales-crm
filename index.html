@@ -2478,7 +2478,7 @@ async function _getFirmPeople(firmId){
   if(_firmPeopleCache[firmId]&&FIRMS.some(x=>x.id===firmId))return _firmPeopleCache[firmId];
   const fw=FIRMS.find(x=>x.id===firmId)||{};
   const norm=s=>(s||'').trim().toLowerCase();
-  const names=[];const has=n=>names.some(x=>norm(x)===norm(n));
+  const fn=s=>norm(s).split(' ')[0];const names=[];const has=n=>names.some(x=>norm(x)===norm(n)||fn(x)===fn(n));
   // 1. Sempre buscar do Firebase para garantir dado atualizado
   let fd=null;
   if(window._waitFB){
