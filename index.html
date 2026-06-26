@@ -510,7 +510,7 @@ window._fbOnSnapshot = onSnapshot;
       <div class="ni client-nav" onclick="nav('kpis')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>KPIs</div>
       <div class="ni client-nav" onclick="nav('metas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>Metas</div>
       <div class="sb-sec">Execução</div>
-      <div class="ni client-nav" onclick="nav('tasks')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Tasks<span class="nb r" id="bdgt" style="display:none">0</span></div>
+      <div class="ni client-nav" onclick="nav('tasks')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Demandas<span class="nb r" id="bdgt" style="display:none">0</span></div>
       <div class="ni client-nav" onclick="nav('meet')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Reuniões</div>
       <div class="ni client-nav" onclick="nav('arq')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Arquivos</div>
       <div class="sb-sec">Comunicação</div>
@@ -595,7 +595,7 @@ window._fbOnSnapshot = onSnapshot;
                 <div id="nxtmeet"></div>
               </div>
               <div class="card" id="card-p90">
-                <div class="ch"><div class="ct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/></svg>Programa 6 meses</div><button class="ca" onclick="nav('tasks')">Tasks</button></div>
+                <div class="ch"><div class="ct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/></svg>Programa 6 meses</div><button class="ca" onclick="nav('tasks')">Demandas</button></div>
                 <div id="p90"></div>
               </div>
             </div>
@@ -648,7 +648,7 @@ window._fbOnSnapshot = onSnapshot;
             <button class="ca" id="ft-late" onclick="ftask('late')">Atrasadas</button>
             <button class="ca" id="ft-all" onclick="ftask('all')" style="display:none"></button>
             <button class="bulk-del" id="bulk-del" onclick="bulkDelete()">Excluir selecionadas (<span id="sel-count">0</span>)</button>
-            <button class="ca mla" onclick="openM('task')">+ Nova task</button>
+            <button class="ca mla" onclick="openM('task')">+ Nova demanda</button>
           </div>
           <div class="card"><div id="tlist"></div></div>
         </div>
@@ -1253,7 +1253,7 @@ function loadFirm(){
 function populateWkFilter(){const sel=document.getElementById('wk-sel');if(!sel)return;const d=ld();const weeks=[...new Set(d.tasks.map(t=>t.week))].sort((a,b)=>a-b);sel.innerHTML='<option value="all">Todas</option>'+weeks.map(w=>`<option value="${w}">Semana ${w}</option>`).join('');}
 
 // ── NAV ───────────────────────────────────────────────────────
-const TITLES={ov:'Overview',kpis:'KPIs',metas:'Metas',tasks:'Tasks',meet:'Reuniões',arq:'Arquivos',chat:'Chat',dem:'Entregas',timeline:'Jornada',perfil:'Perfil do cliente',flow:'Painel Flow Sales',firms:'Escritórios'};
+const TITLES={ov:'Overview',kpis:'KPIs',metas:'Metas',tasks:'Demandas',meet:'Reuniões',arq:'Arquivos',chat:'Chat',dem:'Entregas',timeline:'Jornada',perfil:'Perfil do cliente',flow:'Painel Flow Sales',firms:'Escritórios'};
 
 function nav(id){
   S.sec=id;
@@ -1329,10 +1329,8 @@ function rOv(d){
     {l:'Vendas',v:safe(k.vendas),g:safe(k.vendasG)||5,c:'var(--green)',fmt:v=>v},
     {l:'Faturamento',v:safe(k.rev),g:safe(k.revG)||15000,c:'var(--green)',fmt:v=>'R$'+(v/1000).toFixed(0)+'k'},
   ].map(i=>{const p=i.g?Math.min(Math.round(i.v/i.g*100),100):0;const gc=p>=100?'var(--green)':p>=60?'var(--gold)':'var(--t2)';return`<div class="kc"><div class="kl">${i.l}</div><div class="kv" style="color:${p>0?gc:'var(--t2)'}">${i.fmt(i.v)}</div><div class="kt"><div class="ktr"><div class="kf" style="width:${p}%;background:${i.c}"></div></div><div class="kbl"><span>${p}% da meta</span><span>${i.fmt(i.g)}</span></div></div></div>`;}).join('');
-  const _isAdmin=S.role==='admin';
   const ua=document.getElementById('urg-area');
-  if(ua)ua.style.display=_isAdmin?'':'none';
-  if(_isAdmin)ua.innerHTML=d.demands.filter(x=>x.status==='open'&&x.pri==='high').map(dm=>`<div class="ub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><div class="ux"><strong>Demanda urgente:</strong> ${dm.title}</div><div class="ul">Alta prioridade</div></div>`).join('');
+  if(ua)ua.innerHTML=d.demands.filter(x=>x.status==='open'&&x.pri==='high').map(dm=>`<div class="ub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><div class="ux"><strong>Demanda urgente:</strong> ${dm.title}</div><div class="ul">Alta prioridade</div></div>`).join('');
   document.getElementById('feed').innerHTML=d.activity.slice(0,8).map((a,i)=>`<div class="ai"><div class="ad" style="background:${a.col||'var(--t2)'}"></div><div style="flex:1"><div class="ax">${a.txt}</div><div class="at2">${a.time}</div></div><button class="ai-del" onclick="delActiv(${i})" title="Excluir"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div>`).join('')||'<div class="empty">Sem atividade recente.</div>';
   const fu=d.meetings.filter(m=>inRange(m.date)||!S.calFrom).filter(m=>new Date(m.date+'T12:00:00')>=new Date()).sort((a,b)=>a.date.localeCompare(b.date))[0];
   document.getElementById('nxtmeet').innerHTML=fu?`<div style="font-size:13px;font-weight:500;margin-bottom:4px">${fu.title}</div><div style="font-size:11px;color:var(--t2)">${fd(fu.date)}</div><div style="margin-top:8px"><span class="b bgo">${fu.type}</span></div>`:'<div class="empty" style="padding:12px">Sem próximas reuniões.</div>';
@@ -1521,7 +1519,7 @@ function clearTaskFilters(){S.wkf='all';S.datef='';const ws=document.getElementB
 function toggleSel(id,cb){if(cb.checked)S.selTasks.add(id);else S.selTasks.delete(id);updateBulk();}
 function selAll(cb){const d=ld();let tasks=d.tasks;if(S.tf!=='all')tasks=tasks.filter(t=>t.status===S.tf);tasks.forEach(t=>{if(cb.checked)S.selTasks.add(t.id);else S.selTasks.delete(t.id);});updateBulk();rTasks(d);}
 function updateBulk(){const n=S.selTasks.size;document.getElementById('sel-count').textContent=n;document.getElementById('bulk-del').style.display=n?'inline-flex':'none';}
-function bulkDelete(){if(!confirm(`Excluir ${S.selTasks.size} tasks?`))return;const d=ld();d.tasks=d.tasks.filter(t=>!S.selTasks.has(t.id));S.selTasks.clear();sv(d);renderAll();updateBulk();}
+function bulkDelete(){if(!confirm(`Excluir ${S.selTasks.size} demandas?`))return;const d=ld();d.tasks=d.tasks.filter(t=>!S.selTasks.has(t.id));S.selTasks.clear();sv(d);renderAll();updateBulk();}
 function tgTask(id){const d=ld();const t=d.tasks.find(x=>x.id===id);if(!t)return;t.status=t.status==='done'?'pending':'done';activ(d,(t.status==='done'?'Task concluída: ':'Task reaberta: ')+t.title,t.status==='done'?'var(--green)':'var(--t2)');sv(d);renderAll();}
 function edTask(id){const d=ld();const t=d.tasks.find(x=>x.id===id);openM('task',t);}
 function delTask(id){if(!confirm('Excluir?'))return;const d=ld();d.tasks=d.tasks.filter(x=>x.id!==id);sv(d);renderAll();}
@@ -1882,7 +1880,7 @@ function autoNotif(){
   // Marca tasks com prazo vencido como atrasadas e persiste
   d.tasks.forEach(t=>{if(t.status==='pending'&&t.due&&t.due<_td){t.status='late';lateChanged=true;}});
   const before=d.notifs.length;
-  d.tasks.filter(t=>t.status==='late').forEach(t=>{if(!d.notifs.find(n=>n.id==='nt_'+t.id))d.notifs.unshift({id:'nt_'+t.id,title:'Task atrasada: '+t.title,sub:'Prazo era '+fd(t.due),read:false});});
+  d.tasks.filter(t=>t.status==='late').forEach(t=>{if(!d.notifs.find(n=>n.id==='nt_'+t.id))d.notifs.unshift({id:'nt_'+t.id,title:'Demanda atrasada: '+t.title,sub:'Prazo era '+fd(t.due),read:false});});
   d.demands.filter(dm=>dm.status==='open'&&dm.pri==='high').forEach(dm=>{if(!d.notifs.find(n=>n.id==='nd_'+dm.id))d.notifs.unshift({id:'nd_'+dm.id,title:'Demanda urgente: '+dm.title,sub:'Alta prioridade',read:false});});
   if(lateChanged||d.notifs.length>before){sv(d);rTasks(d);}
   rNotif(d);rBadges(d);
@@ -1967,7 +1965,7 @@ function openM(type,data){
   const tt=document.getElementById('mott'),mb=document.getElementById('mobb'),mf=document.getElementById('moff');
   const asgOpts=ASSIGNEES.map(a=>`<option${data&&data.assign===a?' selected':''}>${a}</option>`).join('');
   const tpls={
-    task:{title:data?'Editar task':'Nova task',
+    task:{title:data?'Editar demanda':'Nova demanda',
       body:()=>{
         const firmNm=(FIRMS.find(f=>f.id===S.eid)||{}).name||'Escritório';
         const isClient=S.role==='client';
@@ -2013,7 +2011,7 @@ function openM(type,data){
         const resp=document.getElementById('m-rsp')?v('m-rsp'):firmNm;
         const d=ld();const t={id:data?data.id:'t'+Date.now(),title:v('m-ttl'),desc:v('m-dsc'),resp,assign:v('m-asg'),week:data?data.week:1,due,status:v('m-sta'),urgent:document.getElementById('m-urg').checked,pri:_pri||'med',created:data?data.created:_localDate()};
         if(data){const i=d.tasks.findIndex(x=>x.id===data.id);if(i>=0)d.tasks[i]=t;}
-        else{d.tasks.push(t);activ(d,'Nova task: '+t.title,'var(--gold)');if(t.assign){const nid='nasgn_'+t.id;if(!d.notifs.find(n=>n.id===nid)){d.notifs.unshift({id:nid,title:'Nova task atribuída a '+t.assign,sub:t.title+(t.due?' · Prazo: '+fd(t.due):''),read:false});}if(t.assign!==S.user.name)_desktopNotif('📋 Task atribuída a '+t.assign,t.title);}_clickupTask(t);}
+        else{d.tasks.push(t);activ(d,'Nova demanda: '+t.title,'var(--gold)');if(t.assign){const nid='nasgn_'+t.id;if(!d.notifs.find(n=>n.id===nid)){d.notifs.unshift({id:nid,title:'Nova demanda atribuída a '+t.assign,sub:t.title+(t.due?' · Prazo: '+fd(t.due):''),read:false});}if(t.assign!==S.user.name)_desktopNotif('📋 Demanda atribuída a '+t.assign,t.title);}_clickupTask(t);}
         cModal(null,1);sv(d);try{renderAll();populateWkFilter();}catch(e){console.warn("renderAll err",e);}
       }
     },
