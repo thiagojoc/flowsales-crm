@@ -517,7 +517,6 @@ window._fbOnSnapshot = onSnapshot;
       <div class="ni client-nav" onclick="nav('chat')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Chat<span class="nb r" id="bdgc" style="display:none">0</span></div>
       <div class="ni client-nav" onclick="nav('dem')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Entregas<span class="nb g" id="bdgd" style="display:none">0</span></div>
       <div class="sb-sec">Gestão</div>
-      <div class="ni client-nav" onclick="nav('timeline')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="3" y1="12" x2="21" y2="12"/><circle cx="7" cy="12" r="2.5"/><circle cx="14" cy="12" r="2.5"/><circle cx="20" cy="12" r="1.5"/></svg>Jornada</div>
       <div class="ni client-nav" id="ni-perfil" onclick="nav('perfil')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Perfil do cliente</div>
       <div class="ni admin-only" id="ni-firms" onclick="nav('firms')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Escritórios</div>
       <div class="sb-foot">
@@ -704,7 +703,6 @@ window._fbOnSnapshot = onSnapshot;
         </div>
 
         <!-- JORNADA -->
-        <div class="sec" id="s-timeline"><div id="timeline-wrap"></div></div>
 
         <!-- PAINEL INTERNO FLOWSALES -->
         <div class="sec" id="s-flow">
@@ -1259,7 +1257,7 @@ function loadFirm(){
 function populateWkFilter(){const sel=document.getElementById('wk-sel');if(!sel)return;const d=ld();const weeks=[...new Set(d.tasks.map(t=>t.week))].sort((a,b)=>a-b);sel.innerHTML='<option value="all">Todas</option>'+weeks.map(w=>`<option value="${w}">Semana ${w}</option>`).join('');}
 
 // ── NAV ───────────────────────────────────────────────────────
-const TITLES={ov:'Overview',kpis:'KPIs',metas:'Metas',tasks:'Demandas',meet:'Reuniões',arq:'Arquivos',chat:'Chat',dem:'Entregas',timeline:'Jornada',perfil:'Perfil do cliente',flow:'Painel Flow Sales',firms:'Escritórios'};
+const TITLES={ov:'Overview',kpis:'KPIs',metas:'Metas',tasks:'Demandas',meet:'Reuniões',arq:'Arquivos',chat:'Chat',dem:'Entregas',perfil:'Perfil do cliente',flow:'Painel Flow Sales',firms:'Escritórios'};
 
 function nav(id){
   S.sec=id;
@@ -1320,7 +1318,7 @@ function _clickupTask(t){
       createTask(li.id);
     }).catch(()=>{});
 }
-function renderAll(){const d=ld();const _td=_localDate();d.tasks.forEach(t=>{if(t.status==='pending'&&t.due&&t.due<_td)t.status='late';});rOv(d);rKpis(d);rGhlKpis(d);rScore(d);rMetas(d);rTasks(d);rMeet(d);rFiles(d);rChat(d);rDem(d);rTimeline(d);rPerfil(d);rNotif(d);rBadges(d);rFlow();rFirms();}
+function renderAll(){const d=ld();const _td=_localDate();d.tasks.forEach(t=>{if(t.status==='pending'&&t.due&&t.due<_td)t.status='late';});rOv(d);rKpis(d);rGhlKpis(d);rScore(d);rMetas(d);rTasks(d);rMeet(d);rFiles(d);rChat(d);rDem(d);rPerfil(d);rNotif(d);rBadges(d);rFlow();rFirms();}
 
 // ── OVERVIEW ──────────────────────────────────────────────────
 
@@ -1845,35 +1843,7 @@ function delEntrega(id){if(!confirm('Excluir entrega?'))return;const d=ld();d.en
 
 // ── PERFIL DO CLIENTE ─────────────────────────────────────────
 
-function rTimeline(d){
-  const tw=document.getElementById('timeline-wrap');if(!tw)return;
-  const f=FIRMS.find(x=>x.id===S.eid)||{};
-  const events=[];
-  const fd2=dt=>{try{const p=dt.split('-');return p[2]+'/'+p[1]+'/'+p[0];}catch(e){return dt;}};
-  if(f.start)events.push({date:f.start,label:'Início do programa',sub:'Bem-vindo à jornada',col:'var(--gold)'});
-  (d.entregas||[]).forEach(e=>{
-    const cc={GHL:'var(--blue)',IA:'#7c3aed',Website:'var(--green)',Campanha:'var(--gold)'};
-    events.push({date:e.date,label:e.title,sub:e.category+(e.desc?' · '+e.desc.slice(0,55)+(e.desc.length>55?'...':''):''),col:cc[e.category]||'var(--t2)'});
-  });
-  const today=new Date().toISOString().split('T')[0];
-  (d.meetings||[]).filter(m=>m.date&&m.date<=today).forEach(m=>{
-    events.push({date:m.date,label:m.type||'Reunião',sub:m.title||'',col:'var(--blue)'});
-  });
-  events.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
-  if(!events.length){tw.innerHTML='<div style="text-align:center;padding:40px 20px;color:var(--t2);font-size:13px">A jornada será construída conforme as entregas e reuniões forem registradas.<br><span style="font-size:13px;opacity:.6">Cada marco que vocês constroem juntos aparece aqui.</span></div>';return;}
-  tw.innerHTML='<div style="position:relative;padding:8px 0 4px 32px">'+
-    events.map((ev,i)=>{
-      const isLast=i===events.length-1;
-      return '<div style="position:relative;padding-bottom:'+(isLast?'4px':'22px')+'">'+
-        (!isLast?'<div style="position:absolute;left:-19px;top:20px;bottom:0;width:1px;background:var(--bdr)"></div>':'')+
-        '<div style="position:absolute;left:-24px;top:4px;width:10px;height:10px;border-radius:50%;background:'+ev.col+';box-shadow:0 0 8px '+ev.col+'66"></div>'+
-        '<div style="font-size:12px;color:var(--t2);margin-bottom:2px">'+fd2(ev.date)+'</div>'+
-        '<div style="font-size:13px;font-weight:600;color:var(--text);line-height:1.3">'+ev.label+'</div>'+
-        (ev.sub?'<div style="font-size:13px;color:var(--t2);margin-top:2px">'+ev.sub+'</div>':'')+
-      '</div>';
-    }).join('')+
-  '</div>';
-}
+
 
 function rPerfil(d){
   const f=FIRMS.find(x=>x.id===S.eid)||{};const fe=d.firmExtra||{};
