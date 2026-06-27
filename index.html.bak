@@ -34,8 +34,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 .lmark-text{display:flex;flex-direction:column;line-height:1.15;}
 .lmark-text-top{font-size:18px;font-weight:800;letter-spacing:-0.01em;}
 .lmark-text-sub{font-size:8px;color:var(--gold);letter-spacing:.2em;font-weight:500;}
-.lname{font-size:20px;font-weight:600;letter-spacing:-0.02em;margin-bottom:4px;color:#fff;}
-.lsub{font-size:12px;color:rgba(255,255,255,0.7);}
+.lname{font-size:20px;font-weight:600;letter-spacing:-0.02em;margin-bottom:4px;}
+.lsub{font-size:12px;color:var(--t2);}
 .lform{margin-top:28px;}
 .fg{margin-bottom:16px;}
 .fg label{display:block;font-size:13px;color:var(--text);font-weight:500;margin-bottom:6px;letter-spacing:.03em;text-transform:uppercase;}
@@ -466,9 +466,7 @@ window._fbOnSnapshot = onSnapshot;
       <div class="fg"><label>E-mail</label><input class="fi" id="le" type="email" placeholder="seu@email.com" autocomplete="email"></div>
       <div class="fg"><label>Senha</label><input class="fi" id="lp" type="password" placeholder="••••••••" autocomplete="current-password"></div>
       <button class="lbtn" onclick="doLogin()">Entrar</button>
-      <div class="lerr" id="lerr"></div>
-      <div style="text-align:center;margin-top:10px"><button onclick="forgotPass()" style="background:none;border:none;color:rgba(255,255,255,0.55);font-size:12px;cursor:pointer;font-family:inherit;text-decoration:underline;letter-spacing:.02em">Esqueci minha senha</button></div>
-      <div style="margin-top:16px;font-size:12px;color:rgba(255,255,255,0.75);text-align:center;letter-spacing:.08em;font-weight:500">Criado por Thiago Caetano</div>
+      <div class="lerr" id="lerr"></div><div style="margin-top:20px;font-size:12px;color:var(--t2);text-align:center;letter-spacing:.08em">Criado por FlowSales</div>
     </div>
   </div>
 </div>
@@ -516,7 +514,6 @@ window._fbOnSnapshot = onSnapshot;
       <div class="ni client-nav" onclick="nav('tasks')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Demandas<span class="nb r" id="bdgt" style="display:none">0</span></div>
       <div class="ni client-nav" onclick="nav('meet')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Reuniões</div>
       <div class="ni client-nav" onclick="nav('arq')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Arquivos</div>
-      <div class="ni client-nav admin-only" id="ni-fin" onclick="nav('fin')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Financeiro</div>
       <div class="ni client-nav" id="ni-timeline" onclick="nav('timeline')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="17" y1="12" x2="3" y2="12"/><polyline points="11 18 17 12 11 6"/><line x1="3" y1="6" x2="3" y2="18"/></svg>Jornada</div>
       <div class="sb-sec">Comunicação</div>
       <div class="ni client-nav" onclick="nav('chat')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Chat<span class="nb r" id="bdgc" style="display:none">0</span></div>
@@ -766,44 +763,6 @@ window._fbOnSnapshot = onSnapshot;
         </div>
 
         <!-- ESCRITÓRIOS (ADMIN) -->
-        <!-- FINANCEIRO -->
-        <div class="sec" id="s-fin">
-          <div class="g2" style="grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
-            <div class="card" style="background:var(--s2)">
-              <div style="font-size:12px;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Total de gastos</div>
-              <div id="fin-total-gastos" style="font-size:22px;font-weight:700;color:var(--red)">R$ 0,00</div>
-            </div>
-            <div class="card" style="background:var(--s2)">
-              <div style="font-size:12px;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">ROI (faturamento / gastos)</div>
-              <div id="fin-roi" style="font-size:22px;font-weight:700;color:var(--green)">—</div>
-            </div>
-          </div>
-          <div class="card" style="margin-bottom:12px">
-            <div class="ch"><div class="ct">Adicionar gasto</div></div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-              <div class="fg" style="margin:0"><label>Título</label><input class="fi" id="fin-ttl" placeholder="Ex: Tráfego pago Meta"></div>
-              <div class="fg" style="margin:0"><label>Valor (R$)</label><input class="fi" id="fin-val" type="number" step="0.01" min="0" placeholder="0,00"></div>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
-              <div class="fg" style="margin:0"><label>Data</label><input class="fi" id="fin-date" type="date"></div>
-              <div class="fg" style="margin:0"><label>Categoria</label><select class="fi" id="fin-cat"><option value="trafego">Tráfego pago</option><option value="ferramenta">Ferramenta / Software</option><option value="servico">Serviço terceiro</option><option value="infra">Infraestrutura</option><option value="outro">Outro</option></select></div>
-            </div>
-            <div class="fg" style="margin-top:8px;margin-bottom:0"><label>Descrição (opcional)</label><input class="fi" id="fin-desc" placeholder="Detalhes sobre este gasto..."></div>
-            <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
-              <label class="fg" style="margin:0;flex:1;cursor:pointer">
-                <span style="display:block;font-size:11px;color:var(--t2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em">Comprovante (opcional)</span>
-                <input type="file" id="fin-file" style="display:none" onchange="finFileChosen(this)">
-                <div id="fin-file-label" onclick="document.getElementById('fin-file').click()" style="border:1px dashed var(--bdr2);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--t2);cursor:pointer;text-align:center">Clique para anexar arquivo</div>
-              </label>
-              <button class="bpr" style="height:38px;align-self:flex-end" onclick="addGasto()">Adicionar</button>
-            </div>
-          </div>
-          <div class="card">
-            <div class="ch"><div class="ct">Histórico de gastos</div></div>
-            <div id="fin-list"><div class="empty">Nenhum gasto registrado.</div></div>
-          </div>
-        </div>
-
         <div class="sec" id="s-firms">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:13px;font-weight:500">Escritórios clientes</div><button class="ca" onclick="openM('addfirm')">+ Novo escritório</button></div>
           <div id="firms-summary" style="margin-bottom:10px"></div>
@@ -903,10 +862,7 @@ function _waitFB(){if(window._fbReady)return Promise.resolve();return new Promis
 async function _fbSave(eid, data){
   try{
     await _waitFB();
-    // Strip base64 file data before saving to Firebase (avoids 1MB limit)
-    const safe=Object.assign({},data);
-    if(safe.files&&safe.files.length){safe.files=safe.files.map(f=>{const c=Object.assign({},f);delete c.data;return c;});}
-    await window._fbSetDoc(window._fbDoc(window._fbDB,'flowsales_crm',eid),safe);
+    await window._fbSetDoc(window._fbDoc(window._fbDB,'flowsales_crm',eid),data);
     _setSyncDot('ok');
   }catch(e){
     console.error('[FB] ❌ Salvar:',e.code||e.message);
@@ -1072,7 +1028,6 @@ function dflEmpty(){
     firmExtra:{address:'',website:'',instagram:''},
     kpiHistory:[],
     vendasItems:[],
-    gastos:[],
   };
 }
 function ld() { const s=localStorage.getItem('fs_'+S.eid); return s?JSON.parse(s):dfl(); }
@@ -1193,7 +1148,6 @@ function doLogin(){
   localStorage.setItem('fs_sess',JSON.stringify({email:u.email}));showApp();
 }
 function doLogout(){if(_fbUnsub){_fbUnsub();_fbUnsub=null;}localStorage.removeItem('fs_sess');document.getElementById('login').style.display='flex';document.getElementById('app').style.display='none';}
-function forgotPass(){alert('Para redefinir sua senha, entre em contato com o administrador: Thiago Caetano\nWhatsApp: disponível no portal\nE-mail: tcaetano1706@gmail.com');}
 function checkSess(){const s=localStorage.getItem('fs_sess');if(!s)return;const{email}=JSON.parse(s);const u=USERS.find(x=>x.email===email)||_fbDynUsers.find(x=>x.email===email);if(!u)return;S.user=u;S.role=u.role;if(u.eid)S.eid=u.eid;showApp();}
 function cleanupPhantomDemand(){
   // Remove the default phantom demand d1 if it exists in localStorage
@@ -1223,7 +1177,7 @@ function showApp(){
   let _avPh=saved.photo||u.photo||'';if(!_avPh&&S.role==='client'){try{const _lfd=JSON.parse(localStorage.getItem('fs_'+S.eid)||'{}');const _nmU=n=>((n||'').trim().toLowerCase());const _ptU=(_lfd.partners||[]).find(p=>_nmU(p.name)===_nmU(u.name));if(_ptU&&_ptU.photo)_avPh=_ptU.photo;}catch(e){}}if(_avPh){av.innerHTML=`<img src="${_avPh}" alt="">`;}else{av.textContent=u.init;}
   const _feUN2=(S.role==='client')?(()=>{try{return JSON.parse(localStorage.getItem('fs_'+S.eid)||'{}').firmExtra?.respName||'';}catch(e){return '';}})():'';
   const _fnFull=saved.name||u.name||_feUN2||'';
-  const _unEl=document.getElementById('un');_unEl.textContent=_fnFull;_unEl.title=_fnFull;
+  const _unEl=document.getElementById('un');_unEl.textContent=_fnFull.split(' ')[0]||_fnFull;_unEl.title=_fnFull;
   document.getElementById('ur').textContent=S.role==='admin'?'Admin':'Parceiro';
   if(S.role==='client'){document.querySelectorAll('.admin-only').forEach(el=>el.style.display='none');}
   else{document.querySelectorAll('.admin-only').forEach(el=>el.style.display='');}
@@ -1317,7 +1271,7 @@ function loadFirm(){
   }
   const f=FIRMS.find(x=>x.id===S.eid);
   if(!f)return;
-  const _unLF=document.getElementById('un');if(_unLF&&S.user){const _svLF=JSON.parse(localStorage.getItem('fs_upf_'+(S.user.email||''))||'{}');const _feRN=(()=>{try{return JSON.parse(localStorage.getItem('fs_'+S.eid)||'{}').firmExtra?.respName||'';}catch(e){return '';}})();const _lfFull=_svLF.name||S.user.name||_feRN||'';_unLF.textContent=_lfFull;_unLF.title=_lfFull;}
+  const _unLF=document.getElementById('un');if(_unLF&&S.user){const _svLF=JSON.parse(localStorage.getItem('fs_upf_'+(S.user.email||''))||'{}');const _feRN=(()=>{try{return JSON.parse(localStorage.getItem('fs_'+S.eid)||'{}').firmExtra?.respName||'';}catch(e){return '';}})();const _lfFull=_svLF.name||S.user.name||_feRN||'';_unLF.textContent=_lfFull.split(' ')[0]||_lfFull;_unLF.title=_lfFull;}
   document.getElementById('sfn').textContent=f.name;
   document.getElementById('sfs').textContent='';
   document.getElementById('sbdg').textContent='';
@@ -1326,7 +1280,7 @@ function loadFirm(){
 function populateWkFilter(){const sel=document.getElementById('wk-sel');if(!sel)return;const d=ld();const weeks=[...new Set(d.tasks.map(t=>t.week))].sort((a,b)=>a-b);sel.innerHTML='<option value="all">Todas</option>'+weeks.map(w=>`<option value="${w}">Semana ${w}</option>`).join('');}
 
 // ── NAV ───────────────────────────────────────────────────────
-const TITLES={ov:'Overview',kpis:'KPIs',metas:'Metas',tasks:'Demandas',meet:'Reuniões',arq:'Arquivos',fin:'Financeiro',chat:'Chat',dem:'Entregas',perfil:'Perfil do cliente',flow:'Painel Flow Sales',firms:'Escritórios',timeline:'Jornada'};
+const TITLES={ov:'Overview',kpis:'KPIs',metas:'Metas',tasks:'Demandas',meet:'Reuniões',arq:'Arquivos',chat:'Chat',dem:'Entregas',perfil:'Perfil do cliente',flow:'Painel Flow Sales',firms:'Escritórios'};
 
 function nav(id){
   S.sec=id;
@@ -1346,8 +1300,8 @@ function nav(id){
     if(chatEl)chatEl.style.display='none';
     if(contentEl)contentEl.style.display='';
   }
-  if(id==='flow')rFlow();if(id==='firms')rFirms();if(id==='fin'){const _fd=ld();rFinanceiro(_fd);}
-  const _ctg=document.getElementById('cal-toggle');if(_ctg)_ctg.style.display=['chat','perfil','arq','fin'].includes(id)?'none':'';
+  if(id==='flow')rFlow();if(id==='firms')rFirms();
+  const _ctg=document.getElementById('cal-toggle');if(_ctg)_ctg.style.display=['chat','perfil','arq'].includes(id)?'none':'';
   closeSb();closeCal();
   if(id==='arq'&&S.ff==='link'){document.getElementById('link-add').style.display='block';}else{const la=document.getElementById('link-add');if(la)la.style.display='none';}
 }
@@ -1388,7 +1342,7 @@ function _clickupTask(t){
       createTask(li.id);
     }).catch(()=>{});
 }
-function renderAll(){const d=ld();const _td=_localDate();d.tasks.forEach(t=>{if(t.status==='pending'&&t.due&&t.due<_td)t.status='late';});rOv(d);rKpis(d);rGhlKpis(d);rScore(d);rMetas(d);rTasks(d);rMeet(d);rFiles(d);rChat(d);rDem(d);rTimeline(d);rPerfil(d);rNotif(d);rBadges(d);rFlow();rFirms();rFinanceiro(d);}
+function renderAll(){const d=ld();const _td=_localDate();d.tasks.forEach(t=>{if(t.status==='pending'&&t.due&&t.due<_td)t.status='late';});rOv(d);rKpis(d);rGhlKpis(d);rScore(d);rMetas(d);rTasks(d);rMeet(d);rFiles(d);rChat(d);rDem(d);rTimeline(d);rPerfil(d);rNotif(d);rBadges(d);rFlow();rFirms();}
 
 function rTimeline(d){
   const wrap=document.getElementById('timeline-wrap');if(!wrap)return;
@@ -1431,9 +1385,8 @@ function rTimeline(d){
   }
   // Firma específica ou cliente
   const weeks=[...new Set((d.tasks||[]).map(t=>t.week))].filter(Boolean).sort((a,b)=>a-b);
-  const welcomeEntry='<div class="card" style="margin-bottom:8px;border-left:3px solid var(--gold)"><div style="display:flex;align-items:center;gap:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><div><div style="font-size:13px;font-weight:600;color:var(--text)">Bem-vindo ao programa</div><div style="font-size:12px;color:var(--t2);margin-top:2px">Início da jornada — Você deu o primeiro passo para transformar o marketing jurídico do seu escritório.</div></div></div></div>';
-  if(!weeks.length){wrap.innerHTML=welcomeEntry+'<div class="empty" style="margin-top:8px">Nenhuma semana registrada ainda.</div>';return;}
-  wrap.innerHTML=welcomeEntry+weeks.map(w=>{
+  if(!weeks.length){wrap.innerHTML='<div class="empty">Nenhuma semana registrada ainda.</div>';return;}
+  wrap.innerHTML=weeks.map(w=>{
     const wt=(d.tasks||[]).filter(t=>t.week===w);
     const done=wt.filter(t=>t.status==='done').length;
     const pct=wt.length?Math.round(done/wt.length*100):0;
@@ -1735,64 +1688,6 @@ function edMeet(id){const d=ld();const m=d.meetings.find(x=>x.id===id);openM('me
 function delMeet(id){if(!confirm('Excluir?'))return;const d=ld();d.meetings=d.meetings.filter(x=>x.id!==id);sv(d);renderAll();document.getElementById('mdet').style.display='none';}
 
 // ── FILES ─────────────────────────────────────────────────────
-// ── FINANCEIRO ────────────────────────────────────────────────
-function rFinanceiro(d){
-  const gastos=d.gastos||[];
-  const totalGastos=gastos.reduce((s,g)=>s+(+g.val||0),0);
-  const fat=+(d.kpis&&d.kpis.rev||0);
-  const roi=totalGastos>0?((fat/totalGastos)*100).toFixed(1)+'%':'—';
-  const roiColor=totalGastos>0&&fat>totalGastos?'var(--green)':totalGastos>0?'var(--red)':'var(--t2)';
-  const tg=document.getElementById('fin-total-gastos');const rEl=document.getElementById('fin-roi');
-  if(tg)tg.textContent='R$ '+totalGastos.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-  if(rEl){rEl.textContent=roi;rEl.style.color=roiColor;}
-  const CAT_LABELS={trafego:'Tráfego pago',ferramenta:'Ferramenta / Software',servico:'Serviço terceiro',infra:'Infraestrutura',outro:'Outro'};
-  const el=document.getElementById('fin-list');if(!el)return;
-  if(!gastos.length){el.innerHTML='<div class="empty">Nenhum gasto registrado.</div>';return;}
-  // Show sorted by date desc
-  const sorted=[...gastos].sort((a,b)=>b.date<a.date?-1:1);
-  el.innerHTML=sorted.map(g=>`<div class="fi2" style="border-left:3px solid var(--red)">
-    <div style="flex:1;min-width:0">
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-        <div class="fn2">${g.ttl}</div>
-        <span style="font-size:11px;background:var(--s3);padding:2px 7px;border-radius:20px;color:var(--t2)">${CAT_LABELS[g.cat]||g.cat}</span>
-        <span style="font-size:13px;font-weight:700;color:var(--red);margin-left:auto">R$ ${(+g.val).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
-      </div>
-      <div class="fm">${fd(g.date)}${g.desc?` · ${g.desc}`:''}</div>
-      ${g.fileName?`<div style="font-size:12px;color:var(--blue);margin-top:3px">📎 ${g.fileName}</div>`:''}
-    </div>
-    <button class="fdl" style="color:var(--red)" onclick="delGasto('${g.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
-  </div>`).join('');
-}
-function finFileChosen(inp){
-  const lbl=document.getElementById('fin-file-label');
-  if(inp.files&&inp.files[0])lbl.textContent='📎 '+inp.files[0].name;
-  else lbl.textContent='Clique para anexar arquivo';
-}
-function addGasto(){
-  const ttl=document.getElementById('fin-ttl').value.trim();
-  const val=document.getElementById('fin-val').value;
-  const date=document.getElementById('fin-date').value;
-  const cat=document.getElementById('fin-cat').value;
-  const desc=document.getElementById('fin-desc').value.trim();
-  if(!ttl||!val||!date)return _showToast('Preencha título, valor e data','var(--red)');
-  const d=ld();d.gastos=d.gastos||[];
-  const finFile=document.getElementById('fin-file');
-  const doSave=fileData=>{
-    d.gastos.push({id:'g'+Date.now(),ttl,val:+val,date,cat,desc,fileName:fileData?finFile.files[0].name:'',fileData});
-    activ(d,'Gasto adicionado: '+ttl,'var(--red)');sv(d);rFinanceiro(d);
-    ['fin-ttl','fin-val','fin-date','fin-desc'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-    document.getElementById('fin-file').value='';
-    document.getElementById('fin-file-label').textContent='Clique para anexar arquivo';
-    _showToast('Gasto adicionado ✅','var(--green)');
-  };
-  if(finFile.files&&finFile.files[0]){
-    const reader=new FileReader();
-    reader.onload=e=>doSave(e.target.result);
-    reader.readAsDataURL(finFile.files[0]);
-  } else doSave(null);
-}
-function delGasto(id){if(!confirm('Excluir gasto?'))return;const d=ld();d.gastos=(d.gastos||[]).filter(x=>x.id!==id);sv(d);rFinanceiro(d);}
-
 function rFiles(d){
   const firm=FIRMS.find(f=>f.id===S.eid)||{};
   const driveBanner=document.getElementById('drive-link-banner');
@@ -1802,11 +1697,11 @@ function rFiles(d){
   document.getElementById('link-add').style.display=isLink?'block':'none';
   if(isLink){
     const el=document.getElementById('flist');
-    el.innerHTML=(d.links||[]).map(l=>`<div class="fi2"><div class="fic link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div><div style="flex:1;min-width:0"><div class="fn2">${l.title}</div><div class="fm"><a href="${l.url}" target="_blank" style="color:var(--blue);text-decoration:none">${l.url}</a></div>${l.desc?`<div style="font-size:13px;color:var(--t2);margin-top:3px">${l.desc}</div>`:''}</div>${S.role==='admin'?`<button class="fdl" style="color:var(--t2);margin-right:2px" onclick="edLink('${l.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="fdl" style="color:var(--red)" onclick="delLink('${l.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>`:''}</div>`).join('')||'<div class="empty">Sem links. Adicione um acima.</div>';
+    el.innerHTML=(d.links||[]).map(l=>`<div class="fi2"><div class="fic link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div><div style="flex:1;min-width:0"><div class="fn2">${l.title}</div><div class="fm"><a href="${l.url}" target="_blank" style="color:var(--blue);text-decoration:none">${l.url}</a></div>${l.desc?`<div style="font-size:13px;color:var(--t2);margin-top:3px">${l.desc}</div>`:''}</div>${S.role==='admin'?`<button class="fdl" onclick="delLink('${l.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>`:''}</div>`).join('')||'<div class="empty">Sem links. Adicione um acima.</div>';
     return;
   }
   let files=d.files;if(S.ff!=='all')files=files.filter(f=>f.type===S.ff||f.cat===S.ff);
-  document.getElementById('flist').innerHTML=files.map(f=>`<div class="fi2"><div class="fic ${f.type}">${f.type.toUpperCase()}</div><div style="flex:1;min-width:0"><div class="fn2">${f.name}</div><div class="fm">${f.size} - ${f.by} - ${fd(f.date)}</div>${f.desc?`<div style="font-size:12px;color:var(--t3);margin-top:1px">${f.desc}</div>`:''}</div><button class="fdl mla" title="Visualizar" onclick="viewFile('${f.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>${S.role==='admin'?`<button class="fdl" style="color:var(--red)" onclick="delFile('${f.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>`:''}</div>`).join('')||'<div class="empty">Sem arquivos.</div>';
+  document.getElementById('flist').innerHTML=files.map(f=>`<div class="fi2"><div class="fic ${f.type}">${f.type.toUpperCase()}</div><div style="flex:1;min-width:0"><div class="fn2">${f.name}</div><div class="fm">${f.size} - ${f.by} - ${fd(f.date)}</div>${f.desc?`<div style="font-size:12px;color:var(--t3);margin-top:1px">${f.desc}</div>`:''}</div><button class="fdl mla" title="Visualizar" onclick="viewFile('${f.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>${S.role==='admin'?`<button class="fdl" onclick="delFile('${f.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>`:''}</div>`).join('')||'<div class="empty">Sem arquivos.</div>';
 }
 function ffile(f){S.ff=f;['all','doc','img','script','link'].forEach(x=>{const b=document.getElementById('at-'+x);if(b)b.classList.remove('on');});const a=document.getElementById('at-'+f);if(a)a.classList.add('on');rFiles(ld());}
 function viewFile(id){const d=ld();const f=d.files.find(x=>x.id===id);if(!f)return;if(f.data){const w=window.open();w.document.write(`<html><body style="margin:0;background:#000"><iframe src="${f.data}" style="width:100%;height:100vh;border:none"></iframe></body></html>`);}else{alert('Este arquivo foi adicionado sem conteúdo salvo. Para visualizar, use a funcionalidade com Firebase ativo.');}}
@@ -1814,18 +1709,12 @@ function uploadF(inp){
   const d=ld();
   Array.from(inp.files).forEach(file=>{
     const ext=file.name.split('.').pop().toLowerCase();
-    let type=['pdf'].includes(ext)?'pdf':['doc','docx'].includes(ext)?'doc':['jpg','jpeg','png','gif','svg','webp'].includes(ext)?'img':'gen';
-    // Override type based on active tab (except 'all' and 'link')
-    if(S.ff&&S.ff!=='all'&&S.ff!=='link') type=S.ff;
+    const type=['pdf'].includes(ext)?'pdf':['doc','docx'].includes(ext)?'doc':['jpg','jpeg','png','gif','svg','webp'].includes(ext)?'img':'gen';
     const size=file.size>1048576?(file.size/1048576).toFixed(1)+' MB':(file.size/1024).toFixed(0)+' KB';
     const reader=new FileReader();
     reader.onload=e=>{
       d.files.push({id:'f'+Date.now(),name:file.name,type,size,date:new Date().toISOString().split('T')[0],by:S.user.name,desc:'',cat:type,data:e.target.result});
-      // Notification for file upload
-      const nid='arq_'+Date.now();
-      d.notifs.unshift({id:nid,title:'📁 Arquivo adicionado',sub:file.name,for:S.user&&S.user.name,read:false});
-      activ(d,'Arquivo adicionado: '+file.name,'var(--gold)');sv(d);rFiles(d);rNotif(d);
-      const nd=document.getElementById('ndot');if(nd)nd.style.display='flex';
+      activ(d,'Arquivo adicionado: '+file.name,'var(--gold)');sv(d);rFiles(d);
     };
     reader.readAsDataURL(file);
   });
@@ -1838,11 +1727,8 @@ function addLink(){
   ['lnk-ttl','lnk-url','lnk-desc'].forEach(id=>document.getElementById(id).value='');
   activ(d,'Link adicionado: '+t,'var(--blue)');sv(d);rFiles(d);
 }
-function edLink(id){const d=ld();const l=(d.links||[]).find(x=>x.id===id);if(!l)return;const nt=prompt('Título:',l.title);if(nt===null)return;const nu=prompt('URL:',l.url);if(nu===null)return;const nd=prompt('Descrição:',l.desc||'');if(nd===null)return;l.title=nt.trim()||l.title;l.url=nu.trim()||l.url;l.desc=nd.trim();sv(d);rFiles(d);}
 function delLink(id){if(!confirm('Excluir?'))return;const d=ld();d.links=(d.links||[]).filter(x=>x.id!==id);sv(d);rFiles(d);}
 document.addEventListener('DOMContentLoaded',()=>{
-  // Set default date for financeiro
-  const _finD=document.getElementById('fin-date');if(_finD)_finD.value=new Date().toISOString().split('T')[0];
   // Pré-carrega firms e usuários dinâmicos do Firebase antes do login
   _waitFB().then(async ()=>{
     try{
@@ -2007,149 +1893,14 @@ function handleChatFile(inp){
   if(file.size>MAX){_showToast('Arquivo muito grande (máx 5MB)','var(--red)');inp.value='';return;}
   const r=new FileReader();
   r.onload=e=>{
-    if(file.type.startsWith('image/')){
-      _showImgPreview(e.target.result,file.name,file.type);
-    } else {
-      const d=ld();
-      const msg={id:'m'+Date.now(),text:'',from:S.user.name,role:S.role,time:new Date().toISOString(),media:{name:file.name,type:file.type,data:e.target.result}};
-      d.msgs=d.msgs||[];d.msgs.push(msg);
-      activ(d,'Arquivo enviado: '+file.name,'var(--blue)');sv(d);rChat(d);
-    }
-    inp.value='';
+    const d=ld();
+    const msg={id:'m'+Date.now(),text:'',from:S.user.name,role:S.role,time:new Date().toISOString(),media:{name:file.name,type:file.type,data:e.target.result}};
+    d.msgs=d.msgs||[];d.msgs.push(msg);
+    activ(d,'Arquivo enviado: '+file.name,'var(--blue)');sv(d);rChat(d);inp.value='';
   };
   r.readAsDataURL(file);
 }
-// ── IMAGE PREVIEW WITH CROP & DRAW ────────────────────────────
-let _imgPreviewData=null,_imgPreviewName='',_imgPreviewType='';
-let _drawCtx=null,_drawing=false,_drawColor='#e53e3e',_drawSize=4,_drawMode='draw';
-let _cropMode=false,_cropStart=null,_cropRect=null;
-function _showImgPreview(dataUrl,name,type){
-  _imgPreviewData=dataUrl;_imgPreviewName=name;_imgPreviewType=type;
-  // Remove old modal
-  const old=document.getElementById('img-preview-modal');if(old)old.remove();
-  const modal=document.createElement('div');
-  modal.id='img-preview-modal';
-  modal.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;';
-  modal.innerHTML=`
-    <div style="background:var(--s1);border-radius:12px;overflow:hidden;max-width:700px;width:100%;max-height:90vh;display:flex;flex-direction:column;">
-      <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:0.5px solid var(--bdr);flex-shrink:0">
-        <span style="font-size:13px;font-weight:600;flex:1;color:var(--text)">Pré-visualização</span>
-        <button onclick="_imgToggleMode('draw')" id="ipm-draw" style="background:var(--gold);color:#000;border:none;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">✏️ Desenhar</button>
-        <button onclick="_imgToggleMode('crop')" id="ipm-crop" style="background:var(--s3);color:var(--text);border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:inherit">✂️ Cortar</button>
-        <input type="color" id="ipm-color" value="#e53e3e" onchange="_drawColor=this.value" title="Cor" style="width:28px;height:28px;border:none;border-radius:4px;cursor:pointer;padding:0;background:none">
-        <select id="ipm-size" onchange="_drawSize=+this.value" style="background:var(--s2);color:var(--text);border:0.5px solid var(--bdr);border-radius:6px;padding:3px 6px;font-size:12px;font-family:inherit">
-          <option value="2">Fino</option>
-          <option value="4" selected>Médio</option>
-          <option value="8">Grosso</option>
-        </select>
-        <button onclick="_imgUndo()" style="background:var(--s3);color:var(--text);border:none;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;font-family:inherit" title="Desfazer">↩</button>
-        <button onclick="_imgReset()" style="background:var(--s3);color:var(--text);border:none;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;font-family:inherit" title="Resetar">🗑</button>
-      </div>
-      <div style="flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;padding:12px;min-height:0">
-        <div style="position:relative;display:inline-flex">
-          <canvas id="ipm-canvas" style="max-width:100%;max-height:60vh;display:block;cursor:crosshair;border-radius:6px;"></canvas>
-          <canvas id="ipm-overlay" style="position:absolute;inset:0;max-width:100%;max-height:60vh;cursor:crosshair;border-radius:6px;opacity:0.6;pointer-events:none"></canvas>
-        </div>
-      </div>
-      <div style="padding:10px 14px;border-top:0.5px solid var(--bdr);display:flex;gap:8px;justify-content:flex-end;flex-shrink:0">
-        <button onclick="_closeImgPreview()" style="background:var(--s3);color:var(--text);border:none;border-radius:8px;padding:7px 16px;font-size:13px;cursor:pointer;font-family:inherit">Descartar</button>
-        ${_cropMode?'':''}
-        <button id="ipm-crop-apply" onclick="_imgApplyCrop()" style="display:none;background:var(--blue);color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:13px;cursor:pointer;font-family:inherit">Aplicar corte</button>
-        <button onclick="_sendImgPreview()" style="background:var(--green);color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Enviar</button>
-      </div>
-    </div>`;
-  document.body.appendChild(modal);
-  _drawMode='draw';_cropStart=null;_cropRect=null;
-  const img=new Image();
-  img.onload=()=>{
-    const cvs=document.getElementById('ipm-canvas');
-    const ovl=document.getElementById('ipm-overlay');
-    // Scale to max display size
-    const maxW=Math.min(img.width,650);const ratio=maxW/img.width;
-    cvs.width=img.width;cvs.height=img.height;
-    cvs.style.width=Math.round(img.width*ratio)+'px';cvs.style.height=Math.round(img.height*ratio)+'px';
-    ovl.width=img.width;ovl.height=img.height;
-    ovl.style.width=cvs.style.width;ovl.style.height=cvs.style.height;
-    _drawCtx=cvs.getContext('2d');
-    _drawCtx.drawImage(img,0,0);
-    _imgSnapshots=[_drawCtx.getImageData(0,0,cvs.width,cvs.height)];
-    _setupDrawEvents(cvs,ovl,img.width/Math.round(img.width*ratio));
-  };
-  img.src=dataUrl;
-}
-let _imgSnapshots=[];
-function _setupDrawEvents(cvs,ovl,scale){
-  const getPos=e=>{const r=cvs.getBoundingClientRect();const cx=(e.touches?e.touches[0].clientX:e.clientX)-r.left;const cy=(e.touches?e.touches[0].clientY:e.clientY)-r.top;return{x:cx*scale,y:cy*scale};};
-  const down=e=>{
-    e.preventDefault();
-    const p=getPos(e);
-    if(_drawMode==='crop'){_cropStart=p;_cropRect=null;}
-    else{_drawing=true;_drawCtx.beginPath();_drawCtx.moveTo(p.x,p.y);_drawCtx.strokeStyle=_drawColor;_drawCtx.lineWidth=_drawSize;_drawCtx.lineCap='round';_drawCtx.lineJoin='round';}
-  };
-  const move=e=>{
-    e.preventDefault();
-    const p=getPos(e);
-    if(_drawMode==='crop'&&_cropStart){
-      _cropRect={x:Math.min(_cropStart.x,p.x),y:Math.min(_cropStart.y,p.y),w:Math.abs(p.x-_cropStart.x),h:Math.abs(p.y-_cropStart.y)};
-      const oc=ovl.getContext('2d');oc.clearRect(0,0,ovl.width,ovl.height);
-      oc.strokeStyle='#fff';oc.lineWidth=2*scale;oc.setLineDash([6*scale,3*scale]);
-      oc.strokeRect(_cropRect.x,_cropRect.y,_cropRect.w,_cropRect.h);
-      oc.fillStyle='rgba(0,0,0,0.35)';
-      oc.fillRect(0,0,ovl.width,_cropRect.y);oc.fillRect(0,_cropRect.y+_cropRect.h,ovl.width,ovl.height-_cropRect.y-_cropRect.h);
-      oc.fillRect(0,_cropRect.y,_cropRect.x,_cropRect.h);oc.fillRect(_cropRect.x+_cropRect.w,_cropRect.y,ovl.width-_cropRect.x-_cropRect.w,_cropRect.h);
-    } else if(_drawing){_drawCtx.lineTo(p.x,p.y);_drawCtx.stroke();}
-  };
-  const up=e=>{
-    if(_drawing){_drawing=false;_drawCtx.closePath();_imgSnapshots.push(_drawCtx.getImageData(0,0,cvs.width,cvs.height));}
-    if(_drawMode==='crop'&&_cropRect){const btn=document.getElementById('ipm-crop-apply');if(btn)btn.style.display='';}
-    _cropStart=null;
-  };
-  cvs.addEventListener('mousedown',down);cvs.addEventListener('mousemove',move);cvs.addEventListener('mouseup',up);
-  cvs.addEventListener('touchstart',down,{passive:false});cvs.addEventListener('touchmove',move,{passive:false});cvs.addEventListener('touchend',up);
-}
-function _imgToggleMode(mode){
-  _drawMode=mode;_cropRect=null;_cropStart=null;
-  const ovl=document.getElementById('ipm-overlay');if(ovl)ovl.getContext('2d').clearRect(0,0,ovl.width,ovl.height);
-  const ca=document.getElementById('ipm-crop-apply');if(ca)ca.style.display='none';
-  document.getElementById('ipm-draw').style.background=mode==='draw'?'var(--gold)':'var(--s3)';
-  document.getElementById('ipm-draw').style.color=mode==='draw'?'#000':'var(--text)';
-  document.getElementById('ipm-crop').style.background=mode==='crop'?'var(--gold)':'var(--s3)';
-  document.getElementById('ipm-crop').style.color=mode==='crop'?'#000':'var(--text)';
-}
-function _imgUndo(){
-  if(_imgSnapshots.length<=1)return;
-  _imgSnapshots.pop();
-  const cvs=document.getElementById('ipm-canvas');if(!cvs)return;
-  _drawCtx.putImageData(_imgSnapshots[_imgSnapshots.length-1],0,0);
-}
-function _imgReset(){
-  if(_imgSnapshots.length<1)return;
-  _drawCtx.putImageData(_imgSnapshots[0],0,0);
-  _imgSnapshots=[_imgSnapshots[0]];
-}
-function _imgApplyCrop(){
-  if(!_cropRect||!_cropRect.w||!_cropRect.h)return;
-  const cvs=document.getElementById('ipm-canvas');
-  const tmp=document.createElement('canvas');tmp.width=_cropRect.w;tmp.height=_cropRect.h;
-  tmp.getContext('2d').drawImage(cvs,_cropRect.x,_cropRect.y,_cropRect.w,_cropRect.h,0,0,_cropRect.w,_cropRect.h);
-  cvs.width=_cropRect.w;cvs.height=_cropRect.h;
-  const ovl=document.getElementById('ipm-overlay');ovl.width=_cropRect.w;ovl.height=_cropRect.h;
-  _drawCtx=cvs.getContext('2d');_drawCtx.drawImage(tmp,0,0);
-  _imgSnapshots=[_drawCtx.getImageData(0,0,cvs.width,cvs.height)];
-  _cropRect=null;ovl.getContext('2d').clearRect(0,0,ovl.width,ovl.height);
-  const ca=document.getElementById('ipm-crop-apply');if(ca)ca.style.display='none';
-  _imgToggleMode('draw');
-}
-function _closeImgPreview(){const m=document.getElementById('img-preview-modal');if(m)m.remove();_imgPreviewData=null;}
-function _sendImgPreview(){
-  const cvs=document.getElementById('ipm-canvas');if(!cvs)return;
-  const dataUrl=cvs.toDataURL(_imgPreviewType||'image/png');
-  const d=ld();
-  const msg={id:'m'+Date.now(),text:'',from:S.user.name,role:S.role,time:new Date().toISOString(),media:{name:_imgPreviewName,type:_imgPreviewType||'image/png',data:dataUrl}};
-  d.msgs=d.msgs||[];d.msgs.push(msg);
-  activ(d,'Imagem enviada','var(--blue)');sv(d);rChat(d);_closeImgPreview();
-}
-let _mediaRec=null,_recChunks=[],_audioPreviewBlob=null;
+let _mediaRec=null,_recChunks=[];
 function toggleAudio(){
   const btn=document.getElementById('mic-btn');
   if(_mediaRec&&_mediaRec.state==='recording'){_mediaRec.stop();btn.classList.remove('rec');return;}
@@ -2160,61 +1911,18 @@ function toggleAudio(){
     _mediaRec.ondataavailable=e=>{if(e.data.size>0)_recChunks.push(e.data);};
     _mediaRec.onstop=()=>{
       stream.getTracks().forEach(t=>t.stop());
-      _audioPreviewBlob=new Blob(_recChunks,{type:'audio/webm'});
-      const url=URL.createObjectURL(_audioPreviewBlob);
-      _showAudioPreview(url);
+      const blob=new Blob(_recChunks,{type:'audio/webm'});
+      const fr=new FileReader();
+      fr.onload=ev=>{
+        const d=ld();
+        const msg={id:'m'+Date.now(),text:'',from:S.user.name,role:S.role,time:new Date().toISOString(),media:{name:'audio_'+Date.now()+'.webm',type:'audio/webm',data:ev.target.result}};
+        d.msgs=d.msgs||[];d.msgs.push(msg);
+        activ(d,'Áudio enviado','var(--gold)');sv(d);rChat(d);
+      };
+      fr.readAsDataURL(blob);
     };
     _mediaRec.start();btn.classList.add('rec');_showToast('Gravando... clique novamente para parar','var(--gold)');
   }).catch(()=>_showToast('Permissão de microfone negada','var(--red)'));
-}
-function _showAudioPreview(url){
-  // Remove any existing preview
-  const old=document.getElementById('audio-preview-bar');if(old)old.remove();
-  const bar=document.createElement('div');
-  bar.id='audio-preview-bar';
-  bar.style.cssText='display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--s2);border-top:0.5px solid var(--bdr);flex-shrink:0;flex-wrap:wrap;';
-  bar.innerHTML=`
-    <audio id="audio-preview" src="${url}" style="display:none"></audio>
-    <button onclick="document.getElementById('audio-preview').play()" style="background:var(--gold);color:#000;border:none;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">▶ Ouvir</button>
-    <button onclick="document.getElementById('audio-preview').pause()" style="background:var(--s3);color:var(--text);border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit">⏸</button>
-    <div style="display:flex;gap:4px;align-items:center">
-      <span style="font-size:11px;color:var(--t2)">Velocidade:</span>
-      <button onclick="_setAudioSpeed(1)" id="aspd-1" style="background:var(--gold);color:#000;border:none;border-radius:5px;padding:3px 7px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">1x</button>
-      <button onclick="_setAudioSpeed(1.5)" id="aspd-15" style="background:var(--s3);color:var(--text);border:none;border-radius:5px;padding:3px 7px;font-size:11px;cursor:pointer;font-family:inherit">1.5x</button>
-      <button onclick="_setAudioSpeed(2)" id="aspd-2" style="background:var(--s3);color:var(--text);border:none;border-radius:5px;padding:3px 7px;font-size:11px;cursor:pointer;font-family:inherit">2x</button>
-    </div>
-    <div style="margin-left:auto;display:flex;gap:6px">
-      <button onclick="_discardAudio()" style="background:var(--s3);color:var(--text);border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit">Descartar</button>
-      <button onclick="_sendAudioPreview()" style="background:var(--green);color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Enviar</button>
-    </div>`;
-  // Insert above the chat input row
-  const cinRow=document.querySelector('.cin-row')||document.getElementById('s-chat');
-  const chatInput=document.getElementById('cin');
-  if(chatInput&&chatInput.closest){
-    const row=chatInput.closest('.cin-row')||chatInput.parentElement;
-    if(row&&row.parentElement)row.parentElement.insertBefore(bar,row);
-    else document.getElementById('s-chat').appendChild(bar);
-  } else document.getElementById('s-chat').appendChild(bar);
-}
-function _setAudioSpeed(spd){
-  const a=document.getElementById('audio-preview');if(a)a.playbackRate=spd;
-  [1,15,2].forEach(s=>{const id='aspd-'+(s===1?'1':s===15?'15':'2');const b=document.getElementById(id);if(b){b.style.background=((s===1&&spd===1)||(s===15&&spd===1.5)||(s===2&&spd===2))?'var(--gold)':'var(--s3)';b.style.color=((s===1&&spd===1)||(s===15&&spd===1.5)||(s===2&&spd===2))?'#000':'var(--text)';}});
-}
-function _discardAudio(){
-  const bar=document.getElementById('audio-preview-bar');if(bar)bar.remove();
-  _audioPreviewBlob=null;
-}
-function _sendAudioPreview(){
-  if(!_audioPreviewBlob)return;
-  const fr=new FileReader();
-  fr.onload=ev=>{
-    const d=ld();
-    const msg={id:'m'+Date.now(),text:'',from:S.user.name,role:S.role,time:new Date().toISOString(),media:{name:'audio_'+Date.now()+'.webm',type:'audio/webm',data:ev.target.result}};
-    d.msgs=d.msgs||[];d.msgs.push(msg);
-    activ(d,'Áudio enviado','var(--gold)');sv(d);rChat(d);
-    _discardAudio();
-  };
-  fr.readAsDataURL(_audioPreviewBlob);
 }
 function insertMention(name){
   const inp=document.getElementById('cin');const v=inp.value;const pos=inp.selectionStart;const before=v.substring(0,pos).replace(/@\w*$/,'@'+name+' ');inp.value=before+v.substring(pos);closeMentionDrop();inp.focus();
