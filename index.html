@@ -3,17 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0A0A0A">
+<meta name="theme-color" content="#F2EFE8">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Flow Sales</title>
 <link rel="manifest" href="manifest.json">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 :root{
-  --bg:#F2EFE8;--s1:#FFFFFF;--s2:#F7F5F1;--s3:#EDE9E1;
-  --bdr:rgba(0,0,0,0.08);--bdr2:rgba(0,0,0,0.13);
-  --gold:#B8922E;--gb:rgba(184,146,46,0.09);--gbr:rgba(184,146,46,0.28);
-  --text:#1A1815;--t2:#6E6455;--t3:#D0C9BC;
+  --bg:#EEEBE3;--s1:#F5F3EE;--s2:#EDEAE3;--s3:#E3DFD6;
+  --bdr:rgba(0,0,0,0.09);--bdr2:rgba(0,0,0,0.14);
+  --gold:#B8922E;--gb:rgba(184,146,46,0.1);--gbr:rgba(184,146,46,0.3);
+  --text:#1A1815;--t2:#6A6050;--t3:#C8C2B5;
   --green:#1D9E75;--red:#C0392B;--blue:#3498DB;
   --sw:220px;
 }
@@ -101,7 +101,7 @@ input[type="date"].fi::-webkit-calendar-picker-indicator:hover{opacity:1;}
 
 /* MAIN */
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;}
-.topbar{display:flex;align-items:center;gap:8px;padding:0 16px;height:50px;border-bottom:0.5px solid var(--bdr);flex-shrink:0;}
+.topbar{display:flex;align-items:center;gap:8px;padding:0 16px;height:50px;border-bottom:0.5px solid var(--bdr);flex-shrink:0;background:var(--s1);}
 .tb-ttl{font-size:14px;font-weight:500;flex:1;}
 .cal-btn{display:flex;align-items:center;gap:6px;font-size:13px;padding:5px 11px;border-radius:7px;cursor:pointer;border:0.5px solid var(--bdr2);background:transparent;color:var(--t2);transition:all .12s;font-family:inherit;white-space:nowrap;}
 .cal-btn:hover,.cal-btn.on{border-color:var(--gbr);color:var(--gold);}
@@ -110,7 +110,7 @@ input[type="date"].fi::-webkit-calendar-picker-indicator:hover{opacity:1;}
 .tb-btn:hover{border-color:var(--gbr);color:var(--gold);}
 .notifbtn{position:relative;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:7px;cursor:pointer;border:0.5px solid var(--bdr);background:transparent;color:var(--t2);}
 .notifbtn:hover{border-color:var(--bdr2);color:var(--text);}
-.ndot{position:absolute;top:3px;right:3px;min-width:15px;height:15px;background:var(--red);border-radius:9px;border:1.5px solid var(--s1);font-size:13px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;}
+.ndot{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;background:var(--red);border-radius:9px;border:1.5px solid var(--s1);font-size:10px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;}
 .sb-toggle-top{background:none;border:none;cursor:pointer;color:var(--gold);padding:6px;border-radius:7px;display:none;align-items:center;flex-shrink:0;transition:color .15s,background .15s;}.sb-toggle-top:hover{background:rgba(201,168,67,.1);}.hamb{display:none;background:none;border:none;cursor:pointer;color:var(--t2);padding:5px;}
 
 /* CALENDAR PANEL */
@@ -143,7 +143,7 @@ input[type="date"].fi::-webkit-calendar-picker-indicator:hover{opacity:1;}
 .nph{padding:12px 14px;border-bottom:0.5px solid var(--bdr);font-size:12px;font-weight:500;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--s1);}
 .ni2{padding:10px 14px;border-bottom:0.5px solid var(--bdr);cursor:pointer;transition:background .12s;}
 .ni2:last-child{border:none;}
-.ni2:hover{background:rgba(255,255,255,.018);}
+.ni2:hover{background:var(--s2);}
 .ni2.unr{border-left:2px solid var(--gold);}
 .nit{font-size:12px;margin-bottom:2px;}
 .nis{font-size:12px;color:var(--t2);}
@@ -151,16 +151,16 @@ input[type="date"].fi::-webkit-calendar-picker-indicator:hover{opacity:1;}
 
 /* CONTENT */
 
-.content{flex:1;overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:12px;}
+.content{flex:1;overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:12px;background:var(--bg);}
 
 
 /* CHAT FILL — CSS puro, sem JS */
 
 /* CHAT — absolutamente posicionado dentro do .main para garantir altura total */
-#s-chat{display:none;position:absolute;top:50px;left:0;right:0;bottom:0;flex-direction:column;overflow:hidden;background:var(--bg);z-index:5;}
+#s-chat{display:none;position:absolute;top:50px;left:0;right:0;bottom:0;flex-direction:column;overflow:hidden;background:var(--s2);z-index:5;}
 .sec{display:none;flex-direction:column;gap:12px;}
 .sec.on{display:flex;}
-.card{background:linear-gradient(145deg,#131313,#0f0f0f);border:0.5px solid rgba(255,255,255,0.07);border-radius:10px;padding:16px 18px;box-shadow:0 2px 16px rgba(0,0,0,.3);}
+.card{background:var(--s1);border:0.5px solid var(--bdr);border-radius:10px;padding:16px 18px;box-shadow:0 1px 6px rgba(0,0,0,0.07);}
 .ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
 .ct{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;}
 .ct svg{width:14px;height:14px;opacity:.55;stroke-width:1.8;}
@@ -170,7 +170,7 @@ input[type="date"].fi::-webkit-calendar-picker-indicator:hover{opacity:1;}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
 .gw{display:grid;grid-template-columns:1fr 340px;gap:12px;}
 .kg{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
-.kc{background:var(--s2);border-radius:9px;padding:14px 16px;}
+.kc{background:var(--s3);border-radius:9px;padding:14px 16px;}
 .kl{font-size:12px;color:var(--t2);margin-bottom:5px;}
 .kv{font-size:22px;font-weight:500;letter-spacing:-0.02em;}
 .km{font-size:12px;color:var(--t2);margin-top:3px;}
@@ -189,7 +189,7 @@ input[type="date"].fi::-webkit-calendar-picker-indicator:hover{opacity:1;}
 .kpi-hero-roi-lbl{font-size:12px;color:var(--t2);margin-bottom:4px;}
 .kpi-hero-roi-val{font-size:22px;font-weight:500;color:var(--green);}
 .kpi-g6{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
-.kpi-mc{background:var(--s2);border-radius:9px;padding:14px 16px;}
+.kpi-mc{background:var(--s3);border-radius:9px;padding:14px 16px;}
 .kpi-lbl{font-size:12px;color:var(--t2);margin-bottom:5px;}
 .kpi-val{font-size:20px;font-weight:500;letter-spacing:-0.02em;}
 .kpi-sub{font-size:12px;margin-top:3px;}
@@ -200,7 +200,7 @@ input[type="date"].fi::-webkit-calendar-picker-indicator:hover{opacity:1;}
 .kpi-fill{height:3px;border-radius:2px;}
 .kpi-goal{font-size:12px;color:var(--t2);margin-top:3px;}
 .funnel-wrap{display:flex;align-items:center;gap:4px;}
-.fn-step{flex:1;background:var(--s2);border-radius:8px;padding:10px;text-align:center;}
+.fn-step{flex:1;background:var(--s2);border:0.5px solid var(--bdr);border-radius:8px;padding:10px;text-align:center;}
 .fn-n{font-size:18px;font-weight:500;}
 .fn-l{font-size:13px;color:var(--t2);margin-top:2px;}
 .fn-p{font-size:13px;color:var(--green);margin-top:1px;}
@@ -334,7 +334,7 @@ input[type="date"].fi::-webkit-calendar-picker-indicator:hover{opacity:1;}
 
 /* PERFIL */
 .prof-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.partner-card{background:var(--s2);border-radius:9px;padding:12px 14px;display:flex;align-items:flex-start;gap:12px;}
+.partner-card{background:var(--s2);border:0.5px solid var(--bdr);border-radius:9px;padding:12px 14px;display:flex;align-items:flex-start;gap:12px;}
 .partner-av{width:40px;height:40px;border-radius:50%;background:var(--gb);border:0.5px solid var(--gbr);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--gold);flex-shrink:0;cursor:pointer;overflow:hidden;}
 .partner-av img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
 .partner-info{flex:1;min-width:0;}
@@ -540,7 +540,7 @@ window._fbOnSnapshot = onSnapshot;
         </button>
         
         <span id="sync-dot" title="Sincronizando..." style="width:7px;height:7px;border-radius:50%;background:var(--t3);display:inline-block;flex-shrink:0;transition:background .3s;cursor:default;"></span>
-        <button class="notifbtn" onclick="toggleNotif()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="ndot" id="ndot" style="display:none"></span></button>
+        <button class="notifbtn" onclick="toggleNotif()"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="ndot" id="ndot" style="display:none"></span></button>
       </div>
 
       <!-- CALENDAR PANEL -->
@@ -2147,8 +2147,8 @@ function openM(type,data){
         const firmNm=(FIRMS.find(f=>f.id===S.eid)||{}).name||'Escritório';
         const resp=document.getElementById('m-rsp')?v('m-rsp'):firmNm;
         const d=ld();const t={id:data?data.id:'t'+Date.now(),title:v('m-ttl'),desc:v('m-dsc'),resp,assign:v('m-asg'),week:data?data.week:1,due,status:v('m-sta'),urgent:document.getElementById('m-urg').checked,pri:_pri||'med',created:data?data.created:_localDate()};
-        if(data){const i=d.tasks.findIndex(x=>x.id===data.id);if(i>=0){d.tasks[i]=t;if(t.assign&&t.assign!==(data.assign||'')){const _fnmE=s=>(s||'').trim().split(' ')[0].toLowerCase();const _isMeE=_fnmE(t.assign)===_fnmE(S.user&&S.user.name);if(_isMeE){const nidE='nasgn_ed_'+t.id+'_'+Date.now();d.notifs.unshift({id:nidE,title:'Demanda atribuída a você',sub:t.title+(t.due?' · Prazo: '+fd(t.due):''),read:false});_showToast('📋 Demanda atribuída: '+t.title,'var(--gold)');}else if(t.assign)_desktopNotif('📋 Demanda reatribuída a '+t.assign,t.title);}}}
-        else{d.tasks.push(t);activ(d,'Nova demanda: '+t.title,'var(--gold)');if(t.assign){const _fnm=s=>(s||'').trim().split(' ')[0].toLowerCase();const _isMe=_fnm(t.assign)===_fnm(S.user&&S.user.name);if(_isMe){const nid='nasgn_'+t.id;if(!d.notifs.find(n=>n.id===nid)){d.notifs.unshift({id:nid,title:'Nova demanda atribuída a você',sub:t.title+(t.due?' · Prazo: '+fd(t.due):''),read:false});_showToast('📋 Nova demanda: '+t.title,'var(--gold)');}}else{const nid='nasgn_'+t.id;if(!d.notifs.find(n=>n.id===nid)){d.notifs.unshift({id:nid,title:'📋 Nova demanda: '+t.title,sub:'Atribuída a '+t.assign+(t.due?' · Prazo: '+fd(t.due):''),read:false});}d.notifs.unshift===void 0||(()=>{});_desktopNotif('📋 Demanda atribuída a '+t.assign,t.title);}}_clickupTask(t);}
+        if(data){const i=d.tasks.findIndex(x=>x.id===data.id);if(i>=0){d.tasks[i]=t;if(t.assign&&t.assign!==(data.assign||'')){const _fnmE=s=>(s||'').trim().split(' ')[0].toLowerCase();const _isMeE=_fnmE(t.assign)===_fnmE(S.user&&S.user.name);if(_isMeE){const nidE='nasgn_ed_'+t.id+'_'+Date.now();d.notifs.unshift({id:nidE,title:'Demanda atribuída a você',sub:t.title+(t.due?' · Prazo: '+fd(t.due):''),read:false});_showToast('📋 Demanda atribuída: '+t.title,'var(--gold)');}else if(t.assign)_desktopNotif('📋 Demanda reatribuída a '+t.assign,t.title);if(S.eid&&S.eid!=='flowsales'){try{const _adme=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');_adme.notifs=_adme.notifs||[];const _xide='xfirm_ed_'+t.id+'_'+Date.now();const _feobj=FIRMS.find(f=>f.id===S.eid)||{};_adme.notifs.unshift({id:_xide,title:'📋 Demanda atualizada — '+(_feobj.name||S.eid),sub:t.title+' · Para: '+t.assign,read:false});localStorage.setItem('fs_flowsales',JSON.stringify(_adme));}catch(_xee){}}}}}
+        else{d.tasks.push(t);activ(d,'Nova demanda: '+t.title,'var(--gold)');if(t.assign){const _fnm=s=>(s||'').trim().split(' ')[0].toLowerCase();const _isMe=_fnm(t.assign)===_fnm(S.user&&S.user.name);if(_isMe){const nid='nasgn_'+t.id;if(!d.notifs.find(n=>n.id===nid)){d.notifs.unshift({id:nid,title:'Nova demanda atribuída a você',sub:t.title+(t.due?' · Prazo: '+fd(t.due):''),read:false});_showToast('📋 Nova demanda: '+t.title,'var(--gold)');}}else{const nid='nasgn_'+t.id;if(!d.notifs.find(n=>n.id===nid)){d.notifs.unshift({id:nid,title:'📋 Nova demanda: '+t.title,sub:'Atribuída a '+t.assign+(t.due?' · Prazo: '+fd(t.due):''),read:false});}d.notifs.unshift===void 0||(()=>{});_desktopNotif('📋 Demanda atribuída a '+t.assign,t.title);}}if(S.eid&&S.eid!=='flowsales'){try{const _admd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');_admd.notifs=_admd.notifs||[];const _xid='xfirm_'+t.id;if(!_admd.notifs.find(n=>n.id===_xid)){const _fobj=FIRMS.find(f=>f.id===S.eid)||{};_admd.notifs.unshift({id:_xid,title:'📋 Nova demanda de '+(_fobj.name||S.eid),sub:t.title+(t.assign?' · Para: '+t.assign:'')+(t.due?' · Prazo: '+fd(t.due):''),read:false});localStorage.setItem('fs_flowsales',JSON.stringify(_admd));}}catch(_xe){}}_clickupTask(t);}
         cModal(null,1);sv(d);try{renderAll();populateWkFilter();}catch(e){console.warn("renderAll err",e);}
       }
     },
