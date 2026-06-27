@@ -10,14 +10,14 @@
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 :root{
-  --bg:#0A0A0A;--s1:#111;--s2:#181818;--s3:#212121;
-  --bdr:rgba(255,255,255,0.055);--bdr2:rgba(255,255,255,0.11);
-  --gold:#C9A843;--gb:rgba(201,168,67,0.08);--gbr:rgba(201,168,67,0.22);
-  --text:#F0E8D6;--t2:#C8B890;--t3:#484848;
+  --bg:#F2EFE8;--s1:#FFFFFF;--s2:#F7F5F1;--s3:#EDE9E1;
+  --bdr:rgba(0,0,0,0.08);--bdr2:rgba(0,0,0,0.13);
+  --gold:#B8922E;--gb:rgba(184,146,46,0.09);--gbr:rgba(184,146,46,0.28);
+  --text:#1A1815;--t2:#6E6455;--t3:#D0C9BC;
   --green:#1D9E75;--red:#C0392B;--blue:#3498DB;
   --sw:220px;
 }
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',sans-serif;font-size:15px;line-height:1.5;overflow:hidden;;text-shadow:0 0 18px rgba(201,168,67,0.18),0 1px 3px rgba(0,0,0,0.55);}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',sans-serif;font-size:15px;line-height:1.5;overflow:hidden;}
 ::-webkit-scrollbar{width:3px;height:3px;}
 ::-webkit-scrollbar-thumb{background:var(--s3);border-radius:2px;}
 
@@ -55,7 +55,7 @@ input[type="date"].fi::-webkit-calendar-picker-indicator:hover{opacity:1;}
 .shell{display:flex;height:100%;}
 
 /* SIDEBAR */
-.sb{width:var(--sw);min-width:var(--sw);background:linear-gradient(180deg,#131310 0%,#0f0f0d 100%);border-right:2px solid rgba(201,168,67,0.38);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;}
+.sb{width:var(--sw);min-width:var(--sw);background:linear-gradient(180deg,#131310 0%,#0f0f0d 100%);border-right:2px solid rgba(201,168,67,0.38);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;--text:#F0E8D6;--t2:#C8B890;--t3:#484848;--bdr:rgba(255,255,255,0.055);--bdr2:rgba(255,255,255,0.11);--s1:#111;--s2:#1A1816;--s3:#212121;--gb:rgba(201,168,67,0.08);--gbr:rgba(201,168,67,0.22);--gold:#C9A843;}
 .sb-top{padding:16px 14px 12px;border-bottom:0.5px solid var(--bdr);}
 .sb-logo{display:flex;align-items:center;gap:10px;cursor:default;width:100%;}
 .sb-logo-icon{width:30px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
@@ -66,7 +66,7 @@ input[type="date"].fi::-webkit-calendar-picker-indicator:hover{opacity:1;}
 .sb-firm-wrap{position:relative;margin:10px 10px 4px;}
 .sb-firm{padding:10px 11px;background:var(--gb);border:0.5px solid var(--gbr);border-radius:9px;cursor:pointer;}
 .sb-firm-admin{cursor:pointer;}
-.sb-fn{font-size:12px;font-weight:600;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;justify-content:space-between;}
+.sb-fn{font-size:12px;font-weight:600;color:var(--gold);display:flex;align-items:center;justify-content:space-between;gap:6px;overflow:hidden;}
 .sb-fs{font-size:12px;color:var(--t2);}
 .sb-badge{display:inline-block;margin-top:6px;font-size:13px;font-weight:600;padding:2px 8px;border-radius:20px;background:rgba(29,158,117,.14);color:var(--green);border:0.5px solid rgba(29,158,117,.28);}
 .firm-dropdown{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--s2);border:0.5px solid var(--bdr2);border-radius:9px;z-index:50;overflow:hidden;}
@@ -499,7 +499,7 @@ window._fbOnSnapshot = onSnapshot;
       </div>
       <div class="sb-firm-wrap" id="firm-wrap">
         <div class="sb-firm" id="sfirm" onclick="toggleFirmDrop(event)">
-          <div class="sb-fn" style="display:flex;align-items:center;gap:8px"><img id="sfirm-photo" src="" style="width:40px;height:40px;border-radius:8px;object-fit:cover;display:none;border:0.5px solid var(--gbr);flex-shrink:0"><span id="sfn">Carregando...</span><svg id="firm-arr" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;color:var(--t2);display:none"><polyline points="6 9 12 15 18 9"/></svg></div>
+          <div class="sb-fn" style="display:flex;align-items:center;gap:8px"><img id="sfirm-photo" src="" style="width:40px;height:40px;border-radius:8px;object-fit:cover;display:none;border:0.5px solid var(--gbr);flex-shrink:0"><span id="sfn" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">Carregando...</span><svg id="firm-arr" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;color:var(--t2);display:none"><polyline points="6 9 12 15 18 9"/></svg></div>
           <div class="sb-fs" id="sfs"></div>
           <div class="sb-badge" id="sbdg"></div>
         </div>
@@ -1242,8 +1242,16 @@ function selectFirm(id){
     o.classList.toggle('active',o.dataset.fid===id);
   });
   loadFirm();nav('ov');renderAll();populateWkFilter();
-  // Apply responsável photo if stored
-  try{const fe=(ld().firmExtra||{});if(fe.respPhoto){const av=document.getElementById('uav');if(av)av.innerHTML='<img src="'+fe.respPhoto+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';}} catch(e){}
+  // Restaurar avatar do admin ao trocar firma
+  if(S.role==='admin'){
+    try{
+      const _au=S.user;const _as=JSON.parse(localStorage.getItem('fs_upf_'+_au.email)||'{}')||{};
+      const _ap=_as.photo||_au.photo||'';
+      const _aav=document.getElementById('uav');
+      if(_aav){if(_ap)_aav.innerHTML='<img src="'+_ap+'" alt="">';else _aav.textContent=_au.init||'?';}
+    }catch(e){}
+  }
+  setupFirmSelect();
   _startRealtimeSync();
 }
 function loadFirm(){
@@ -1331,6 +1339,44 @@ function renderAll(){const d=ld();const _td=_localDate();d.tasks.forEach(t=>{if(
 
 function rTimeline(d){
   const wrap=document.getElementById('timeline-wrap');if(!wrap)return;
+  // Admin no painel FlowSales → mostrar todas as firmas
+  if(S.role==='admin'&&S.eid==='flowsales'){
+    if(!FIRMS.length){wrap.innerHTML='<div class="empty">Nenhum escritório cadastrado.</div>';return;}
+    wrap.innerHTML=FIRMS.map(firm=>{
+      let fd2={};try{fd2=JSON.parse(localStorage.getItem('fs_'+firm.id)||'{}');}catch(e){}
+      const tasks=fd2.tasks||[];
+      const weeks=[...new Set(tasks.map(t=>t.week))].filter(Boolean).sort((a,b)=>a-b);
+      if(!weeks.length)return'';
+      const firmDone=tasks.filter(t=>t.status==='done').length;
+      const firmPct=tasks.length?Math.round(firmDone/tasks.length*100):0;
+      const firmCol=firmPct===100?'var(--green)':firmPct>0?'var(--gold)':'var(--t2)';
+      return'<div class="card" style="margin-bottom:12px"><div class="ch"><div class="ct" style="display:flex;align-items:center;gap:8px">'
+        +(firm.photo?'<img src="'+firm.photo+'" style="width:22px;height:22px;border-radius:4px;object-fit:cover">':'')
+        +'<span>'+firm.name+'</span></div>'
+        +'<span class="b" style="color:'+firmCol+'">'+firmPct+'% concluído</span></div>'
+        +'<div style="margin:8px 0 10px"><div style="height:4px;background:var(--s3);border-radius:2px"><div style="height:4px;width:'+firmPct+'%;background:'+firmCol+';border-radius:2px"></div></div></div>'
+        +weeks.map(w=>{
+          const wt=tasks.filter(t=>t.week===w);
+          const done=wt.filter(t=>t.status==='done').length;
+          const pct=wt.length?Math.round(done/wt.length*100):0;
+          const col=pct===100?'var(--green)':pct>0?'var(--gold)':'var(--t2)';
+          return'<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
+            +'<span style="font-size:12px;color:var(--t2)">Semana '+w+'</span>'
+            +'<span style="font-size:12px;color:'+col+'">'+done+'/'+wt.length+'</span></div>'
+            +'<div style="height:3px;background:var(--s3);border-radius:2px"><div style="height:3px;width:'+pct+'%;background:'+col+';border-radius:2px"></div></div>'
+            +'<div style="display:flex;flex-direction:column;gap:4px;margin-top:6px">'+wt.map(t=>{
+              const ic=t.status==='done'?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>':'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--t2)" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>';
+              return'<div style="display:flex;align-items:center;gap:7px;font-size:13px"><span style="flex-shrink:0">'+ic+'</span>'
+                +'<span style="color:'+(t.status==='done'?'var(--t2)':'var(--text)')+';'+(t.status==='done'?'text-decoration:line-through':'')+'">'+t.title+'</span>'
+                +(t.due?'<span style="margin-left:auto;font-size:12px;color:var(--t2);white-space:nowrap">'+fd(t.due)+'</span>':'')
+                +'</div>';
+            }).join('')+'</div></div>';
+        }).join('')
+        +'</div>';
+    }).filter(Boolean).join('')||'<div class="empty">Nenhuma jornada registrada.</div>';
+    return;
+  }
+  // Firma específica ou cliente
   const weeks=[...new Set((d.tasks||[]).map(t=>t.week))].filter(Boolean).sort((a,b)=>a-b);
   if(!weeks.length){wrap.innerHTML='<div class="empty">Nenhuma semana registrada ainda.</div>';return;}
   wrap.innerHTML=weeks.map(w=>{
@@ -1338,7 +1384,7 @@ function rTimeline(d){
     const done=wt.filter(t=>t.status==='done').length;
     const pct=wt.length?Math.round(done/wt.length*100):0;
     const col=pct===100?'var(--green)':pct>0?'var(--gold)':'var(--t2)';
-    return '<div class="card" style="margin-bottom:8px"><div class="ch"><div class="ct">Semana '+w+'</div><span class="b" style="color:'+col+';background:'+col.replace(')',',0.12)').replace('var(','rgba(')+'">'+pct+'%</span></div>'
+    return '<div class="card" style="margin-bottom:8px"><div class="ch"><div class="ct">Semana '+w+'</div><span class="b" style="color:'+col+'">'+pct+'%</span></div>'
       +'<div style="margin:8px 0 10px"><div style="height:4px;background:var(--s3);border-radius:2px"><div style="height:4px;width:'+pct+'%;background:'+col+';border-radius:2px;transition:width .3s"></div></div></div>'
       +'<div style="display:flex;flex-direction:column;gap:6px">'+wt.map(t=>{
         const ic=t.status==='done'?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>':'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--t2)" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>';
