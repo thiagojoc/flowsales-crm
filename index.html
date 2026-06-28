@@ -3327,9 +3327,9 @@ function _getGuests(){
 // ── INIT ────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded',()=>{
   checkSess();
-  const _lpw=document.getElementById('l-pw');
+  const _lpw=document.getElementById('lp');
   if(_lpw)_lpw.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
-  const _lem=document.getElementById('l-em');
+  const _lem=document.getElementById('le');
   if(_lem)_lem.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
   document.addEventListener('click',(e)=>{
     // firm dropdown
