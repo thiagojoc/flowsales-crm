@@ -1610,13 +1610,13 @@ function rKpis(d){
   const vendasItems=d.vendasItems||[];
   const vbEl=document.getElementById('kpi-vendas-breakdown');
   const vbBtn=document.getElementById('vendas-add-btn');
-  if(vbBtn){if(S.role==='admin'){vbBtn.innerHTML='<button class="ca" onclick="openAddVenda()">+ Tipo</button>';}else{vbBtn.innerHTML='';}}
+  if(vbBtn){vbBtn.innerHTML='<button class="ca" onclick="openAddVenda()">+ Adicionar venda</button>';}
   if(vbEl){
     if(!vendasItems.length){vbEl.innerHTML='<div class="empty">Nenhuma venda registrada. Clique em + Tipo para registrar.</div>';}
     else{
       const tot=vendasItems.reduce(function(s,x){return s+x.qty;},0);
       // Group by tipo for chart
-      var byTipo={};vendasItems.forEach(function(vi){if(!byTipo[vi.tipo])byTipo[vi.tipo]={qty:0,orig:{},clis:[]};byTipo[vi.tipo].qty+=vi.qty;if(vi.orig)byTipo[vi.tipo].orig[vi.orig]=(byTipo[vi.tipo].orig[vi.orig]||0)+vi.qty;if(vi.cli)byTipo[vi.tipo].clis.push(vi.cli);});
+      var byTipo={};vendasItems.forEach(function(vi){if(!byTipo[vi.tipo])byTipo[vi.tipo]={qty:0,orig:{},clis:[],sellers:[]};byTipo[vi.tipo].qty+=(vi.qty||1);if(vi.orig)byTipo[vi.tipo].orig[vi.orig]=(byTipo[vi.tipo].orig[vi.orig]||0)+(vi.qty||1);if(vi.cli)byTipo[vi.tipo].clis.push(vi.cli);if(vi.seller&&!byTipo[vi.tipo].sellers.includes(vi.seller))byTipo[vi.tipo].sellers.push(vi.seller);});
       var tipos=Object.keys(byTipo);var cols=['var(--gold)','var(--blue)','var(--green)','#a78bfa','#f472b6','var(--red)','#34d399','#60a5fa'];
       // Mini SVG bar chart
       var maxQ=Math.max.apply(null,tipos.map(function(t){return byTipo[t].qty;}));
@@ -1630,14 +1630,19 @@ function rKpis(d){
         var g=byTipo[t];var pct=tot?Math.round(g.qty/tot*100):0;
         var origStr=Object.keys(g.orig).map(function(o){return o+' ('+g.orig[o]+')';}).join(', ')||'Não informada';
         var cliStr=g.clis.length?g.clis.slice(0,3).join(', ')+(g.clis.length>3?' +'+( g.clis.length-3):''):'';
+        var totVal=vendasItems.filter(function(vi){return vi.tipo===t;}).reduce(function(s,vi){return s+(+vi.val||0);},0);
+        var valStr=totVal>0?'R$ '+totVal.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'';
+        var sellers=[...new Set(vendasItems.filter(function(vi){return vi.tipo===t&&vi.seller;}).map(function(vi){return vi.seller;}))].join(', ');
         var delBtns=vendasItems.filter(function(vi){return vi.tipo===t;}).map(function(vi){return S.role==='admin'?'<button class="ib del" data-vid="'+vi.id+'" onclick="delVendasItem(this.dataset.vid)" title="Remover entrada"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>':'';}).join('');
         return '<div style="border:0.5px solid var(--bdr);border-radius:8px;padding:10px 13px;margin-bottom:7px">'
           +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
           +'<div style="display:flex;align-items:center;gap:7px"><div style="width:8px;height:8px;border-radius:50%;background:'+cols[i%cols.length]+';flex-shrink:0"></div><span style="font-size:12px;font-weight:600">'+t+'</span></div>'
           +'<div style="display:flex;align-items:center;gap:6px"><span style="font-size:12px;font-weight:700;color:'+cols[i%cols.length]+'">'+g.qty+'</span><span style="font-size:13px;color:var(--t2);background:var(--gb);border-radius:4px;padding:1px 5px">'+pct+'%</span>'+delBtns+'</div></div>'
           +'<div style="font-size:12px;color:var(--t2);display:flex;flex-wrap:wrap;gap:10px">'
+          +(valStr?'<span><b style="color:var(--t3)">Total:</b> <span style="color:var(--green);font-weight:700">'+valStr+'</span></span>':'')
           +'<span><b style="color:var(--t3)">Origem:</b> '+origStr+'</span>'
           +(cliStr?'<span><b style="color:var(--t3)">Clientes:</b> '+cliStr+'</span>':'')
+          +(sellers?'<span><b style="color:var(--t3)">Vendedor:</b> '+sellers+'</span>':'')
           +'</div>'
           +'<div style="margin-top:7px;height:3px;background:var(--s3);border-radius:2px"><div style="height:100%;width:'+pct+'%;background:'+cols[i%cols.length]+';border-radius:2px"></div></div>'
           +'</div>';
@@ -1824,7 +1829,7 @@ function rFinanceiro(d){
     <div style="flex:1;min-width:0">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <div class="fn2">${g.ttl}</div>
-        <span style="font-size:11px;background:var(--s3);padding:2px 7px;border-radius:20px;color:var(--t2)">${CAT_LABELS[g.cat]||g.cat}</span>
+        <span style="font-size:13px;background:var(--s3);padding:2px 9px;border-radius:20px;color:var(--text);opacity:.75">${CAT_LABELS[g.cat]||g.cat}</span>
         <span style="font-size:13px;font-weight:700;color:var(--red);margin-left:auto">R$ ${(+g.val).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
       </div>
       <div class="fm">${fd(g.date)}${g.desc?` · ${g.desc}`:''}</div>
@@ -2771,8 +2776,23 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
       }
     },
     vendasItem:{title:'Registrar tipo de venda',
-      body:`<div class="fg"><label>Produto / Serviço</label><input class="fi" id="vi-tipo" placeholder="Planejamento previdenciário, Auxílio maternidade..."></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Quantidade</label><input class="fi" id="vi-qty" type="number" min="1" value="1"></div><div class="fg"><label>Origem</label><select class="fi" id="vi-orig"><option value="">Não informada</option><option>Meta Ads</option><option>Google Ads</option><option>Indicação</option><option>WhatsApp</option><option>Instagram</option><option>Site</option><option>Evento</option><option>Outro</option></select></div></div><div class="fg"><label>Nome do cliente (opcional)</label><input class="fi" id="vi-cli" placeholder="Dr. João Silva..."></div>`,
-      save:()=>{const tipo=v('vi-tipo').trim();const qty=+v('vi-qty');const orig=v('vi-orig');const cli=v('vi-cli').trim();if(!tipo||!qty){alert('Preencha tipo e quantidade.');return;}const d=ld();d.vendasItems=d.vendasItems||[];d.vendasItems.push({id:'vi'+Date.now(),tipo,qty,orig,cli});sv(d);renderAll();cModal(null,1);}
+      body:`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Data da venda</label><input class="fi" id="vi-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div><div class="fg"><label>Valor cobrado (R$)</label><input class="fi" id="vi-val" type="text" inputmode="numeric" placeholder="R$ 0,00" oninput="fmtFinVal(this)"></div></div><div class="fg"><label>Serviço ou produto</label><input class="fi" id="vi-tipo" placeholder="Planejamento previdenciário, Ação trabalhista..."></div><div class="fg"><label>Nome do cliente</label><input class="fi" id="vi-cli" placeholder="Dr. João Silva..."></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Origem do cliente</label><select class="fi" id="vi-orig"><option value="">Não informada</option><option>Meta Ads</option><option>Google Ads</option><option>Indicação</option><option>WhatsApp</option><option>Instagram</option><option>Site</option><option>Evento</option><option>Outro</option></select></div><div class="fg"><label>Quem vendeu</label><input class="fi" id="vi-seller" placeholder="Nome do responsável"></div></div><div class="fg" style="margin-bottom:4px"><label>Comprovante / Contrato (opcional)</label><div style="display:flex;align-items:center;gap:8px"><label for="vi-file" style="flex:1;border:1px dashed var(--bdr2);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--t2);cursor:pointer;text-align:center" id="vi-file-lbl">Clique para anexar arquivo</label></div><input type="file" id="vi-file" style="position:absolute;width:0;height:0;opacity:0;pointer-events:none" onchange="document.getElementById('vi-file-lbl').textContent='📎 '+this.files[0].name"></div>`,
+      save:()=>{
+        const tipo=v('vi-tipo').trim();const cli=v('vi-cli').trim();
+        const orig=v('vi-orig');const seller=v('vi-seller').trim();
+        const date=v('vi-date');
+        const _rv=(v('vi-val')||'').replace(/[^\d,\.]/g,'').replace(/\./g,'').replace(',','.');
+        const val=parseFloat(_rv)||0;
+        if(!tipo){alert('Preencha o serviço ou produto.');return;}
+        const doSave=(fileData,fileName)=>{
+          const d=ld();d.vendasItems=d.vendasItems||[];
+          d.vendasItems.push({id:'vi'+Date.now(),tipo,cli,orig,seller,date,val,qty:1,fileData,fileName:fileName||''});
+          sv(d);renderAll();cModal(null,1);
+        };
+        const finp=document.getElementById('vi-file');
+        if(finp&&finp.files&&finp.files[0]){const r=new FileReader();r.onload=e=>doSave(e.target.result,finp.files[0].name);r.readAsDataURL(finp.files[0]);}
+        else doSave(null,'');
+      }
     },
     fspipe:{title:'Novo lead no pipeline',
       body:`<div class="fg"><label>Nome do escritório</label><input class="fi" id="m-ttl" placeholder="Escritório XYZ Advogados"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Cidade</label><input class="fi" id="m-city" placeholder="São José dos Campos"></div><div class="fg"><label>Temperatura</label><select class="fi" id="m-stage"><option value="hot">Quente</option><option value="warm">Morno</option><option value="cold">Frio</option></select></div></div><div class="fg"><label>Observações</label><textarea id="m-dsc" placeholder="Contexto do lead..."></textarea></div>`,
