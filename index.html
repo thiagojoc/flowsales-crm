@@ -804,6 +804,19 @@ window._fbOnSnapshot = onSnapshot;
           </div>
         </div>
 
+<!-- UPLOAD FILE DETAILS MODAL -->
+<div id="upf-det-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:var(--s2);border-radius:16px;padding:24px;width:min(420px,92vw);box-shadow:0 8px 40px rgba(0,0,0,.35)">
+    <div style="font-size:16px;font-weight:700;margin-bottom:16px;color:var(--text)">Detalhes do arquivo</div>
+    <div class="fg"><label>Título</label><input class="fi" id="upf-ttl" placeholder="Nome do documento"></div>
+    <div class="fg"><label>Data</label><input class="fi" id="upf-dat" type="date"></div>
+    <div class="fg" style="margin-bottom:16px"><label>Descrição (opcional)</label><input class="fi" id="upf-dsc" placeholder="Descrição ou observações..."></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="bgh" onclick="cancelUpfDet()">Cancelar</button>
+      <button class="bpr" onclick="confirmUpfDet()">Salvar arquivo</button>
+    </div>
+  </div>
+</div>
 <!-- EDIT LINK MODAL -->
 <div id="ed-link-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center" onclick="if(event.target===this)closeEdLink()">
   <div style="background:var(--s2);border-radius:16px;padding:24px;width:min(420px,92vw);box-shadow:0 8px 40px rgba(0,0,0,.35)">
@@ -1919,26 +1932,45 @@ function rFiles(d){
 }
 function ffile(f){S.ff=f;['all','doc','img','script','link'].forEach(x=>{const b=document.getElementById('at-'+x);if(b)b.classList.remove('on');});const a=document.getElementById('at-'+f);if(a)a.classList.add('on');rFiles(ld());}
 function viewFile(id){const d=ld();const f=d.files.find(x=>x.id===id);if(!f)return;if(f.data){const w=window.open();w.document.write(`<html><body style="margin:0;background:#000"><iframe src="${f.data}" style="width:100%;height:100vh;border:none"></iframe></body></html>`);}else{alert('Este arquivo foi adicionado sem conteúdo salvo. Para visualizar, use a funcionalidade com Firebase ativo.');}}
+let _upfQueue=[];let _upfCurrent=null;
 function uploadF(inp){
-  const d=ld();
-  Array.from(inp.files).forEach(file=>{
-    const ext=file.name.split('.').pop().toLowerCase();
-    let type=['pdf'].includes(ext)?'pdf':['doc','docx'].includes(ext)?'doc':['jpg','jpeg','png','gif','svg','webp'].includes(ext)?'img':'gen';
-    // Override type based on active tab (except 'all' and 'link')
-    if(S.ff&&S.ff!=='all'&&S.ff!=='link') type=S.ff;
-    const size=file.size>1048576?(file.size/1048576).toFixed(1)+' MB':(file.size/1024).toFixed(0)+' KB';
-    const reader=new FileReader();
-    reader.onload=e=>{
-      d.files.push({id:'f'+Date.now(),name:file.name,type,size,date:new Date().toISOString().split('T')[0],by:S.user.name,desc:'',cat:type,data:e.target.result});
-      // Notification for file upload
-      const nid='arq_'+Date.now();
-      d.notifs.unshift({id:nid,title:'📁 Arquivo adicionado',sub:file.name,for:S.user&&S.user.name,read:false});
-      activ(d,'Arquivo adicionado: '+file.name,'var(--gold)');sv(d);rFiles(d);rNotif(d);
-      const nd=document.getElementById('ndot');if(nd)nd.style.display='flex';
-    };
-    reader.readAsDataURL(file);
-  });
+  _upfQueue=Array.from(inp.files);
   inp.value='';
+  _upfNext();
+}
+function _upfNext(){
+  if(!_upfQueue.length){_upfCurrent=null;return;}
+  const file=_upfQueue.shift();
+  const ext=file.name.split('.').pop().toLowerCase();
+  let type=['pdf'].includes(ext)?'pdf':['doc','docx'].includes(ext)?'doc':['jpg','jpeg','png','gif','svg','webp'].includes(ext)?'img':'gen';
+  if(S.ff&&S.ff!=='all'&&S.ff!=='link') type=S.ff;
+  const size=file.size>1048576?(file.size/1048576).toFixed(1)+' MB':(file.size/1024).toFixed(0)+' KB';
+  const reader=new FileReader();
+  reader.onload=e=>{
+    _upfCurrent={data:e.target.result,name:file.name,type,size};
+    document.getElementById('upf-ttl').value=file.name.replace(/\.[^.]+$/,'');
+    document.getElementById('upf-dat').value=new Date().toISOString().split('T')[0];
+    document.getElementById('upf-dsc').value='';
+    document.getElementById('upf-det-ov').style.display='flex';
+  };
+  reader.readAsDataURL(file);
+}
+function cancelUpfDet(){document.getElementById('upf-det-ov').style.display='none';_upfCurrent=null;_upfQueue=[];}
+function confirmUpfDet(){
+  if(!_upfCurrent)return;
+  const ttl=document.getElementById('upf-ttl').value.trim()||_upfCurrent.name;
+  const dat=document.getElementById('upf-dat').value||new Date().toISOString().split('T')[0];
+  const dsc=document.getElementById('upf-dsc').value.trim();
+  const d=ld();
+  d.files.push({id:'f'+Date.now(),name:ttl,type:_upfCurrent.type,size:_upfCurrent.size,date:dat,by:S.user.name,desc:dsc,cat:_upfCurrent.type,data:_upfCurrent.data});
+  const nid='arq_'+Date.now();
+  d.notifs.unshift({id:nid,title:'📁 Arquivo adicionado',sub:ttl,for:S.user&&S.user.name,read:false});
+  activ(d,'Arquivo adicionado: '+ttl,'var(--gold)');sv(d);rFiles(d);rNotif(d);
+  const nd=document.getElementById('ndot');if(nd)nd.style.display='flex';
+  document.getElementById('upf-det-ov').style.display='none';
+  _upfCurrent=null;
+  _showToast('Arquivo salvo ✅','var(--green)');
+  _upfNext();
 }
 function addLink(){
   const t=document.getElementById('lnk-ttl').value.trim();const u=document.getElementById('lnk-url').value.trim();if(!t||!u)return;
