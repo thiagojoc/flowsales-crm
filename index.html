@@ -804,6 +804,31 @@ window._fbOnSnapshot = onSnapshot;
           </div>
         </div>
 
+<!-- EDIT LINK MODAL -->
+<div id="ed-link-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center" onclick="if(event.target===this)closeEdLink()">
+  <div style="background:var(--s2);border-radius:16px;padding:24px;width:min(420px,92vw);box-shadow:0 8px 40px rgba(0,0,0,.35)">
+    <div style="font-size:16px;font-weight:700;margin-bottom:16px;color:var(--text)">Editar link</div>
+    <div class="fg"><label>Título</label><input class="fi" id="el-ttl" placeholder="Nome do link"></div>
+    <div class="fg"><label>URL</label><input class="fi" id="el-url" placeholder="https://"></div>
+    <div class="fg" style="margin-bottom:16px"><label>Descrição (opcional)</label><input class="fi" id="el-desc" placeholder="Descrição..."></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="bgh" onclick="closeEdLink()">Cancelar</button>
+      <button class="bpr" onclick="saveEdLink()">Salvar</button>
+    </div>
+  </div>
+</div>
+<!-- EDIT FILE MODAL -->
+<div id="ed-file-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center" onclick="if(event.target===this)closeEdFile()">
+  <div style="background:var(--s2);border-radius:16px;padding:24px;width:min(420px,92vw);box-shadow:0 8px 40px rgba(0,0,0,.35)">
+    <div style="font-size:16px;font-weight:700;margin-bottom:16px;color:var(--text)">Editar arquivo</div>
+    <div class="fg"><label>Nome</label><input class="fi" id="ef2-name" placeholder="Nome do arquivo"></div>
+    <div class="fg" style="margin-bottom:16px"><label>Descrição (opcional)</label><input class="fi" id="ef2-desc" placeholder="Descrição..."></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="bgh" onclick="closeEdFile()">Cancelar</button>
+      <button class="bpr" onclick="saveEdFile()">Salvar</button>
+    </div>
+  </div>
+</div>
 <!-- EDIT GASTO MODAL -->
 <div id="ed-gasto-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center" onclick="if(event.target===this)closeEdGasto()">
   <div style="background:var(--s2);border-radius:16px;padding:24px;width:min(420px,92vw);box-shadow:0 8px 40px rgba(0,0,0,.35)">
@@ -1880,11 +1905,12 @@ function rFiles(d){
   document.getElementById('link-add').style.display=isLink?'block':'none';
   if(isLink){
     const el=document.getElementById('flist');
-    el.innerHTML=(d.links||[]).map(l=>`<div class="fi2"><div class="fic link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div><div style="flex:1;min-width:0"><div class="fn2">${l.title}</div><div class="fm"><a href="${l.url}" target="_blank" style="color:var(--blue);text-decoration:none">${l.url}</a></div>${l.desc?`<div style="font-size:13px;color:var(--t2);margin-top:3px">${l.desc}</div>`:''}</div>${S.role==='admin'?`<button class="fdl" style="color:var(--t2);margin-right:2px" onclick="edLink('${l.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="fdl" style="color:var(--red)" onclick="delLink('${l.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>`:''}</div>`).join('')||'<div class="empty">Sem links. Adicione um acima.</div>';
+    el.innerHTML=(d.links||[]).map(l=>`<div class="fi2"><div class="fic link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div><div style="flex:1;min-width:0"><div class="fn2">${l.title}</div><div class="fm"><a href="${l.url}" target="_blank" style="color:var(--blue);text-decoration:none">${l.url}</a></div>${l.desc?`<div style="font-size:13px;color:var(--t2);margin-top:3px">${l.desc}</div>`:''}</div><button class="fdl" style="color:var(--t2);margin-right:2px" onclick="edLink('${l.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="fdl" style="color:var(--red)" onclick="delLink('${l.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div>`).join('')||'<div class="empty">Sem links. Adicione um acima.</div>';
     return;
   }
-  let files=d.files;if(S.ff!=='all')files=files.filter(f=>f.type===S.ff||f.cat===S.ff);
-  document.getElementById('flist').innerHTML=files.map(f=>`<div class="fi2"><div class="fic ${f.type}">${f.type.toUpperCase()}</div><div style="flex:1;min-width:0"><div class="fn2">${f.name}</div><div class="fm">${f.size} - ${f.by} - ${fd(f.date)}</div>${f.desc?`<div style="font-size:12px;color:var(--t3);margin-top:1px">${f.desc}</div>`:''}</div><button class="fdl mla" title="Visualizar" onclick="viewFile('${f.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>${S.role==='admin'?`<button class="fdl" style="color:var(--red)" onclick="delFile('${f.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>`:''}</div>`).join('')||'<div class="empty">Sem arquivos.</div>';
+  if(S.ff==='all'){const allLinks=(d.links||[]);if(allLinks.length){const el2=document.getElementById('flist');const linkHtml=allLinks.map(l=>`<div class="fi2"><div class="fic link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div><div style="flex:1;min-width:0"><div class="fn2">${l.title}</div><div class="fm"><a href="${l.url}" target="_blank" style="color:var(--blue);text-decoration:none">${l.url}</a></div>${l.desc?`<div style="font-size:13px;color:var(--t2);margin-top:3px">${l.desc}</div>`:''}</div><button class="fdl" style="color:var(--t2);margin-right:2px" onclick="edLink('${l.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="fdl" style="color:var(--red)" onclick="delLink('${l.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div>`).join('');el2._pendingLinks=linkHtml;}}  let files=d.files;if(S.ff!=='all')files=files.filter(f=>f.type===S.ff||f.cat===S.ff);
+  document.getElementById('flist').innerHTML=files.map(f=>`<div class="fi2"><div class="fic ${f.type}">${f.type.toUpperCase()}</div><div style="flex:1;min-width:0"><div class="fn2">${f.name}</div><div class="fm">${f.size} - ${f.by} - ${fd(f.date)}</div>${f.desc?`<div style="font-size:12px;color:var(--t3);margin-top:1px">${f.desc}</div>`:''}</div><button class="fdl" title="Visualizar" onclick="viewFile('${f.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="fdl" style="color:var(--t2);margin-right:2px" onclick="edFile('${f.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="fdl" style="color:var(--red)" onclick="delFile('${f.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div>`).join('')||'<div class="empty">Sem arquivos.</div>';
+  if(S.ff==='all'){const _el2=document.getElementById('flist');if(_el2._pendingLinks){_el2.innerHTML=_el2._pendingLinks+_el2.innerHTML;_el2._pendingLinks=null;}}
 }
 function ffile(f){S.ff=f;['all','doc','img','script','link'].forEach(x=>{const b=document.getElementById('at-'+x);if(b)b.classList.remove('on');});const a=document.getElementById('at-'+f);if(a)a.classList.add('on');rFiles(ld());}
 function viewFile(id){const d=ld();const f=d.files.find(x=>x.id===id);if(!f)return;if(f.data){const w=window.open();w.document.write(`<html><body style="margin:0;background:#000"><iframe src="${f.data}" style="width:100%;height:100vh;border:none"></iframe></body></html>`);}else{alert('Este arquivo foi adicionado sem conteúdo salvo. Para visualizar, use a funcionalidade com Firebase ativo.');}}
@@ -1916,7 +1942,10 @@ function addLink(){
   ['lnk-ttl','lnk-url','lnk-desc'].forEach(id=>document.getElementById(id).value='');
   activ(d,'Link adicionado: '+t,'var(--blue)');sv(d);rFiles(d);
 }
-function edLink(id){const d=ld();const l=(d.links||[]).find(x=>x.id===id);if(!l)return;const nt=prompt('Título:',l.title);if(nt===null)return;const nu=prompt('URL:',l.url);if(nu===null)return;const nd=prompt('Descrição:',l.desc||'');if(nd===null)return;l.title=nt.trim()||l.title;l.url=nu.trim()||l.url;l.desc=nd.trim();sv(d);rFiles(d);}
+let _edLinkId=null;
+function edLink(id){const d=ld();const l=(d.links||[]).find(x=>x.id===id);if(!l)return;_edLinkId=id;document.getElementById('el-ttl').value=l.title||'';document.getElementById('el-url').value=l.url||'';document.getElementById('el-desc').value=l.desc||'';document.getElementById('ed-link-ov').style.display='flex';}
+function closeEdLink(){document.getElementById('ed-link-ov').style.display='none';_edLinkId=null;}
+function saveEdLink(){if(!_edLinkId)return;const d=ld();const l=(d.links||[]).find(x=>x.id===_edLinkId);if(!l)return;const t=document.getElementById('el-ttl').value.trim();const u=document.getElementById('el-url').value.trim();if(!t||!u)return _showToast('Preencha título e URL','var(--red)');l.title=t;l.url=u;l.desc=document.getElementById('el-desc').value.trim();sv(d);rFiles(d);closeEdLink();_showToast('Link atualizado ✅','var(--green)');}
 function delLink(id){if(!confirm('Excluir?'))return;const d=ld();d.links=(d.links||[]).filter(x=>x.id!==id);sv(d);rFiles(d);}
 document.addEventListener('DOMContentLoaded',()=>{
   // Set default date for financeiro
@@ -1949,6 +1978,10 @@ document.addEventListener('DOMContentLoaded',()=>{
   ['dragleave','drop'].forEach(e=>dz.addEventListener(e,ev=>{ev.preventDefault();dz.classList.remove('ov');}));
   dz.addEventListener('drop',ev=>{const fi=document.getElementById('fi');if(ev.dataTransfer.files.length){const dt=new DataTransfer();Array.from(ev.dataTransfer.files).forEach(f=>dt.items.add(f));fi.files=dt.files;uploadF(fi);}});
 });
+let _edFileId=null;
+function edFile(id){const d=ld();const f=(d.files||[]).find(x=>x.id===id);if(!f)return;_edFileId=id;document.getElementById('ef2-name').value=f.name||'';document.getElementById('ef2-desc').value=f.desc||'';document.getElementById('ed-file-ov').style.display='flex';}
+function closeEdFile(){document.getElementById('ed-file-ov').style.display='none';_edFileId=null;}
+function saveEdFile(){if(!_edFileId)return;const d=ld();const f=(d.files||[]).find(x=>x.id===_edFileId);if(!f)return;const n=document.getElementById('ef2-name').value.trim();if(!n)return _showToast('Preencha o nome','var(--red)');f.name=n;f.desc=document.getElementById('ef2-desc').value.trim();sv(d);rFiles(d);closeEdFile();_showToast('Arquivo atualizado ✅','var(--green)');}
 function delFile(id){if(!confirm('Excluir?'))return;const d=ld();d.files=d.files.filter(x=>x.id!==id);sv(d);renderAll();}
 
 // ── CHAT ──────────────────────────────────────────────────────
@@ -2513,7 +2546,8 @@ function saveProfile(){
   document.getElementById('un').textContent=saved.name||u.name;
   document.getElementById('prof-ov').classList.remove('on');
   _showToast('✅ Perfil salvo','var(--green)');
-  if(newEmail&&newEmail!==u.email||newPass)_showToast('✅ Credenciais atualizadas — novo e-mail: '+finalEmail,'var(--green)');
+  if(newPass&&(!newEmail||newEmail===u.email))_showToast('✅ Senha atualizada com sucesso','var(--green)');
+  else if(newEmail&&newEmail!==u.email)_showToast('✅ Credenciais atualizadas — novo e-mail: '+finalEmail,'var(--green)');
 }
 function closeProfOv(e){if(e.target===document.getElementById('prof-ov'))document.getElementById('prof-ov').classList.remove('on');}
 
