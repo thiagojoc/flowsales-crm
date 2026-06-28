@@ -278,8 +278,8 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="datetime-local
 .fic.img{background:rgba(29,158,117,.12);color:var(--green);}
 .fic.gen,.fic.script{background:var(--gb);color:var(--gold);}
 .fic.link{background:rgba(21,101,168,.15);color:var(--blue);}
-.fn2{font-size:12px;font-weight:500;}
-.fm{font-size:12px;color:var(--t2);margin-top:2px;}
+.fn2{font-size:14px;font-weight:500;}
+.fm{font-size:13px;color:var(--text);opacity:.7;margin-top:2px;}
 .fdl{background:none;border:none;cursor:pointer;color:var(--t2);padding:4px;border-radius:4px;transition:color .12s;}
 .fdl:hover{color:var(--t2);}
 .dz{border:1px dashed var(--bdr2);border-radius:9px;padding:20px;text-align:center;cursor:pointer;transition:border-color .15s;margin-bottom:12px;font-size:12px;color:var(--t2);}
@@ -803,6 +803,22 @@ window._fbOnSnapshot = onSnapshot;
             <div id="fin-list"><div class="empty">Nenhum gasto registrado.</div></div>
           </div>
         </div>
+
+<!-- EDIT GASTO MODAL -->
+<div id="ed-gasto-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center" onclick="if(event.target===this)closeEdGasto()">
+  <div style="background:var(--s2);border-radius:16px;padding:24px;width:min(420px,92vw);box-shadow:0 8px 40px rgba(0,0,0,.35)">
+    <div style="font-size:16px;font-weight:700;margin-bottom:16px;color:var(--text)">Editar gasto</div>
+    <div class="fg"><label>Título</label><input class="fi" id="eg-ttl" placeholder="Título do gasto"></div>
+    <div class="fg"><label>Valor (R$)</label><input class="fi" id="eg-val" type="text" inputmode="numeric" placeholder="R$ 0,00" oninput="fmtFinVal(this)"></div>
+    <div class="fg"><label>Data</label><input class="fi" id="eg-date" type="date"></div>
+    <div class="fg"><label>Categoria</label><select class="fi" id="eg-cat"><option value="trafego">Tráfego pago</option><option value="ferramenta">Ferramenta / Software</option><option value="servico">Serviço terceirizado</option><option value="infra">Infraestrutura</option><option value="outro">Outros</option></select></div>
+    <div class="fg" style="margin-bottom:16px"><label>Descrição (opcional)</label><input class="fi" id="eg-desc" placeholder="Detalhes..."></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="bgh" onclick="closeEdGasto()">Cancelar</button>
+      <button class="bpr" onclick="saveEdGasto()">Salvar</button>
+    </div>
+  </div>
+</div>
 
         <div class="sec" id="s-firms">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:13px;font-weight:500">Escritórios clientes</div><button class="ca" onclick="openM('addfirm')">+ Novo escritório</button></div>
@@ -1805,7 +1821,7 @@ function fmtFinVal(inp){
 }
 function addGasto(){
   const ttl=document.getElementById('fin-ttl').value.trim();
-  const _rawVal=document.getElementById('fin-val').value.replace(/[^\d,\.]/g,'').replace(',','.');
+  const _rawVal=document.getElementById('fin-val').value.replace(/[^\d,\.]/g,'').replace(/\./g,'').replace(',','.');
   const val=parseFloat(_rawVal)||0;
   const date=document.getElementById('fin-date').value;
   const cat=document.getElementById('fin-cat').value;
@@ -1827,13 +1843,31 @@ function addGasto(){
     reader.readAsDataURL(finFile.files[0]);
   } else doSave(null);
 }
+let _edGastoId=null;
 function edGasto(id){
   const d=ld();const g=(d.gastos||[]).find(x=>x.id===id);if(!g)return;
-  const nt=prompt('Título:',g.ttl);if(nt===null)return;
-  const nv=prompt('Valor (R$):',g.val);if(nv===null)return;
-  const nd=prompt('Descrição:',g.desc||'');if(nd===null)return;
-  g.ttl=nt.trim()||g.ttl;g.val=parseFloat((nv+'').replace(',','.'))||g.val;g.desc=nd.trim();
-  sv(d);rFinanceiro(d);_showToast('Gasto atualizado ✅','var(--green)');
+  _edGastoId=id;
+  document.getElementById('eg-ttl').value=g.ttl||'';
+  const vFmt='R$ '+(+g.val).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('eg-val').value=vFmt;
+  document.getElementById('eg-date').value=g.date||'';
+  document.getElementById('eg-cat').value=g.cat||'outro';
+  document.getElementById('eg-desc').value=g.desc||'';
+  const ov=document.getElementById('ed-gasto-ov');ov.style.display='flex';
+}
+function closeEdGasto(){document.getElementById('ed-gasto-ov').style.display='none';_edGastoId=null;}
+function saveEdGasto(){
+  if(!_edGastoId)return;
+  const d=ld();const g=(d.gastos||[]).find(x=>x.id===_edGastoId);if(!g)return;
+  const ttl=document.getElementById('eg-ttl').value.trim();
+  const _rv=document.getElementById('eg-val').value.replace(/[^\d,\.]/g,'').replace(/\./g,'').replace(',','.');
+  const val=parseFloat(_rv)||0;
+  const date=document.getElementById('eg-date').value;
+  const cat=document.getElementById('eg-cat').value;
+  const desc=document.getElementById('eg-desc').value.trim();
+  if(!ttl||!val||!date)return _showToast('Preencha título, valor e data','var(--red)');
+  g.ttl=ttl;g.val=val;g.date=date;g.cat=cat;g.desc=desc;
+  sv(d);rFinanceiro(d);closeEdGasto();_showToast('Gasto atualizado ✅','var(--green)');
 }
 function delGasto(id){if(!confirm('Excluir gasto?'))return;const d=ld();d.gastos=(d.gastos||[]).filter(x=>x.id!==id);sv(d);rFinanceiro(d);}
 
