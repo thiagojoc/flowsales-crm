@@ -1515,7 +1515,7 @@ function rTimeline(d){
   // Firma específica ou cliente
   const weeks=[...new Set((d.tasks||[]).map(t=>t.week))].filter(Boolean).sort((a,b)=>a-b);
   const welcomeEntry='<div class="card" style="margin-bottom:8px;border-left:3px solid var(--gold)"><div style="display:flex;align-items:center;gap:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><div><div style="font-size:13px;font-weight:600;color:var(--text)">Bem vindo(a) ao programa</div><div style="font-size:12px;color:var(--t2);margin-top:2px">Início da jornada. Você deu o primeiro passo para transformar o marketing e o comercial do seu escritório.</div></div></div></div>';
-  if(!weeks.length){wrap.innerHTML=welcomeEntry+'<div class="empty" style="margin-top:8px">Nenhuma semana registrada ainda.</div>';return;}
+  if(!weeks.length){wrap.innerHTML=welcomeEntry;return;}
   wrap.innerHTML=welcomeEntry+weeks.map(w=>{
     const wt=(d.tasks||[]).filter(t=>t.week===w);
     const done=wt.filter(t=>t.status==='done').length;
@@ -1625,7 +1625,7 @@ function rKpis(d){
   const vbBtn=document.getElementById('vendas-add-btn');
   if(vbBtn){vbBtn.innerHTML='<button class="ca" onclick="openAddVenda()">+ Adicionar venda</button>';}
   if(vbEl){
-    if(!vendasItems.length){vbEl.innerHTML='<div class="empty">Nenhuma venda registrada. Clique em + Tipo para registrar.</div>';}
+    if(!vendasItems.length){vbEl.innerHTML='<div class="empty">Nenhum registro ainda.</div>';}
     else{
       const tot=vendasItems.reduce(function(s,x){return s+x.qty;},0);
       // Group by tipo for chart
