@@ -516,7 +516,7 @@ window._fbOnSnapshot = onSnapshot;
       <div class="ni client-nav" onclick="nav('tasks')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Demandas<span class="nb r" id="bdgt" style="display:none">0</span></div>
       <div class="ni client-nav" onclick="nav('meet')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Reuniões</div>
       <div class="ni client-nav" onclick="nav('arq')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Arquivos</div>
-      <div class="ni client-nav admin-only" id="ni-fin" onclick="nav('fin')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Financeiro</div>
+      <div class="ni client-nav" id="ni-fin" onclick="nav('fin')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Financeiro</div>
       <div class="ni client-nav" id="ni-timeline" onclick="nav('timeline')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="17" y1="12" x2="3" y2="12"/><polyline points="11 18 17 12 11 6"/><line x1="3" y1="6" x2="3" y2="18"/></svg>Jornada</div>
       <div class="sb-sec">Comunicação</div>
       <div class="ni client-nav" onclick="nav('chat')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Chat<span class="nb r" id="bdgc" style="display:none">0</span></div>
@@ -779,14 +779,14 @@ window._fbOnSnapshot = onSnapshot;
             </div>
           </div>
           <div class="card" style="margin-bottom:12px">
-            <div class="ch"><div class="ct">Adicionar gasto</div></div>
+            <div class="ch"><div class="ct">Adicionar gastos</div></div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
               <div class="fg" style="margin:0"><label>Título</label><input class="fi" id="fin-ttl" placeholder="Ex: Tráfego pago Meta"></div>
-              <div class="fg" style="margin:0"><label>Valor (R$)</label><input class="fi" id="fin-val" type="number" step="0.01" min="0" placeholder="0,00"></div>
+              <div class="fg" style="margin:0"><label>Valor (R$)</label><input class="fi" id="fin-val" type="text" inputmode="numeric" placeholder="R$ 0,00" oninput="fmtFinVal(this)"></div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
               <div class="fg" style="margin:0"><label>Data</label><input class="fi" id="fin-date" type="date"></div>
-              <div class="fg" style="margin:0"><label>Categoria</label><select class="fi" id="fin-cat"><option value="trafego">Tráfego pago</option><option value="ferramenta">Ferramenta / Software</option><option value="servico">Serviço terceiro</option><option value="infra">Infraestrutura</option><option value="outro">Outro</option></select></div>
+              <div class="fg" style="margin:0"><label>Categoria</label><select class="fi" id="fin-cat"><option value="trafego">Tráfego pago</option><option value="ferramenta">Ferramenta / Software</option><option value="servico">Serviço terceirizado</option><option value="infra">Infraestrutura</option><option value="outro">Outros</option></select></div>
             </div>
             <div class="fg" style="margin-top:8px;margin-bottom:0"><label>Descrição (opcional)</label><input class="fi" id="fin-desc" placeholder="Detalhes sobre este gasto..."></div>
             <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
@@ -894,7 +894,7 @@ function _showToast(msg, bg){
 
 let _syncTimer = null;
 let _fbUnsub = null; // unsubscribe do listener em tempo real
-let _fbDynUsers = []; // usuários dinâmicos carregados do Firebase
+let _fbDynUsers = JSON.parse(localStorage.getItem('fs_dynusers')||'[]'); // usuários dinâmicos (cache local + Firebase)
 let _fbCreds    = {}; // overrides de senha sincronizados via Firebase
 let _fbProfiles = {}; // fotos/nomes sincronizados via Firebase
 
@@ -906,6 +906,7 @@ async function _fbSave(eid, data){
     // Strip base64 file data before saving to Firebase (avoids 1MB limit)
     const safe=Object.assign({},data);
     if(safe.files&&safe.files.length){safe.files=safe.files.map(f=>{const c=Object.assign({},f);delete c.data;return c;});}
+    if(safe.gastos&&safe.gastos.length){safe.gastos=safe.gastos.map(g=>{const c=Object.assign({},g);delete c.fileData;return c;});}
     await window._fbSetDoc(window._fbDoc(window._fbDB,'flowsales_crm',eid),safe);
     _setSyncDot('ok');
   }catch(e){
@@ -1006,7 +1007,7 @@ async function _startFirmsSync(){
       if(snap.data&&snap.data().fsConfig){try{localStorage.setItem('fs__config',JSON.stringify(snap.data().fsConfig));loadFSConfig();}catch(e){}}
       const data=snap.data();
       // Carregar usuários dinâmicos, credenciais e perfis do Firebase
-      if(data.users&&data.users.length) _fbDynUsers=data.users;
+      if(data.users&&data.users.length){_fbDynUsers=data.users;localStorage.setItem('fs_dynusers',JSON.stringify(_fbDynUsers));}
       if(data.creds) { _fbCreds=data.creds; localStorage.setItem('fs_creds',JSON.stringify(data.creds)); }
       if(data.profiles) {
         _fbProfiles=data.profiles;
@@ -1193,7 +1194,21 @@ function doLogin(){
   localStorage.setItem('fs_sess',JSON.stringify({email:u.email}));showApp();
 }
 function doLogout(){if(_fbUnsub){_fbUnsub();_fbUnsub=null;}localStorage.removeItem('fs_sess');document.getElementById('login').style.display='flex';document.getElementById('app').style.display='none';}
-function forgotPass(){alert('Para redefinir sua senha, entre em contato com o administrador: Thiago Caetano\nWhatsApp: disponível no portal\nE-mail: tcaetano1706@gmail.com');}
+function forgotPass(){
+  const old=document.getElementById('forgot-modal');if(old)old.remove();
+  const m=document.createElement('div');
+  m.id='forgot-modal';
+  m.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:20px';
+  m.innerHTML=`<div style="background:#2A2420;border:0.5px solid rgba(201,168,67,0.3);border-radius:14px;padding:28px 24px;max-width:360px;width:100%;text-align:center">
+    <div style="font-size:28px;margin-bottom:12px">🔐</div>
+    <div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:8px">Redefinir senha</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.65);line-height:1.6;margin-bottom:20px">Entre em contato com o administrador:<br><strong style="color:#C9A843">Thiago Caetano</strong><br>E-mail: comercialflowsales@gmail.com</div>
+    <a href="https://wa.me/5512991636548?text=Olá%2C%20preciso%20redefinir%20minha%20senha%20no%20portal%20FlowSales" target="_blank" style="display:block;background:#25D366;color:#fff;border-radius:8px;padding:10px;font-size:13px;font-weight:600;text-decoration:none;margin-bottom:10px">💬 Falar no WhatsApp</a>
+    <button onclick="document.getElementById('forgot-modal').remove()" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);border:none;border-radius:8px;padding:9px;width:100%;font-size:13px;cursor:pointer;font-family:inherit">Fechar</button>
+  </div>`;
+  document.body.appendChild(m);
+  m.addEventListener('click',e=>{if(e.target===m)m.remove();});
+}
 function checkSess(){const s=localStorage.getItem('fs_sess');if(!s)return;const{email}=JSON.parse(s);const u=USERS.find(x=>x.email===email)||_fbDynUsers.find(x=>x.email===email);if(!u)return;S.user=u;S.role=u.role;if(u.eid)S.eid=u.eid;showApp();}
 function cleanupPhantomDemand(){
   // Remove the default phantom demand d1 if it exists in localStorage
@@ -1264,7 +1279,7 @@ function showApp(){
             localStorage.setItem('fs_firms',JSON.stringify(FIRMS));
             setupFirmSelect();
           }
-          if(_cd.users&&_cd.users.length) _fbDynUsers=_cd.users;
+          if(_cd.users&&_cd.users.length){_fbDynUsers=_cd.users;localStorage.setItem('fs_dynusers',JSON.stringify(_fbDynUsers));}
           if(_cd.creds) _fbCreds=_cd.creds;
           if(_cd.profiles) _fbProfiles=_cd.profiles;
         }
@@ -1308,6 +1323,20 @@ function loadFirm(){
   const isFS = S.eid==='flowsales';
   const niPerfil=document.getElementById('ni-perfil');
   if(niPerfil) niPerfil.style.display=isFS?'none':'';
+  // Update partner photo after firm data is loaded from Firebase
+  if(S.role==='client'){
+    try{
+      const _lfdPh=JSON.parse(localStorage.getItem('fs_'+S.eid)||'{}');
+      const _avEl=document.getElementById('uav');
+      if(_avEl&&!_avEl.querySelector('img')){
+        const _nmU=n=>((n||'').trim().toLowerCase());
+        const _ptU=(_lfdPh.partners||[]).find(p=>_nmU(p.name)===_nmU(S.user&&S.user.name));
+        const _respPh=(_lfdPh.firmExtra||{}).respPhoto||'';
+        const _ph=_ptU&&_ptU.photo?_ptU.photo:_respPh;
+        if(_ph)_avEl.innerHTML='<img src="'+_ph+'" alt="">';
+      }
+    }catch(e){}
+  }
   if(isFS){
     document.getElementById('sfn').textContent='Flow Sales';
     document.getElementById('sfs').textContent='Painel interno';
@@ -1431,7 +1460,7 @@ function rTimeline(d){
   }
   // Firma específica ou cliente
   const weeks=[...new Set((d.tasks||[]).map(t=>t.week))].filter(Boolean).sort((a,b)=>a-b);
-  const welcomeEntry='<div class="card" style="margin-bottom:8px;border-left:3px solid var(--gold)"><div style="display:flex;align-items:center;gap:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><div><div style="font-size:13px;font-weight:600;color:var(--text)">Bem-vindo ao programa</div><div style="font-size:12px;color:var(--t2);margin-top:2px">Início da jornada — Você deu o primeiro passo para transformar o marketing jurídico do seu escritório.</div></div></div></div>';
+  const welcomeEntry='<div class="card" style="margin-bottom:8px;border-left:3px solid var(--gold)"><div style="display:flex;align-items:center;gap:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><div><div style="font-size:13px;font-weight:600;color:var(--text)">Bem vindo(a) ao programa</div><div style="font-size:12px;color:var(--t2);margin-top:2px">Início da jornada. Você deu o primeiro passo para transformar o marketing e o comercial do seu escritório.</div></div></div></div>';
   if(!weeks.length){wrap.innerHTML=welcomeEntry+'<div class="empty" style="margin-top:8px">Nenhuma semana registrada ainda.</div>';return;}
   wrap.innerHTML=welcomeEntry+weeks.map(w=>{
     const wt=(d.tasks||[]).filter(t=>t.week===w);
@@ -1745,7 +1774,7 @@ function rFinanceiro(d){
   const tg=document.getElementById('fin-total-gastos');const rEl=document.getElementById('fin-roi');
   if(tg)tg.textContent='R$ '+totalGastos.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
   if(rEl){rEl.textContent=roi;rEl.style.color=roiColor;}
-  const CAT_LABELS={trafego:'Tráfego pago',ferramenta:'Ferramenta / Software',servico:'Serviço terceiro',infra:'Infraestrutura',outro:'Outro'};
+  const CAT_LABELS={trafego:'Tráfego pago',ferramenta:'Ferramenta / Software',servico:'Serviço terceirizado',infra:'Infraestrutura',outro:'Outros'};
   const el=document.getElementById('fin-list');if(!el)return;
   if(!gastos.length){el.innerHTML='<div class="empty">Nenhum gasto registrado.</div>';return;}
   // Show sorted by date desc
@@ -1760,7 +1789,7 @@ function rFinanceiro(d){
       <div class="fm">${fd(g.date)}${g.desc?` · ${g.desc}`:''}</div>
       ${g.fileName?`<div style="font-size:12px;color:var(--blue);margin-top:3px">📎 ${g.fileName}</div>`:''}
     </div>
-    <button class="fdl" style="color:var(--red)" onclick="delGasto('${g.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
+    <button class="fdl" style="color:var(--t2);margin-right:2px" onclick="edGasto('${g.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="fdl" style="color:var(--red)" onclick="delGasto('${g.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
   </div>`).join('');
 }
 function finFileChosen(inp){
@@ -1768,18 +1797,25 @@ function finFileChosen(inp){
   if(inp.files&&inp.files[0])lbl.textContent='📎 '+inp.files[0].name;
   else lbl.textContent='Clique para anexar arquivo';
 }
+function fmtFinVal(inp){
+  let v=inp.value.replace(/[^\d]/g,'');
+  if(!v){inp.value='';return;}
+  const n=parseInt(v,10)/100;
+  inp.value='R$ '+n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
 function addGasto(){
   const ttl=document.getElementById('fin-ttl').value.trim();
-  const val=document.getElementById('fin-val').value;
+  const _rawVal=document.getElementById('fin-val').value.replace(/[^\d,\.]/g,'').replace(',','.');
+  const val=parseFloat(_rawVal)||0;
   const date=document.getElementById('fin-date').value;
   const cat=document.getElementById('fin-cat').value;
   const desc=document.getElementById('fin-desc').value.trim();
-  if(!ttl||!val||!date)return _showToast('Preencha título, valor e data','var(--red)');
+  if(!ttl||!val||val<=0||!date)return _showToast('Preencha título, valor e data','var(--red)');
   const d=ld();d.gastos=d.gastos||[];
   const finFile=document.getElementById('fin-file');
   const doSave=fileData=>{
     d.gastos.push({id:'g'+Date.now(),ttl,val:+val,date,cat,desc,fileName:fileData?finFile.files[0].name:'',fileData});
-    activ(d,'Gasto adicionado: '+ttl,'var(--red)');sv(d);rFinanceiro(d);
+    const _gnid='gasto_'+Date.now();d.notifs=d.notifs||[];d.notifs.unshift({id:_gnid,title:'💸 Gasto registrado',sub:ttl+' · R$ '+parseFloat(val).toLocaleString('pt-BR',{minimumFractionDigits:2}),for:S.user&&S.user.name,read:false});activ(d,'Gasto adicionado: '+ttl+' (R$ '+parseFloat(val).toFixed(2)+')','var(--red)');sv(d);rFinanceiro(d);rNotif(d);const _nd=document.getElementById('ndot');if(_nd)_nd.style.display='flex';
     ['fin-ttl','fin-val','fin-date','fin-desc'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
     document.getElementById('fin-file').value='';
     document.getElementById('fin-file-label').textContent='Clique para anexar arquivo';
@@ -1790,6 +1826,14 @@ function addGasto(){
     reader.onload=e=>doSave(e.target.result);
     reader.readAsDataURL(finFile.files[0]);
   } else doSave(null);
+}
+function edGasto(id){
+  const d=ld();const g=(d.gastos||[]).find(x=>x.id===id);if(!g)return;
+  const nt=prompt('Título:',g.ttl);if(nt===null)return;
+  const nv=prompt('Valor (R$):',g.val);if(nv===null)return;
+  const nd=prompt('Descrição:',g.desc||'');if(nd===null)return;
+  g.ttl=nt.trim()||g.ttl;g.val=parseFloat((nv+'').replace(',','.'))||g.val;g.desc=nd.trim();
+  sv(d);rFinanceiro(d);_showToast('Gasto atualizado ✅','var(--green)');
 }
 function delGasto(id){if(!confirm('Excluir gasto?'))return;const d=ld();d.gastos=(d.gastos||[]).filter(x=>x.id!==id);sv(d);rFinanceiro(d);}
 
@@ -1849,7 +1893,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       const snap=await window._fbGetDoc(window._fbDoc(window._fbDB,'flowsales_crm','__config'));
       if(snap.exists()){
         const data=snap.data();
-        if(data.users&&data.users.length) _fbDynUsers=data.users;
+        if(data.users&&data.users.length){_fbDynUsers=data.users;localStorage.setItem('fs_dynusers',JSON.stringify(_fbDynUsers));}
         if(data.creds){ _fbCreds=data.creds; localStorage.setItem('fs_creds',JSON.stringify(data.creds)); }
         if(data.profiles) _fbProfiles=data.profiles;
         if(data.firms&&data.firms.length){
@@ -2500,7 +2544,7 @@ function openM(type,data){
     },
         edFirmAdmin:{title:'Editar escritório',
       body:()=>{const _efe=(()=>{try{return JSON.parse(localStorage.getItem('fs_'+data.id)||'{}').firmExtra||{};}catch(e){return{};}})();return`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Nome</label><input class="fi" id="ef-nm" value="${data?data.name||'':''}"></div><div class="fg"><label>Área</label><input class="fi" id="ef-area" value="${data?data.area||'':''}"></div><div class="fg"><label>Cidade / UF</label><input class="fi" id="ef-city" value="${data?data.city||'':''}"></div><div class="fg"><label>Telefone</label><input class="fi" id="ef-ph" value="${data?data.phone||'':''}"></div><div class="fg"><label>E-mail de contato</label><input class="fi" id="ef-em" type="email" value="${data?data.email||'':''}"></div><div class="fg"><label>Mensalidade (R$)</label><input class="fi" id="ef-fee" type="number" value="${data?data.fee||3500:3500}"></div><div class="fg"><label>OAB</label><input class="fi" id="ef-oab" value="${data?data.oab||'':''}"></div><div class="fg"><label>Início do contrato</label><input class="fi" id="ef-start" type="date" value="${data?data.start||'':''}"></div><div class="fg"><label>Vencimento mensal</label><input class="fi" id="ef-due" type="date" value="${data?data.due||'':''}"></div></div><div style="margin-top:12px;padding-top:12px;border-top:0.5px solid var(--bdr)"><div style="font-size:13px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Responsável</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Nome</label><input class="fi" id="ef-resp-nm" value="${data.contact||_efe.respName||''}"></div><div class="fg"><label>WhatsApp</label><input class="fi" id="ef-resp-wa" value="${_efe.respWhatsapp||data.contactPhone||''}"></div><div class="fg"><label>E-mail</label><input class="fi" id="ef-resp-em" type="email" value="${data.contactEmail||_efe.respEmail||''}"></div><div class="fg"><label>OAB</label><input class="fi" id="ef-resp-oab" value="${_efe.respOAB||''}"></div><div class="fg"><label>Áreas de atuação</label><input class="fi" id="ef-resp-areas" value="${_efe.respAreas||''}"></div><div class="fg"><label>Instagram</label><input class="fi" id="ef-resp-ig" value="${_efe.respIG||_efe.respInstagram||''}" placeholder="@responsavel"></div><div class="fg"><label>Endereço</label><input class="fi" id="ef-resp-addr" value="${_efe.respAddress||''}" placeholder="Rua, número, cidade/UF"></div><div class="fg"><label>Senha de acesso</label><input class="fi" id="ef-resp-pass" value="${(()=>{const _rnu=(_efe.respName||data.contact||'').trim().toLowerCase();const _ru=(_fbDynUsers||[]).find(u=>u.eid===data.id&&u.role==='client'&&(u.name||'').trim().toLowerCase()===_rnu);return _ru?_ru.pass:'';})()} " placeholder="Sem acesso cadastrado"></div><div class="fg"><label>Foto</label>${(()=>{const _rph=_efe.respPhoto;if(_rph)return '<img src="'+_rph+'" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:0.5px solid var(--gbr);display:block;margin-top:4px">';return '<div style="width:38px;height:38px;border-radius:50%;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;margin-top:4px">'+(_efe.respName||data.contact||'?')[0].toUpperCase()+'</div>';})()} </div></div></div><div style="margin-top:12px;padding-top:12px;border-top:0.5px solid var(--bdr)"><div style="font-size:12px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Integrações</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>GHL API Key</label><input class="fi" id="ef-ghl" placeholder="Cole a API key do GoHighLevel" value="${data?data.ghlKey||'':''}"></div><div class="fg"><label>Meta BM Token</label><input class="fi" id="ef-meta" placeholder="Token da Business Manager" value="${data?data.metaToken||'':''}"></div><div class="fg" style="grid-column:1/-1"><label>Link da pasta no Google Drive</label><input class="fi" id="ef-drive" placeholder="https://drive.google.com/drive/folders/..." value="${data?data.driveUrl||'':''}"></div></div></div><div style='margin-top:12px;padding-top:12px;border-top:0.5px solid var(--bdr)'><div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:8px'><div style='font-size:12px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.07em'>Sócios</div><button class='ca' onclick="cModal(null,1);setTimeout(()=>openM('partner'),150)">+ Sócio</button></div><div id='ef-partners'>${(()=>{try{const _fd=JSON.parse(localStorage.getItem('fs_'+data.id)||'{}');return(_fd.partners||[]).map(p=>`<div style='display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--bdr)'><div style='width:26px;height:26px;border-radius:50%;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0'>${(p.name||'?')[0].toUpperCase()}</div><div style='flex:1;min-width:0'><div style='font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis'>${p.name}</div><div style='font-size:12px;color:var(--t2)'>${p.role||'Sócio'}${p.oab?' · '+p.oab:''}</div></div><button class='ib edit' data-pid='${p.id}' data-fid='${data.id}' onclick='_editFirmPartner(this.dataset.fid,this.dataset.pid)' style='flex-shrink:0'><svg width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7'/><path d='M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z'/></svg></button><button class='ib del' data-pid='${p.id}' onclick='delPartner(this.dataset.pid)' style='flex-shrink:0'><svg width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><polyline points='3 6 5 6 21 6'/><path d='M19 6l-1 14H6L5 6'/></svg></button></div>`).join('')||'<div style=\'color:var(--t2);font-size:13px;padding:8px 0\'>Nenhum sócio cadastrado.</div>';}catch(e){return '';}})()}</div></div>`;},
-      save:()=>{const f=FIRMS.find(x=>x.id===data.id);if(!f)return;f.name=v('ef-nm')||f.name;f.area=v('ef-area');f.city=v('ef-city');f.phone=v('ef-ph');f.email=v('ef-em');f.fee=+(v('ef-fee')||f.fee);f.oab=v('ef-oab');f.start=v('ef-start');f.due=v('ef-due');f.ghlKey=v('ef-ghl');f.metaToken=v('ef-meta');f.driveUrl=v('ef-drive');f.contact=v('ef-resp-nm');f.contactEmail=v('ef-resp-em');_saveFirms();try{const _efd=JSON.parse(localStorage.getItem('fs_'+data.id)||'{}');_efd.firmExtra=_efd.firmExtra||{};_efd.firmExtra.respName=v('ef-resp-nm');_efd.firmExtra.respWhatsapp=v('ef-resp-wa');_efd.firmExtra.respEmail=v('ef-resp-em');_efd.firmExtra.respOAB=v('ef-resp-oab');_efd.firmExtra.respAreas=v('ef-resp-areas');_efd.firmExtra.respIG=v('ef-resp-ig');_efd.firmExtra.respAddress=v('ef-resp-addr');const _efPss=v('ef-resp-pass');if(_efPss){const _efNm2=v('ef-resp-nm');const _efEm2=(v('ef-resp-em')||data.contactEmail||'').trim().toLowerCase();const _efRnu=(_efNm2||'').trim().toLowerCase();let _efRu=(_fbDynUsers||[]).find(u=>u.eid===data.id&&u.role==='client'&&(u.name||'').trim().toLowerCase()===_efRnu);if(!_efRu&&_efEm2)_efRu=(_fbDynUsers||[]).find(u=>u.eid===data.id&&u.role==='client'&&u.email===_efEm2);if(_efRu){_efRu.pass=_efPss;if(_efNm2)_efRu.name=_efNm2;if(_efEm2)_efRu.email=_efEm2;}else if(_efNm2||_efEm2){_fbDynUsers.push({email:_efEm2||(_efNm2.split(' ')[0].toLowerCase()+'@firm.local'),pass:_efPss,name:_efNm2,role:'client',eid:data.id,init:(_efNm2||'?').substring(0,2).toUpperCase()});}_waitFB().then(()=>{const _rcfg=window._fbDoc(window._fbDB,'flowsales_crm','__config');window._fbSetDoc(_rcfg,{users:_fbDynUsers,__ts:Date.now()},{merge:true}).catch(()=>{});}).catch(()=>{});}localStorage.setItem('fs_'+data.id,JSON.stringify(_efd));if(window._waitFB)_waitFB().then(()=>window._fbSetDoc(window._fbDoc(window._fbDB,'flowsales_crm',data.id),{firmExtra:_efd.firmExtra,__ts:Date.now()},{merge:true})).catch(()=>{});}catch(e){}setupFirmSelect();rFirms();_showToast('Escritório atualizado ✅','var(--green)');cModal(null,1);}
+      save:()=>{const f=FIRMS.find(x=>x.id===data.id);if(!f)return;f.name=v('ef-nm')||f.name;f.area=v('ef-area');f.city=v('ef-city');f.phone=v('ef-ph');f.email=v('ef-em');f.fee=+(v('ef-fee')||f.fee);f.oab=v('ef-oab');f.start=v('ef-start');f.due=v('ef-due');f.ghlKey=v('ef-ghl');f.metaToken=v('ef-meta');f.driveUrl=v('ef-drive');f.contact=v('ef-resp-nm');f.contactEmail=v('ef-resp-em');_saveFirms();try{const _efd=JSON.parse(localStorage.getItem('fs_'+data.id)||'{}');_efd.firmExtra=_efd.firmExtra||{};_efd.firmExtra.respName=v('ef-resp-nm');_efd.firmExtra.respWhatsapp=v('ef-resp-wa');_efd.firmExtra.respEmail=v('ef-resp-em');_efd.firmExtra.respOAB=v('ef-resp-oab');_efd.firmExtra.respAreas=v('ef-resp-areas');_efd.firmExtra.respIG=v('ef-resp-ig');_efd.firmExtra.respAddress=v('ef-resp-addr');const _efPss=v('ef-resp-pass');if(_efPss){const _efNm2=v('ef-resp-nm');const _efEm2=(v('ef-resp-em')||data.contactEmail||'').trim().toLowerCase();const _efRnu=(_efNm2||'').trim().toLowerCase();let _efRu=(_fbDynUsers||[]).find(u=>u.eid===data.id&&u.role==='client'&&(u.name||'').trim().toLowerCase()===_efRnu);if(!_efRu&&_efEm2)_efRu=(_fbDynUsers||[]).find(u=>u.eid===data.id&&u.role==='client'&&u.email===_efEm2);if(_efRu){_efRu.pass=_efPss;if(_efNm2)_efRu.name=_efNm2;if(_efEm2)_efRu.email=_efEm2;}else if(_efNm2||_efEm2){_fbDynUsers.push({email:_efEm2||(_efNm2.split(' ')[0].toLowerCase()+'@firm.local'),pass:_efPss,name:_efNm2,role:'client',eid:data.id,init:(_efNm2||'?').substring(0,2).toUpperCase()});}localStorage.setItem('fs_dynusers',JSON.stringify(_fbDynUsers));_waitFB().then(()=>{const _rcfg=window._fbDoc(window._fbDB,'flowsales_crm','__config');window._fbSetDoc(_rcfg,{users:_fbDynUsers,__ts:Date.now()},{merge:true}).catch(()=>{});}).catch(()=>{});}localStorage.setItem('fs_'+data.id,JSON.stringify(_efd));if(window._waitFB)_waitFB().then(()=>window._fbSetDoc(window._fbDoc(window._fbDB,'flowsales_crm',data.id),{firmExtra:_efd.firmExtra,__ts:Date.now()},{merge:true})).catch(()=>{});}catch(e){}setupFirmSelect();rFirms();_showToast('Escritório atualizado ✅','var(--green)');cModal(null,1);}
     },
         meet:{title:data?'Editar reunião':'Nova reunião',
       body:(()=>{const isPast=data!=null;return`<div class="fg"><label>Título</label><input class="fi" id="m-ttl" value="${data?data.title:''}"></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px"><div class="fg"><label>Data</label><input class="fi" id="m-dt" type="date" value="${data?data.date:new Date().toISOString().split('T')[0]}"></div><div class="fg"><label>Horário</label><input class="fi" id="m-hr" type="time" value="${data?data.time||'10:00':'10:00'}"></div><div class="fg"><label>Duração</label><select class="fi" id="m-dur"><option value="30"${data&&data.duration==='30'?' selected':''}>30 min</option><option value="60"${!data||data.duration==='60'||!data.duration?' selected':''}>1 hora</option><option value="90"${data&&data.duration==='90'?' selected':''}>1h30</option><option value="120"${data&&data.duration==='120'?' selected':''}>2 horas</option></select></div></div><div class="fg"><label>Tipo</label><select class="fi" id="m-tp"><option${!data||data.type==='Check semanal'?' selected':''}>Check semanal</option><option${data&&data.type==='Onboarding'?' selected':''}>Onboarding</option><option${data&&data.type==='Revisão quinzenal'?' selected':''}>Revisão quinzenal</option><option${data&&data.type==='Alinhamento'?' selected':''}>Alinhamento</option><option${data&&data.type==='Treinamento'?' selected':''}>Treinamento</option><option${data&&data.type==='Emergência'?' selected':''}>Emergência</option></select></div><div class="fg"><label>Convidados</label><div id="m-guests-chips" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px">${(data&&data.guests?data.guests.split(',').map(g=>g.trim()).filter(Boolean):[]).map(g=>`<span class="guest-chip" style="display:flex;align-items:center;gap:4px;background:var(--gb);border:0.5px solid var(--bdr);border-radius:6px;padding:3px 8px;font-size:13px">${g}<button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:var(--t2);font-size:12px;line-height:1;padding:0 0 0 2px">×</button></span>`).join('')}</div><div style="display:flex;gap:6px"><input class="fi" id="m-guest-inp" placeholder="email@convidado.com" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();_addGuest();}"><button type="button" class="ca" onclick="_addGuest()" style="flex-shrink:0;padding:0 12px">+</button></div></div><div class="fg"><label>Notas</label><textarea id="m-nt" style="min-height:60px">${data?data.notes||'':''}</textarea></div><div class="fg"><label>Próximos passos (um por linha)</label><textarea id="m-ac">${data&&data.actions?data.actions.join('\n'):''}</textarea></div>${isPast?`<div class="fg"><label>URL da gravação</label><input class="fi" id="m-rec" type="url" placeholder="https://drive.google.com/..." value="${data?data.recording||'':''}"></div><div class="fg"><label>Resumo gerado</label><textarea id="m-sum" placeholder="Cole aqui o resumo automático da reunião...">${data?data.summary||'':''}</textarea></div>`:''}`})(),
