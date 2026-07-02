@@ -1546,11 +1546,15 @@ function rTimeline(d){
     return;
   }
   // Firma específica ou cliente
-  const weeks=[...new Set((d.implementations||[]).map(t=>t.week))].filter(Boolean).sort((a,b)=>a-b);
+  // implementations stored in firm data; fallback: check fs_flowsales for admin-created implementations
+  const _baseImpls=d.implementations||[];
+  const _fsImpls=(()=>{if(_baseImpls.length)return[];try{const _fsd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');return(_fsd.implementations||[]).filter(i=>i._sourceFirm===S.eid||i._firmId===S.eid);}catch(e){return[];}})();
+  const _allImpls=[..._baseImpls,..._fsImpls];
+  const weeks=[...new Set(_allImpls.map(t=>t.week))].filter(Boolean).sort((a,b)=>a-b);
   const welcomeEntry='<div class="card" style="margin-bottom:8px;border-left:3px solid var(--gold)"><div style="display:flex;align-items:center;gap:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><div><div style="font-size:13px;font-weight:600;color:var(--text)">Bem vindo(a) ao programa</div><div style="font-size:12px;color:var(--t2);margin-top:2px">Início da jornada. Você deu o primeiro passo para transformar o marketing e o comercial do seu escritório.</div></div></div></div>';
   if(!weeks.length){wrap.innerHTML=welcomeEntry;return;}
   wrap.innerHTML=welcomeEntry+weeks.map(w=>{
-    const wt=(d.implementations||[]).filter(t=>t.week===w);
+    const wt=_allImpls.filter(t=>t.week===w);
     const done=wt.filter(t=>t.done).length;
     const pct=wt.length?Math.round(done/wt.length*100):0;
     const col=pct===100?'var(--green)':pct>0?'var(--gold)':'var(--t2)';
@@ -1577,7 +1581,11 @@ function rOv(d){
     {l:'Faturamento',v:safe(k.rev),g:safe(k.revG)||15000,c:'var(--green)',fmt:v=>'R$'+(v/1000).toFixed(0)+'k'},
   ].map(i=>{const p=i.g?Math.min(Math.round(i.v/i.g*100),100):0;const gc=p>=100?'var(--green)':p>=60?'var(--gold)':'var(--t2)';return`<div class="kc"><div class="kl">${i.l}</div><div class="kv" style="color:${p>0?gc:'var(--t2)'}">${i.fmt(i.v)}</div><div class="kt"><div class="ktr"><div class="kf" style="width:${p}%;background:${i.c}"></div></div><div class="kbl"><span>${p}% da meta</span><span>${i.fmt(i.g)}</span></div></div></div>`;}).join('');
   const ua=document.getElementById('urg-area');
-  const _usvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';const _urgAll=[...d.demands.filter(x=>x.status==='open'&&x.pri==='high').map(dm=>`<div class="ub">${_usvg}<div class="ux"><strong>Entrega urgente:</strong> ${dm.title}</div><div class="ul">Alta prioridade</div></div>`),...d.tasks.filter(t=>(t.pri==='high'||t.urgent)&&t.status!=='done'&&(S.role==='admin'||((t.assign||'').trim().split(' ')[0].toLowerCase())===((S.user&&S.user.name||'').trim().split(' ')[0].toLowerCase()))).map(t=>`<div class="ub">${_usvg}<div class="ux"><strong>Demanda urgente:</strong> ${t.title}</div><div class="ul">${t.pri==='high'?'Alta prioridade':''}${t.urgent&&t.pri!=='high'?'Urgente':''}${t.due?' · Prazo: '+fd(t.due):''}</div></div>`)];if(ua)ua.innerHTML=_urgAll.join('');
+  const _usvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';const _fn0ov=s=>(s||'').trim().split(' ')[0].toLowerCase();
+  // Include cross-firm tasks from fs_flowsales for client users
+  const _crossTasks=(()=>{if(S.role==='admin')return[];try{const _fsd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');const _fNm=(FIRMS.find(f=>f.id===S.eid)||{}).name||'';return(_fsd.tasks||[]).filter(t=>(t._sourceFirm===S.eid||t.resp===_fNm||t.resp===S.eid)&&!d.tasks.find(x=>x.id===t.id));}catch(e){return[];}})();
+  const _allUrgTasks=[...d.tasks,..._crossTasks];
+  const _urgAll=[...d.demands.filter(x=>x.status==='open'&&x.pri==='high').map(dm=>`<div class="ub">${_usvg}<div class="ux"><strong>Entrega urgente:</strong> ${dm.title}</div><div class="ul">Alta prioridade</div></div>`),..._allUrgTasks.filter(t=>(t.pri==='high'||t.urgent)&&t.status!=='done'&&(S.role==='admin'||_fn0ov(t.assign||'')===_fn0ov(S.user&&S.user.name||''))).map(t=>`<div class="ub">${_usvg}<div class="ux"><strong>Demanda urgente:</strong> ${t.title}</div><div class="ul">${t.pri==='high'?'Alta prioridade':''}${t.urgent&&t.pri!=='high'?'Urgente':''}${t.due?' · Prazo: '+fd(t.due):''}</div></div>`)];if(ua)ua.innerHTML=_urgAll.join('');
   document.getElementById('feed').innerHTML=d.activity.slice(0,8).map((a,i)=>`<div class="ai"><div class="ad" style="background:${a.col||'var(--t2)'}"></div><div style="flex:1"><div class="ax">${a.txt}</div><div class="at2">${a.time}</div></div><button class="ai-del" onclick="delActiv(${i})" title="Excluir"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div>`).join('')||'<div class="empty">Sem atividade recente.</div>';
   const fu=d.meetings.filter(m=>inRange(m.date)||!S.calFrom).filter(m=>m.date>=_localDate()).sort((a,b)=>a.date.localeCompare(b.date))[0];
   document.getElementById('nxtmeet').innerHTML=fu?`<div style="font-size:13px;font-weight:500;margin-bottom:4px">${fu.title}</div><div style="font-size:13px;color:var(--t2)">${fd(fu.date)}</div><div style="margin-top:8px"><span class="b bgo">${fu.type}</span></div>`:'<div class="empty" style="padding:12px">Sem próximas reuniões.</div>';
@@ -2008,7 +2016,20 @@ function rFiles(d){
   if(S.ff==='all'){const _el2=document.getElementById('flist');if(_el2._pendingLinks){_el2.innerHTML=_el2._pendingLinks+_el2.innerHTML;_el2._pendingLinks=null;}}
 }
 function ffile(f){S.ff=f;['all','doc','img','script','link'].forEach(x=>{const b=document.getElementById('at-'+x);if(b)b.classList.remove('on');});const a=document.getElementById('at-'+f);if(a)a.classList.add('on');rFiles(ld());}
-function viewFile(id){const d=ld();const f=d.files.find(x=>x.id===id);if(!f)return;if(f.data){const w=window.open();w.document.write(`<html><body style="margin:0;background:#000"><iframe src="${f.data}" style="width:100%;height:100vh;border:none"></iframe></body></html>`);}else{alert('Este arquivo foi adicionado sem conteúdo salvo. Para visualizar, use a funcionalidade com Firebase ativo.');}}
+function viewFile(id){const d=ld();const f=d.files.find(x=>x.id===id);if(!f)return;if(f.data){const w=window.open();w.document.write(`<html><body style="margin:0;background:#000"><iframe src="${f.data}" style="width:100%;height:100vh;border:none"></iframe></body></html>`);}else{_showReuploadModal(id,f);}}
+function _showReuploadModal(id,f){
+  const ov=document.getElementById('ov');const tt=document.getElementById('m-tt');const mb=document.getElementById('m-body');const mf=document.getElementById('moff');
+  if(!ov||!tt||!mb||!mf)return;
+  tt.textContent='📁 '+f.name;
+  mb.innerHTML=`<div style="padding:12px;background:var(--s2);border-radius:8px;border:0.5px solid var(--bdr);margin-bottom:14px"><div style="font-size:13px;color:var(--t2);margin-bottom:8px">O arquivo <strong>${f.name}</strong> foi salvo sem o conteúdo (o conteúdo não é sincronizado entre dispositivos por limitação de tamanho). Para visualizá-lo novamente, reenvie o arquivo abaixo.</div><div class="fg"><label>Reenviar arquivo</label><input type="file" id="reup-file" class="fi" style="padding:5px;font-size:12px"></div></div>`;
+  mf.innerHTML='<button class="bgh" onclick="cModal(null,1)">Cancelar</button><button class="bpr" onclick="_doReupload(''+id+'')">Salvar arquivo</button>';
+  _save=()=>{};
+  ov.classList.add('on');
+}
+function _doReupload(id){
+  const inp=document.getElementById('reup-file');if(!inp||!inp.files||!inp.files.length)return;
+  const fr=new FileReader();fr.onload=e2=>{const d=ld();const f=d.files.find(x=>x.id===id);if(!f)return;f.data=e2.target.result;sv(d);cModal(null,1);_showToast('Arquivo atualizado ✅','var(--green)');renderAll();viewFile(id);};fr.readAsDataURL(inp.files[0]);
+}
 let _upfQueue=[];let _upfCurrent=null;
 function uploadF(inp){
   _upfQueue=Array.from(inp.files);
@@ -2539,7 +2560,7 @@ function rNotif(d){
   const _fnmN=s=>(s||'').trim().split(' ')[0].toLowerCase();
   const _myN=d.notifs.filter(n=>!n.for||_fnmN(n.for)===_fnmN(S.user&&S.user.name));
   if(!_myN.length){el.innerHTML='<div class="ne">Sem notificações.</div>';const _nb=document.getElementById('ndot');if(_nb)_nb.style.display='none';return;}
-  el.innerHTML=_myN.slice(0,12).map(n=>`<div class="ni2${n.read?'':' unr'}" style="cursor:pointer" onclick="_notifClick('${n.id}')"><div class="nit">${n.title}</div><div class="nis">${n.sub}</div></div>`).join('');
+  el.innerHTML=_myN.slice(0,15).map(n=>`<div class="ni2${n.read?'':' unr'}" style="display:flex;align-items:flex-start;gap:6px"><div style="flex:1;cursor:pointer;min-width:0" onclick="_notifClick('${n.id}')"><div class="nit">${n.title}</div><div class="nis">${n.sub}</div></div><button onclick="_delNotif('${n.id}')" title="Remover" style="flex-shrink:0;background:none;border:none;cursor:pointer;color:var(--t2);font-size:16px;line-height:1;padding:0 2px;margin-top:1px">×</button></div>`).join('');
   const unr=_myN.filter(x=>!x.read).length;
   const ndotEl=document.getElementById('ndot');
   if(ndotEl){ndotEl.style.display=unr?'flex':'none';ndotEl.textContent=unr>9?'9+':String(unr||'');}
@@ -2547,6 +2568,7 @@ function rNotif(d){
 function toggleNotif(){const _np=document.getElementById('np');_np.classList.toggle('on');if(_np.classList.contains('on')){const _nd=ld();rNotif(_nd);}}
 function markRead(){const d=ld();d.notifs.forEach(n=>n.read=true);sv(d);rNotif(d);document.getElementById('ndot').style.display='none';document.getElementById('np').classList.remove('on');}
 function clearNotif(){if(!confirm('Limpar todas as notificações?'))return;const d=ld();const _fnmNc=s=>(s||'').trim().split(' ')[0].toLowerCase();d.notifs=d.notifs.filter(n=>n.for&&_fnmNc(n.for)!==_fnmNc(S.user&&S.user.name));sv(d);rNotif(d);document.getElementById('ndot').style.display='none';document.getElementById('np').classList.remove('on');}
+function _delNotif(id){const d=ld();d.notifs=d.notifs.filter(n=>n.id!==id);sv(d);rNotif(d);const unr=d.notifs.filter(n=>!n.read&&(!n.for||((n.for||'').trim().split(' ')[0].toLowerCase())===(((S.user&&S.user.name)||'').trim().split(' ')[0].toLowerCase()))).length;const ndot=document.getElementById('ndot');if(ndot)ndot.style.display=unr?'flex':'none';}
 function autoNotif(){
   const d=ld();
   const _td=_localDate();
@@ -2995,7 +3017,16 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
   _save=tpl.save;document.getElementById('ov').classList.add('on');
   setTimeout(()=>{const f=mb.querySelector('input,textarea');if(f)f.focus();if(document.getElementById('m-quick-ptcp'))_buildMeetPtcp();},60);
 }
-function openTaskThread(id){const d=ld();const t=d.tasks.find(x=>x.id===id);if(!t)return;openM('taskThread',t);}
+function openTaskThread(id){
+  const d=ld();
+  let t=d.tasks.find(x=>x.id===id);
+  if(!t){
+    // Task might be a cross-firm task stored in fs_flowsales (admin-created)
+    try{const _fsd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');t=(_fsd.tasks||[]).find(x=>x.id===id);}catch(e){}
+  }
+  if(!t)return;
+  openM('taskThread',t);
+}
 function _saveFn(){if(_save)_save();}
 function cModal(e,force){if(!force&&e&&e.target!==document.getElementById('ov'))return;document.getElementById('ov').classList.remove('on');_save=null;}
 function v(id){return document.getElementById(id)?.value||'';}
@@ -3459,11 +3490,27 @@ function _addGuestByName(name){
 function _buildMeetPtcp(){
   const wrap=document.getElementById('m-quick-ptcp');if(!wrap)return;
   const d=ld();
-  const admins=USERS.filter(u=>u.role==='admin').map(u=>u.name);
-  const partners=(d.partners||[]).map(p=>p.name).filter(Boolean);
-  const myName=S.user&&S.user.name;
-  const allNames=[...new Set([myName,...admins,...partners])].filter(Boolean);
-  wrap.innerHTML=allNames.map(n=>`<button type="button" onclick="_addGuestByName('${n.replace(/'/g,"\'")}');this.style.opacity='.4';this.style.pointerEvents='none'" style="font-size:12px;padding:4px 10px;border:0.5px solid var(--bdr);border-radius:20px;background:var(--s1);color:var(--text);cursor:pointer">${n==='Carlos'?'Carlos (FlowSales)':n===myName?'Eu ('+n+')':n}</button>`).join('');
+  const myName=S.user&&S.user.name||'';
+  const _fn0=s=>(s||'').trim().split(' ')[0].toLowerCase();
+  // For admin: include FlowSales team. For client: include responsável + partners only
+  let candidateNames=[];
+  if(S.role==='admin'){
+    candidateNames=[...USERS.filter(u=>u.role==='admin').map(u=>u.name),...(d.partners||[]).map(p=>p.name).filter(Boolean)];
+  }else{
+    // Client: responsável from firmExtra + all partners
+    const resp=(d.firmExtra&&d.firmExtra.respName)||'';
+    candidateNames=[resp,...(d.partners||[]).map(p=>p.name).filter(Boolean)].filter(Boolean);
+  }
+  // Find full name for current user from partners list (canonical)
+  const myFullName=(()=>{const _mp=(d.partners||[]).find(p=>_fn0(p.name)===_fn0(myName));return(_mp&&_mp.name)||myName;})();
+  // Deduplicate by first name (keeps first occurrence)
+  const seen=new Set();const allNames=[];
+  [myFullName,...candidateNames].forEach(n=>{const k=_fn0(n);if(n&&!seen.has(k)){seen.add(k);allNames.push(n);}});
+  wrap.innerHTML=allNames.map(n=>{
+    const isMe=_fn0(n)===_fn0(myName);
+    const label=isMe?'Eu':n==='Carlos'?'Carlos (FlowSales)':n;
+    return`<button type="button" onclick="_addGuestByName('${n.replace(/'/g,"\'")}');this.style.opacity='.4';this.style.pointerEvents='none'" style="font-size:12px;padding:4px 10px;border:0.5px solid var(--bdr);border-radius:20px;background:var(--s1);color:var(--text);cursor:pointer">${label}</button>`;
+  }).join('');
 }
 // ── INIT ────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded',()=>{
