@@ -2022,7 +2022,7 @@ function _showReuploadModal(id,f){
   if(!ov||!tt||!mb||!mf)return;
   tt.textContent='📁 '+f.name;
   mb.innerHTML=`<div style="padding:12px;background:var(--s2);border-radius:8px;border:0.5px solid var(--bdr);margin-bottom:14px"><div style="font-size:13px;color:var(--t2);margin-bottom:8px">O arquivo <strong>${f.name}</strong> foi salvo sem o conteúdo (o conteúdo não é sincronizado entre dispositivos por limitação de tamanho). Para visualizá-lo novamente, reenvie o arquivo abaixo.</div><div class="fg"><label>Reenviar arquivo</label><input type="file" id="reup-file" class="fi" style="padding:5px;font-size:12px"></div></div>`;
-  mf.innerHTML='<button class="bgh" onclick="cModal(null,1)">Cancelar</button><button class="bpr" onclick="_doReupload(''+id+'')">Salvar arquivo</button>';
+  mf.innerHTML=`<button class="bgh" onclick="cModal(null,1)">Cancelar</button><button class="bpr" onclick="_doReupload('${id}')">Salvar arquivo</button>`;
   _save=()=>{};
   ov.classList.add('on');
 }
