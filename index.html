@@ -768,7 +768,11 @@ window._fbOnSnapshot = onSnapshot;
         <!-- ESCRITÓRIOS (ADMIN) -->
         <!-- FINANCEIRO -->
         <div class="sec" id="s-fin">
-          <div class="g2" style="grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+          <div class="g2" style="grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px">
+            <div class="card" style="background:var(--s2)">
+              <div style="font-size:12px;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Faturamento (vendas)</div>
+              <div id="fin-fat" style="font-size:22px;font-weight:700;color:var(--green)">R$ 0,00</div>
+            </div>
             <div class="card" style="background:var(--s2)">
               <div style="font-size:12px;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Total de gastos</div>
               <div id="fin-total-gastos" style="font-size:22px;font-weight:700;color:var(--red)">R$ 0,00</div>
@@ -854,6 +858,30 @@ window._fbOnSnapshot = onSnapshot;
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="bgh" onclick="closeEdGasto()">Cancelar</button>
       <button class="bpr" onclick="saveEdGasto()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div id="ed-venda-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center" onclick="if(event.target===this)closeEdVenda()">
+  <div style="background:var(--s2);border-radius:16px;padding:24px;width:min(480px,94vw);max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.35)">
+    <div style="font-size:16px;font-weight:700;margin-bottom:16px;color:var(--text)">Editar venda</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="fg"><label>Data da venda</label><input class="fi" id="ev-date" type="date"></div>
+      <div class="fg"><label>Valor cobrado (R$)</label><input class="fi" id="ev-val" type="text" inputmode="numeric" placeholder="R$ 0,00" oninput="fmtFinVal(this)"></div>
+    </div>
+    <div class="fg"><label>Serviço ou produto</label><input class="fi" id="ev-tipo" placeholder="Planejamento previdenciário..."></div>
+    <div class="fg"><label>Nome do cliente</label><input class="fi" id="ev-cli" placeholder="Dr. João Silva..."></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="fg"><label>E-mail do cliente</label><input class="fi" id="ev-email" type="email" placeholder="cliente@email.com"></div>
+      <div class="fg"><label>Telefone do cliente</label><input class="fi" id="ev-phone" type="tel" placeholder="(11) 99999-9999"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="fg"><label>Origem do cliente</label><select class="fi" id="ev-orig"><option value="">Não informada</option><option>Meta Ads</option><option>Google Ads</option><option>Indicação</option><option>WhatsApp</option><option>Instagram</option><option>Site</option><option>Evento</option><option>Outro</option></select></div>
+      <div class="fg" style="margin-bottom:16px"><label>Quem vendeu</label><input class="fi" id="ev-seller" placeholder="Nome do responsável"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="bgh" onclick="closeEdVenda()">Cancelar</button>
+      <button class="bpr" onclick="saveEdVenda()">Salvar</button>
     </div>
   </div>
 </div>
@@ -986,6 +1014,11 @@ async function _startRealtimeSync(){
         if(remoteTs > localTs){
           // Verificar se chegou mensagem nova com menção ao usuário atual
           const prevMsgs=(localRaw?JSON.parse(localRaw):{}). msgs||[];
+          // Preserve local file .data (base64) that Firebase strips on upload
+          if(localRaw&&remote.files&&remote.files.length){
+            const localFiles=(JSON.parse(localRaw).files||[]);
+            remote.files=remote.files.map(rf=>{const lf=localFiles.find(x=>x.id===rf.id);return(lf&&lf.data)?Object.assign({},rf,{data:lf.data}):rf;});
+          }
           localStorage.setItem('fs_'+S.eid, JSON.stringify(remote));
           const newMsgs=(remote.msgs||[]).filter(m=>!prevMsgs.find(p=>p.id===m.id));
           newMsgs.forEach(m=>{
@@ -1513,19 +1546,19 @@ function rTimeline(d){
     return;
   }
   // Firma específica ou cliente
-  const weeks=[...new Set((d.tasks||[]).map(t=>t.week))].filter(Boolean).sort((a,b)=>a-b);
+  const weeks=[...new Set((d.implementations||[]).map(t=>t.week))].filter(Boolean).sort((a,b)=>a-b);
   const welcomeEntry='<div class="card" style="margin-bottom:8px;border-left:3px solid var(--gold)"><div style="display:flex;align-items:center;gap:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><div><div style="font-size:13px;font-weight:600;color:var(--text)">Bem vindo(a) ao programa</div><div style="font-size:12px;color:var(--t2);margin-top:2px">Início da jornada. Você deu o primeiro passo para transformar o marketing e o comercial do seu escritório.</div></div></div></div>';
   if(!weeks.length){wrap.innerHTML=welcomeEntry;return;}
   wrap.innerHTML=welcomeEntry+weeks.map(w=>{
-    const wt=(d.tasks||[]).filter(t=>t.week===w);
-    const done=wt.filter(t=>t.status==='done').length;
+    const wt=(d.implementations||[]).filter(t=>t.week===w);
+    const done=wt.filter(t=>t.done).length;
     const pct=wt.length?Math.round(done/wt.length*100):0;
     const col=pct===100?'var(--green)':pct>0?'var(--gold)':'var(--t2)';
     return '<div class="card" style="margin-bottom:8px"><div class="ch"><div class="ct">Semana '+w+'</div><span class="b" style="color:'+col+'">'+pct+'%</span></div>'
       +'<div style="margin:8px 0 10px"><div style="height:4px;background:var(--s3);border-radius:2px"><div style="height:4px;width:'+pct+'%;background:'+col+';border-radius:2px;transition:width .3s"></div></div></div>'
       +'<div style="display:flex;flex-direction:column;gap:6px">'+wt.map(t=>{
-        const ic=t.status==='done'?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>':'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--t2)" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>';
-        return '<div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="flex-shrink:0">'+ic+'</span><span style="color:'+(t.status==='done'?'var(--t2)':'var(--text)')+';'+(t.status==='done'?'text-decoration:line-through':'')+'">'+t.title+'</span>'+(t.due?'<span style="margin-left:auto;font-size:12px;color:var(--t2);white-space:nowrap">'+fd(t.due)+'</span>':'')+'</div>';
+        const ic=t.done?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>':'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--t2)" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>';
+        return '<div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="flex-shrink:0">'+ic+'</span><span style="color:'+(t.done?'var(--t2)':'var(--text)')+';'+(t.done?'text-decoration:line-through':'')+'">'+t.title+'</span>'+(t.due?'<span style="margin-left:auto;font-size:12px;color:var(--t2);white-space:nowrap">'+fd(t.due)+'</span>':'')+'</div>';
       }).join('')+'</div></div>';
   }).join('');
 }
@@ -1627,41 +1660,36 @@ function rKpis(d){
   if(vbEl){
     if(!vendasItems.length){vbEl.innerHTML='<div class="empty">Nenhum registro ainda.</div>';}
     else{
-      const tot=vendasItems.reduce(function(s,x){return s+x.qty;},0);
-      // Group by tipo for chart
-      var byTipo={};vendasItems.forEach(function(vi){if(!byTipo[vi.tipo])byTipo[vi.tipo]={qty:0,orig:{},clis:[],sellers:[]};byTipo[vi.tipo].qty+=(vi.qty||1);if(vi.orig)byTipo[vi.tipo].orig[vi.orig]=(byTipo[vi.tipo].orig[vi.orig]||0)+(vi.qty||1);if(vi.cli)byTipo[vi.tipo].clis.push(vi.cli);if(vi.seller&&!byTipo[vi.tipo].sellers.includes(vi.seller))byTipo[vi.tipo].sellers.push(vi.seller);});
-      var tipos=Object.keys(byTipo);var cols=['var(--gold)','var(--blue)','var(--green)','#a78bfa','#f472b6','var(--red)','#34d399','#60a5fa'];
-      // Mini SVG bar chart
-      var maxQ=Math.max.apply(null,tipos.map(function(t){return byTipo[t].qty;}));
-      var bw=Math.min(48,Math.floor(320/tipos.length)-8);
-      var svgH=80;
-      var bars=tipos.map(function(t,i){var h=maxQ?Math.round(byTipo[t].qty/maxQ*(svgH-22)):0;var x=i*(bw+8)+4;return '<rect x="'+x+'" y="'+(svgH-22-h)+'" width="'+bw+'" height="'+h+'" rx="3" fill="'+cols[i%cols.length]+'"/><text x="'+(x+bw/2)+'" y="'+(svgH-22-h-4)+'" text-anchor="middle" font-size="9" fill="var(--t2)">'+byTipo[t].qty+'</text><text x="'+(x+bw/2)+'" y="'+(svgH-6)+'" text-anchor="middle" font-size="8" fill="var(--t3)">'+t.slice(0,8)+'</text>';}).join('');
-      var svgW=tipos.length*(bw+8)+8;
-      var chart='<div style="overflow-x:auto;margin-bottom:14px"><svg width="'+svgW+'" height="'+svgH+'" style="display:block;margin:0 auto"><line x1="0" y1="'+(svgH-22)+'" x2="'+svgW+'" y2="'+(svgH-22)+'" stroke="var(--bdr)" stroke-width="0.5"/>'+bars+'</svg></div>';
-      // Table rows per tipo
-      var rows=tipos.map(function(t,i){
-        var g=byTipo[t];var pct=tot?Math.round(g.qty/tot*100):0;
-        var origStr=Object.keys(g.orig).map(function(o){return o+' ('+g.orig[o]+')';}).join(', ')||'Não informada';
-        var cliStr=g.clis.length?g.clis.slice(0,3).join(', ')+(g.clis.length>3?' +'+( g.clis.length-3):''):'';
-        var totVal=vendasItems.filter(function(vi){return vi.tipo===t;}).reduce(function(s,vi){return s+(+vi.val||0);},0);
-        var valStr=totVal>0?'R$ '+totVal.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'';
-        var sellers=[...new Set(vendasItems.filter(function(vi){return vi.tipo===t&&vi.seller;}).map(function(vi){return vi.seller;}))].join(', ');
-        var delBtns=vendasItems.filter(function(vi){return vi.tipo===t;}).map(function(vi){return S.role==='admin'?'<button class="ib del" data-vid="'+vi.id+'" onclick="delVendasItem(this.dataset.vid)" title="Remover entrada"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>':'';}).join('');
-        return '<div style="border:0.5px solid var(--bdr);border-radius:8px;padding:10px 13px;margin-bottom:7px">'
-          +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
-          +'<div style="display:flex;align-items:center;gap:7px"><div style="width:8px;height:8px;border-radius:50%;background:'+cols[i%cols.length]+';flex-shrink:0"></div><span style="font-size:12px;font-weight:600">'+t+'</span></div>'
-          +'<div style="display:flex;align-items:center;gap:6px"><span style="font-size:12px;font-weight:700;color:'+cols[i%cols.length]+'">'+g.qty+'</span><span style="font-size:13px;color:var(--t2);background:var(--gb);border-radius:4px;padding:1px 5px">'+pct+'%</span>'+delBtns+'</div></div>'
-          +'<div style="font-size:12px;color:var(--t2);display:flex;flex-wrap:wrap;gap:10px">'
-          +(valStr?'<span><b style="color:var(--t3)">Total:</b> <span style="color:var(--green);font-weight:700">'+valStr+'</span></span>':'')
-          +'<span><b style="color:var(--t3)">Origem:</b> '+origStr+'</span>'
-          +(cliStr?'<span><b style="color:var(--t3)">Clientes:</b> '+cliStr+'</span>':'')
-          +(sellers?'<span><b style="color:var(--t3)">Vendedor:</b> '+sellers+'</span>':'')
+      // Individual entries
+      var totalFat=vendasItems.reduce(function(s,vi){return s+(+vi.val||0);},0);
+      var rows=vendasItems.slice().sort(function(a,b){return(b.date||'')>(a.date||'')?1:-1;}).map(function(vi){
+        var valStr=vi.val>0?'R$ '+Number(vi.val).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'';
+        var canEdit=S.role==='admin';
+        return '<div style="border:0.5px solid var(--bdr);border-radius:8px;padding:11px 13px;margin-bottom:8px">'
+          +'<div style="display:flex;align-items:flex-start;gap:8px">'
+          +'<div style="flex:1;min-width:0">'
+          +'<div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px">'+vi.cli+'</div>'
+          +'<div style="font-size:13px;color:var(--t2);margin-bottom:4px">'+vi.tipo+'</div>'
+          +'<div style="display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--t2)">'
+          +(vi.date?'<span>'+vi.date.split('-').reverse().join('/')+'</span>':'')
+          +(vi.orig&&vi.orig?'<span>'+vi.orig+'</span>':'')
+          +(vi.seller?'<span>'+vi.seller+'</span>':'')
+          +(vi.email?'<span>'+vi.email+'</span>':'')
+          +(vi.phone?'<span>'+vi.phone+'</span>':'')
           +'</div>'
-          +'<div style="margin-top:7px;height:3px;background:var(--s3);border-radius:2px"><div style="height:100%;width:'+pct+'%;background:'+cols[i%cols.length]+';border-radius:2px"></div></div>'
+          +'</div>'
+          +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">'
+          +(valStr?'<span style="font-size:14px;font-weight:700;color:var(--green)">'+valStr+'</span>':'')
+          +(canEdit?'<div style="display:flex;gap:5px">'
+            +'<button class="ib" data-vid="'+vi.id+'" onclick="edVenda(this.dataset.vid)" title="Editar" style="color:var(--t2)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
+            +'<button class="ib del" data-vid="'+vi.id+'" onclick="delVendasItem(this.dataset.vid)" title="Excluir"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>'
+            +'</div>':'')
+          +'</div>'
+          +'</div>'
           +'</div>';
       }).join('');
-      var total_row='<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;padding:8px 2px;border-top:0.5px solid var(--bdr);margin-top:4px"><span>Total</span><span>'+tot+' vendas</span></div>';
-      vbEl.innerHTML=chart+rows+total_row;
+      var total_row='<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;padding:8px 2px;border-top:0.5px solid var(--bdr);margin-top:4px"><span>Total ('+vendasItems.length+' venda'+( vendasItems.length!==1?'s':'')+')</span><span style="color:var(--green)">R$ '+totalFat.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'</span></div>';
+      vbEl.innerHTML=rows+total_row;
     }
   }
   document.getElementById('kpi-g6').innerHTML=metrics.map(i=>{
@@ -1827,12 +1855,13 @@ function delMeet(id){if(!confirm('Excluir?'))return;const d=ld();d.meetings=d.me
 function rFinanceiro(d){
   const gastos=d.gastos||[];
   const totalGastos=gastos.reduce((s,g)=>s+(+g.val||0),0);
-  const fat=+(d.kpis&&d.kpis.rev||0);
+  const fat=(d.vendasItems||[]).reduce((s,vi)=>s+(+vi.val||0),0)||(+(d.kpis&&d.kpis.rev||0));
   const roi=totalGastos>0?((fat/totalGastos)*100).toFixed(1)+'%':'—';
   const roiColor=totalGastos>0&&fat>totalGastos?'var(--green)':totalGastos>0?'var(--red)':'var(--t2)';
-  const tg=document.getElementById('fin-total-gastos');const rEl=document.getElementById('fin-roi');
+  const tg=document.getElementById('fin-total-gastos');const rEl=document.getElementById('fin-roi');const fatEl=document.getElementById('fin-fat');
   if(tg)tg.textContent='R$ '+totalGastos.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
   if(rEl){rEl.textContent=roi;rEl.style.color=roiColor;}
+  if(fatEl)fatEl.textContent='R$ '+fat.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
   const CAT_LABELS={trafego:'Tráfego pago',ferramenta:'Ferramenta / Software',servico:'Serviço terceirizado',infra:'Infraestrutura',outro:'Outros'};
   const el=document.getElementById('fin-list');if(!el)return;
   if(!gastos.length){el.innerHTML='<div class="empty">Nenhum gasto registrado.</div>';return;}
@@ -1913,6 +1942,39 @@ function saveEdGasto(){
   sv(d);rFinanceiro(d);closeEdGasto();_showToast('Gasto atualizado ✅','var(--green)');
 }
 function delGasto(id){if(!confirm('Excluir gasto?'))return;const d=ld();d.gastos=(d.gastos||[]).filter(x=>x.id!==id);sv(d);rFinanceiro(d);}
+let _edVendaId=null;
+function edVenda(id){
+  const d=ld();const vi=(d.vendasItems||[]).find(x=>x.id===id);if(!vi)return;
+  _edVendaId=id;
+  document.getElementById('ev-date').value=vi.date||'';
+  const vFmt=vi.val>0?'R$ '+(+vi.val).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'';
+  document.getElementById('ev-val').value=vFmt;
+  document.getElementById('ev-tipo').value=vi.tipo||'';
+  document.getElementById('ev-cli').value=vi.cli||'';
+  document.getElementById('ev-email').value=vi.email||'';
+  document.getElementById('ev-phone').value=vi.phone||'';
+  document.getElementById('ev-orig').value=vi.orig||'';
+  document.getElementById('ev-seller').value=vi.seller||'';
+  const ov=document.getElementById('ed-venda-ov');ov.style.display='flex';
+}
+function closeEdVenda(){document.getElementById('ed-venda-ov').style.display='none';_edVendaId=null;}
+function saveEdVenda(){
+  if(!_edVendaId)return;
+  const d=ld();const vi=(d.vendasItems||[]).find(x=>x.id===_edVendaId);if(!vi)return;
+  const tipo=document.getElementById('ev-tipo').value.trim();
+  const cli=document.getElementById('ev-cli').value.trim();
+  const _rv=document.getElementById('ev-val').value.replace(/[^\d,\.]/g,'').replace(/\./g,'').replace(',','.');
+  const val=parseFloat(_rv)||0;
+  const date=document.getElementById('ev-date').value;
+  if(!tipo||!cli)return _showToast('Preencha serviço e nome do cliente','var(--red)');
+  vi.tipo=tipo;vi.cli=cli;vi.val=val;vi.date=date;
+  vi.email=document.getElementById('ev-email').value.trim();
+  vi.phone=document.getElementById('ev-phone').value.trim();
+  vi.orig=document.getElementById('ev-orig').value;
+  vi.seller=document.getElementById('ev-seller').value.trim();
+  d.kpis=d.kpis||{};d.kpis.rev=d.vendasItems.reduce((s,v)=>s+(+v.val||0),0);
+  sv(d);renderAll();closeEdVenda();_showToast('Venda atualizada ✅','var(--green)');
+}
 
 function rFiles(d){
   const firm=FIRMS.find(f=>f.id===S.eid)||{};
@@ -2808,7 +2870,7 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
       }
     },
     vendasItem:{title:'Registrar tipo de venda',
-      body:`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Data da venda</label><input class="fi" id="vi-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div><div class="fg"><label>Valor cobrado (R$)</label><input class="fi" id="vi-val" type="text" inputmode="numeric" placeholder="R$ 0,00" oninput="fmtFinVal(this)"></div></div><div class="fg"><label>Serviço ou produto</label><input class="fi" id="vi-tipo" placeholder="Planejamento previdenciário, Ação trabalhista..."></div><div class="fg"><label>Nome do cliente</label><input class="fi" id="vi-cli" placeholder="Dr. João Silva..."></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Origem do cliente</label><select class="fi" id="vi-orig"><option value="">Não informada</option><option>Meta Ads</option><option>Google Ads</option><option>Indicação</option><option>WhatsApp</option><option>Instagram</option><option>Site</option><option>Evento</option><option>Outro</option></select></div><div class="fg"><label>Quem vendeu</label><input class="fi" id="vi-seller" placeholder="Nome do responsável"></div></div><div class="fg" style="margin-bottom:4px"><label>Comprovante / Contrato (opcional)</label><div style="display:flex;align-items:center;gap:8px"><label for="vi-file" style="flex:1;border:1px dashed var(--bdr2);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--t2);cursor:pointer;text-align:center" id="vi-file-lbl">Clique para anexar arquivo</label></div><input type="file" id="vi-file" style="position:absolute;width:0;height:0;opacity:0;pointer-events:none" onchange="document.getElementById('vi-file-lbl').textContent='📎 '+this.files[0].name"></div>`,
+      body:`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Data da venda</label><input class="fi" id="vi-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div><div class="fg"><label>Valor cobrado (R$)</label><input class="fi" id="vi-val" type="text" inputmode="numeric" placeholder="R$ 0,00" oninput="fmtFinVal(this)"></div></div><div class="fg"><label>Serviço ou produto</label><input class="fi" id="vi-tipo" placeholder="Planejamento previdenciário, Ação trabalhista..."></div><div class="fg"><label>Nome do cliente</label><input class="fi" id="vi-cli" placeholder="Dr. João Silva..."></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>E-mail do cliente</label><input class="fi" id="vi-email" type="email" placeholder="cliente@email.com"></div><div class="fg"><label>Telefone do cliente</label><input class="fi" id="vi-phone" type="tel" placeholder="(11) 99999-9999"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Origem do cliente</label><select class="fi" id="vi-orig"><option value="">Não informada</option><option>Meta Ads</option><option>Google Ads</option><option>Indicação</option><option>WhatsApp</option><option>Instagram</option><option>Site</option><option>Evento</option><option>Outro</option></select></div><div class="fg"><label>Quem vendeu</label><input class="fi" id="vi-seller" placeholder="Nome do responsável"></div></div><div class="fg" style="margin-bottom:4px"><label>Comprovante / Contrato (opcional)</label><div style="display:flex;align-items:center;gap:8px"><label for="vi-file" style="flex:1;border:1px dashed var(--bdr2);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--t2);cursor:pointer;text-align:center" id="vi-file-lbl">Clique para anexar arquivo</label></div><input type="file" id="vi-file" style="position:absolute;width:0;height:0;opacity:0;pointer-events:none" onchange="document.getElementById('vi-file-lbl').textContent='📎 '+this.files[0].name"></div>`,
       save:()=>{
         const tipo=v('vi-tipo').trim();const cli=v('vi-cli').trim();
         const orig=v('vi-orig');const seller=v('vi-seller').trim();
@@ -2816,9 +2878,12 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
         const _rv=(v('vi-val')||'').replace(/[^\d,\.]/g,'').replace(/\./g,'').replace(',','.');
         const val=parseFloat(_rv)||0;
         if(!tipo){alert('Preencha o serviço ou produto.');return;}
+        const email=v('vi-email').trim();const phone=v('vi-phone').trim();
         const doSave=(fileData,fileName)=>{
           const d=ld();d.vendasItems=d.vendasItems||[];
-          d.vendasItems.push({id:'vi'+Date.now(),tipo,cli,orig,seller,date,val,qty:1,fileData,fileName:fileName||''});
+          d.vendasItems.push({id:'vi'+Date.now(),tipo,cli,email,phone,orig,seller,date,val,qty:1,fileData,fileName:fileName||''});
+          d.kpis=d.kpis||{};d.kpis.rev=(d.vendasItems.reduce((s,vi)=>s+(+vi.val||0),0));
+          d.kpis.vendas=(d.vendasItems||[]).length;
           sv(d);renderAll();cModal(null,1);
         };
         const finp=document.getElementById('vi-file');
@@ -3298,7 +3363,7 @@ function delFSPipe(id){const d=ldFS();d.pipeline=d.pipeline.filter(x=>x.id!==id)
 function tgFSGoal(id){const d=ldFS();const g=d.goals.find(x=>x.id===id);if(g){g.done=!g.done;svFS(d);rFlow();}}
 function delFSGoal(id){const d=ldFS();d.goals=d.goals.filter(x=>x.id!==id);svFS(d);rFlow();}
 function openAddVenda(){openM('vendasItem');}
-function delVendasItem(id){const d=ld();d.vendasItems=(d.vendasItems||[]).filter(x=>x.id!==id);sv(d);renderAll();}
+function delVendasItem(id){if(!confirm('Excluir esta venda?'))return;const d=ld();d.vendasItems=(d.vendasItems||[]).filter(x=>x.id!==id);d.kpis=d.kpis||{};d.kpis.rev=d.vendasItems.reduce((s,vi)=>s+(+vi.val||0),0);d.kpis.vendas=d.vendasItems.length;sv(d);renderAll();}
 function activ(d,txt,col){d.activity=d.activity||[];d.activity.unshift({txt,col,time:new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})});if(d.activity.length>30)d.activity.length=30;}
 function fd(s){if(!s)return '';const [y,m,d]=s.split('-');if(!y||!m||!d)return s;return `${d}/${m}/${y}`;}
 // ── GUEST HELPERS ─────────────────────────────────────────────
