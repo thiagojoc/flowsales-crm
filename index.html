@@ -651,6 +651,7 @@ window._fbOnSnapshot = onSnapshot;
             <input type="checkbox" class="tck-cb" id="sel-all" onchange="selAll(this)" title="Selecionar todos">
             <button class="ca" id="fo-all" onclick="fown('all')" style="border-color:var(--gbr);color:var(--gold)">Todas</button>
             <button class="ca" id="fo-mine" onclick="fown('mine')">Minhas</button>
+            <button class="ca" id="fo-delegated" onclick="fown('delegated')">Delegadas</button>
             <span style="width:0.5px;height:18px;background:var(--bdr2);margin:0 2px"></span>
             <button class="ca" id="ft-pend" onclick="ftask('pending')">Pendentes</button>
             <button class="ca" id="ft-done" onclick="ftask('done')">Concluídas</button>
@@ -1800,8 +1801,11 @@ function delMeta(p,id){const d=ld();d.metas[p]=(d.metas[p]||[]).filter(x=>x.id!=
 // ── TASKS ─────────────────────────────────────────────────────
 const slbl={done:'<span class="b bg">Concluída</span>',pending:'<span class="b bgo">Pendente</span>',late:'<span class="b br">Atrasada</span>'};const prlbl={high:'<span class="b br" style="font-size:12px">▲ Alta</span>',med:'<span class="b bgo" style="font-size:12px">● Média</span>',low:'<span class="b bgr" style="font-size:12px">▼ Baixa</span>'};
 function rTasks(d){
-  // Default filter: client sees only their tasks
-  if(S.role==='client'&&!S.hasOwnProperty('ownf'))S.ownf='mine';
+  // Default filter: client AND admin-in-firm-context see only their own tasks
+  if(!S.hasOwnProperty('ownf')){
+    if(S.role==='client')S.ownf='mine';
+    else if(S.role==='admin'&&S.eid!=='flowsales')S.ownf='mine';
+  }
   // Include FlowSales tasks assigned to this firm
   const _firmNm=(FIRMS.find(f=>f.id===S.eid)||{}).name||'';
   const _fsTasks=(()=>{try{
@@ -1818,17 +1822,22 @@ function rTasks(d){
     return [..._adminTasks,..._intTasks];
   }catch(e){return[];}})();
   let tasks=[...d.tasks,..._fsTasks.filter(ft=>!d.tasks.find(t=>t.id===ft.id))];
-  // Owner filter (Todas / Minhas)
-  if(S.ownf==='mine'){const _fn0rt=s=>(s||'').trim().split(' ')[0].toLowerCase();tasks=tasks.filter(t=>_fn0rt(t.assign||'')===_fn0rt(S.user&&S.user.name||''));}
+  // Owner filter (Todas / Minhas / Delegadas)
+  const _fn0rt=s=>(s||'').trim().split(' ')[0].toLowerCase();
+  const _myFN=_fn0rt(S.user&&S.user.name||'');
+  if(S.ownf==='mine'){tasks=tasks.filter(t=>!t.assign||_fn0rt(t.assign)===_myFN);}
+  else if(S.ownf==='delegated'){tasks=tasks.filter(t=>t.assign&&_fn0rt(t.assign)!==_myFN);}
   if(S.tf!=='all')tasks=tasks.filter(t=>t.status===S.tf);
   if(S.wkf!=='all')tasks=tasks.filter(t=>String(t.week)===String(S.wkf));
   if(S.datef)tasks=tasks.filter(t=>t.due===S.datef);
   if(S.calFrom)tasks=tasks.filter(t=>!t.due||inRange(t.due));
+  // Update Delegadas badge count
+  (()=>{const _fn0b=s=>(s||'').trim().split(' ')[0].toLowerCase();const _myB=_fn0b(S.user&&S.user.name||'');const _allT=[...d.tasks,..._fsTasks.filter(ft=>!d.tasks.find(t=>t.id===ft.id))];const _delCnt=_allT.filter(t=>t.assign&&_fn0b(t.assign)!==_myB).length;const _db=document.getElementById('fo-delegated');if(_db)_db.textContent='Delegadas'+(_delCnt>0?' ('+_delCnt+')':'');})();
   const el=document.getElementById('tlist');
   if(!tasks.length){el.innerHTML='<div class="empty">Nenhuma task.</div>';return;}
   el.innerHTML=tasks.map(t=>`<div class="trow"><input type="checkbox" class="tck-cb" ${S.selTasks.has(t.id)?'checked':''} onchange="toggleSel('${t.id}',this)"><div class="tck${t.status==='done'?' on':''}" onclick="tgTask('${t.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tb2"><div class="tt${t.status==='done'?' dn':''}">${t.urgent?'<span style="color:var(--red);font-size:13px;font-weight:700;margin-right:5px;letter-spacing:.05em">URGENTE</span>':''}${t.title}</div>${t.desc?`<div style="font-size:12px;color:var(--t2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:500px">${t.desc.length>100?t.desc.slice(0,100)+'\u2026':t.desc}</div>`:''}<div class="ti"><span>Atribuída a: ${t.assign||t.resp}</span>${t.created?`<span style="color:var(--t3)">|</span><span title="Criada em">📅 Criada em: ${fd(t.created)}</span>`+(t.createdBy?`<span style="color:var(--t3)">|</span><span>👤 Criada por: ${t.createdBy}${t._sourceFirmName?' ('+t._sourceFirmName+')':''}</span>`:''):''}${t.due?`<span style="color:var(--t3)">|</span><span title="Prazo" style="color:${t.status!=='done'&&t.due<_localDate()?'var(--red)':'inherit'}">⏰ Prazo: ${fd(t.due)}</span>`:''}${slbl[t.status]||''}${t.pri&&t.pri!=='med'?prlbl[t.pri]||'':''}</div></div><div class="tacts"><button class="ib" onclick="openTaskThread('${t.id}')" title="Respostas/Atualizações" style="color:var(--blue)">${t.replies&&t.replies.length?`<span style="font-size:11px;font-weight:600">💬${t.replies.length}</span>`:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'}</button><button class="ib edit" onclick="edTask('${t.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="ib del" onclick="delTask('${t.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div></div>`).join('');
 }
-function fown(f){if(!S.hasOwnProperty('ownf'))S.ownf='all';S.ownf=f;['all','mine'].forEach(x=>{const b=document.getElementById('fo-'+x);if(b){b.style.borderColor='';b.style.color='';}});const a=document.getElementById('fo-'+f);if(a){a.style.borderColor='var(--gbr)';a.style.color='var(--gold)';}rTasks(ld());}
+function fown(f){if(!S.hasOwnProperty('ownf'))S.ownf='all';S.ownf=f;['all','mine','delegated'].forEach(x=>{const b=document.getElementById('fo-'+x);if(b){b.style.borderColor='';b.style.color='';}});const a=document.getElementById('fo-'+f);if(a){a.style.borderColor='var(--gbr)';a.style.color='var(--gold)';}rTasks(ld());}
 function ftask(f){S.tf=f;['all','pend','done','late'].forEach(x=>{const b=document.getElementById('ft-'+x);if(b){b.style.borderColor='';b.style.color='';}});const a=document.getElementById('ft-'+f);if(a){a.style.borderColor='var(--gbr)';a.style.color='var(--gold)';}rTasks(ld());}
 function applyWkFilter(){const sel=document.getElementById('wk-sel');S.wkf=sel?sel.value:'all';rTasks(ld());}
 function applyDateFilter(){S.datef=document.getElementById('date-sel').value;rTasks(ld());}
@@ -2552,7 +2561,25 @@ function _notifClick(id){
   else if(id.startsWith('nmeet_')||ti.includes('Reuni'))sec='meet';
   else if(id.startsWith('demanda_')||id.startsWith('nasgn_')||id.startsWith('done_')||id.startsWith('xfirm_')||ti.includes('Demanda')||ti.includes('demanda'))sec='tasks';
   else if(id.startsWith('nent_')||ti.includes('entrega'))sec='entregas';
+  // For reply notifications: open the specific task thread
+  else if(id.startsWith('reply_')){
+    sec='tasks';
+    // Extract task ID: reply_{taskId}_{timestamp}
+    const _parts=id.split('_');if(_parts.length>=2){const _tid=_parts[1];setTimeout(()=>openTaskThread(_tid),200);}
+  }
+  // reply_ prefix in tasks section - also handle if already sec='tasks' from reply_
+  if(ti.includes('Resposta na demanda')||ti.includes('Atualização na demanda')){
+    sec='tasks';
+    const _sub=(n&&n.sub)||'';
+    // Try to find and open thread by sub text match
+    setTimeout(()=>{
+      const _dl=ld();const _mt=(_dl.tasks||[]).find(t=>_sub.includes(t.title));
+      if(_mt)openTaskThread(_mt.id);
+    },200);
+  }
   document.getElementById('np').classList.remove('on');
+  // Switch to 'delegated' view so admin sees the task that got a reply
+  if(sec==='tasks'&&S.role==='admin'&&(ti.includes('Resposta')||ti.includes('Atualização'))){S.ownf='delegated';}
   if(sec)nav(sec);
 }
 function rNotif(d){
