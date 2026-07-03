@@ -2967,7 +2967,12 @@ function openProfile(){
     if(S.role==='client'){
       try{const _d2p=ld();const _nmCmp=n=>(n||'').trim().toLowerCase();const _pt2=(_d2p.partners||[]).find(p=>_nmCmp(p.name)===_nmCmp(u.name));if(_pt2&&_pt2.photo)return _pt2.photo;}catch(e){}
     }
-    return fe.respPhoto||'';
+    // fe.respPhoto é um campo único do escritório — só usa se for realmente a
+    // foto desta pessoa (nome bate com "Responsável"), senão mostraria a foto
+    // de outro sócio pra quem não tem foto própria ainda.
+    const _nmCmp2=n=>(n||'').trim().toLowerCase();
+    if(fe.respPhoto&&_nmCmp2(fe.respName)===_nmCmp2(u.name))return fe.respPhoto;
+    return '';
   })();
   const overrides=getCredsOverrides();const ov=overrides[u.email]||{};
   const currentEmail=ov.email||u.email;
