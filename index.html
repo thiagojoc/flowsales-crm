@@ -1012,10 +1012,49 @@ let _fbProfiles = {}; // fotos/nomes sincronizados via Firebase
 
 function _waitFB(){if(window._fbReady)return Promise.resolve();return new Promise(r=>{if(!window._fbResolvers)window._fbResolvers=[];window._fbResolvers.push(r);});}
 
+// Tamanho máximo por arquivo guardado no Firestore (documento tem limite de 1MiB;
+// base64 engorda ~33% o tamanho original, então ficamos com folga).
+const MAX_FILE_BYTES = 700*1024;
+function _b64Size(dataUrl){ return dataUrl ? Math.ceil(dataUrl.length*0.75) : 0; }
+function _fileTooBig(dataUrl){ return _b64Size(dataUrl) > MAX_FILE_BYTES; }
+
+// Guarda o conteúdo (base64) de UM arquivo numa subcoleção própria do escritório,
+// separado do documento principal — assim ele sobrevive trocando de navegador/
+// aparelho, sem esbarrar no limite de 1MiB do documento principal.
+const _fbBlobUploaded = new Set(); // evita re-subir o mesmo arquivo sem necessidade
+async function _fbSaveFileBlob(eid, fileId, dataUrl, meta){
+  if(!dataUrl) return;
+  const cacheKey = eid+'/'+fileId;
+  if(_fbBlobUploaded.has(cacheKey)) return;
+  try{
+    await _waitFB();
+    const ref=window._fbDoc(window._fbDB,'flowsales_crm',eid,'files',fileId);
+    await window._fbSetDoc(ref,Object.assign({data:dataUrl},meta||{}));
+    _fbBlobUploaded.add(cacheKey);
+  }catch(e){ console.error('[FB] ❌ Salvar arquivo '+fileId+':',e.code||e.message); }
+}
+async function _fbLoadFileBlob(eid, fileId){
+  try{
+    await _waitFB();
+    const ref=window._fbDoc(window._fbDB,'flowsales_crm',eid,'files',fileId);
+    const snap=await window._fbGetDoc(ref);
+    return snap.exists() ? snap.data().data : null;
+  }catch(e){ console.error('[FB] ❌ Carregar arquivo '+fileId+':',e.code||e.message); return null; }
+}
+
 async function _fbSave(eid, data){
   try{
     await _waitFB();
-    // Strip base64 file data before saving to Firebase (avoids 1MB limit)
+    // Sobe cada arquivo (base64) para a subcoleção própria antes de tirá-lo do
+    // documento principal — assim ele fica salvo na nuvem, não só no navegador.
+    (data.files||[]).forEach(f=>{ if(f.data) _fbSaveFileBlob(eid,f.id,f.data,{name:f.name,type:f.type}); });
+    (data.gastos||[]).forEach(g=>{ if(g.fileData) _fbSaveFileBlob(eid,'gasto_'+g.id,g.fileData,{name:g.fileName||''}); });
+    (data.vendasItems||[]).forEach(vi=>{ if(vi.fileData) _fbSaveFileBlob(eid,'venda_'+vi.id,vi.fileData,{name:vi.fileName||''}); });
+    (data.tasks||[]).forEach(t=>{
+      if(t.taskFile&&t.taskFile.data) _fbSaveFileBlob(eid,'task_'+t.id,t.taskFile.data,{name:t.taskFile.name,type:t.taskFile.type});
+      (t.replies||[]).forEach(r=>{ if(r.fileData) _fbSaveFileBlob(eid,'reply_'+r.id,r.fileData,{name:r.fileName||''}); });
+    });
+    // Strip base64 file data before saving o documento principal (evita limite de 1MB)
     const safe=Object.assign({},data);
     if(safe.files&&safe.files.length){safe.files=safe.files.map(f=>{const c=Object.assign({},f);delete c.data;return c;});}
     if(safe.gastos&&safe.gastos.length){safe.gastos=safe.gastos.map(g=>{const c=Object.assign({},g);delete c.fileData;return c;});}    if(safe.vendasItems&&safe.vendasItems.length){safe.vendasItems=safe.vendasItems.map(vi=>{const c2=Object.assign({},vi);delete c2.fileData;return c2;});}
@@ -2209,7 +2248,35 @@ function rFiles(d){
   if(S.ff==='all'){const _el2=document.getElementById('flist');if(_el2._pendingLinks){_el2.innerHTML=_el2._pendingLinks+_el2.innerHTML;_el2._pendingLinks=null;}}
 }
 function ffile(f){S.ff=f;['all','doc','img','script','link'].forEach(x=>{const b=document.getElementById('at-'+x);if(b)b.classList.remove('on');});const a=document.getElementById('at-'+f);if(a)a.classList.add('on');rFiles(ld());}
-function viewFile(id){const d=ld();const f=d.files.find(x=>x.id===id);if(!f)return;if(f.data){const w=window.open();w.document.write(`<html><body style="margin:0;background:#000"><iframe src="${f.data}" style="width:100%;height:100vh;border:none"></iframe></body></html>`);}else{_showReuploadModal(id,f);}}
+function _openFileWindow(dataUrl){const w=window.open();w.document.write(`<html><body style="margin:0;background:#000"><iframe src="${dataUrl}" style="width:100%;height:100vh;border:none"></iframe></body></html>`);}
+async function viewFile(id){
+  const d=ld();const f=d.files.find(x=>x.id===id);if(!f)return;
+  if(f.data){_openFileWindow(f.data);return;}
+  const remote=await _fbLoadFileBlob(S.eid,id);
+  if(remote){
+    const d2=ld();const f2=d2.files.find(x=>x.id===id);if(f2){f2.data=remote;localStorage.setItem('fs_'+S.eid,JSON.stringify(d2));}
+    _openFileWindow(remote);
+    return;
+  }
+  _showReuploadModal(id,f);
+}
+async function _getReplyFileData(taskId,replyId){
+  const d=ld();const t=d.tasks.find(x=>x.id===taskId);const r=t&&(t.replies||[]).find(x=>x.id===replyId);
+  if(r&&r.fileData)return r.fileData;
+  const remote=await _fbLoadFileBlob(S.eid,'reply_'+replyId);
+  if(remote&&r){r.fileData=remote;localStorage.setItem('fs_'+S.eid,JSON.stringify(d));}
+  return remote;
+}
+async function viewReplyFile(taskId,replyId){
+  const data=await _getReplyFileData(taskId,replyId);
+  if(!data){_showToast('Arquivo não encontrado','var(--red)');return;}
+  _openFileWindow(data);
+}
+async function downloadReplyFile(taskId,replyId,fileName){
+  const data=await _getReplyFileData(taskId,replyId);
+  if(!data){_showToast('Arquivo não encontrado','var(--red)');return;}
+  const a=document.createElement('a');a.href=data;a.download=fileName||'arquivo';document.body.appendChild(a);a.click();a.remove();
+}
 function _showReuploadModal(id,f){
   const ov=document.getElementById('ov');const tt=document.getElementById('m-tt');const mb=document.getElementById('m-body');const mf=document.getElementById('moff');
   if(!ov||!tt||!mb||!mf)return;
@@ -2238,6 +2305,9 @@ function _upfNext(){
   const size=file.size>1048576?(file.size/1048576).toFixed(1)+' MB':(file.size/1024).toFixed(0)+' KB';
   const reader=new FileReader();
   reader.onload=e=>{
+    if(_fileTooBig(e.target.result)){
+      _showToast('⚠️ "'+file.name+'" é grande demais (máx. ~700KB) e não será salvo na nuvem — só neste navegador.','var(--red)');
+    }
     _upfCurrent={data:e.target.result,name:file.name,type,size};
     document.getElementById('upf-ttl').value=file.name.replace(/\.[^.]+$/,'');
     document.getElementById('upf-dat').value=new Date().toISOString().split('T')[0];
@@ -3234,7 +3304,7 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
             const _delBtn=_canEdit?`<button onclick="_delReply('${data.id}','${_rid}')" title="Excluir" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:12px;padding:0 3px;line-height:1">🗑</button>`:'';
             const _doneBtn=_isDone?`<span style="color:var(--green);font-size:11px;margin-left:4px">✔ Lido</span>`:`<button onclick="_markReplyDone('${data.id}','${_rid}')" title="Marcar como lida" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;line-height:1">✔️</button>`;
             const _hdr=`<div style="display:flex;align-items:center;gap:4px;margin-bottom:4px"><span style="font-size:11px;color:var(--t2);font-weight:600;flex:1">${r.from} <span style="font-weight:400">· ${r.time}${r.edited?' · editado':''}</span></span>${_editBtn}${_delBtn}${_doneBtn}</div>`;
-            const _filePart=r.fileData?`<div style="margin-top:6px;padding:6px 8px;background:var(--gb);border:0.5px solid var(--gbr);border-radius:6px"><div style="font-size:11px;color:var(--t2);margin-bottom:5px;font-weight:600">📎 ${r.fileName||'Arquivo'}</div><div style="display:flex;gap:6px"><a href="${r.fileData}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;background:var(--s2);border:0.5px solid var(--gbr);border-radius:5px;font-size:11px;color:var(--text);text-decoration:none;font-weight:500">👁 Visualizar</a><a href="${r.fileData}" download="${r.fileName||'arquivo'}" style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;background:var(--s2);border:0.5px solid var(--gbr);border-radius:5px;font-size:11px;color:var(--green);text-decoration:none;font-weight:500">⬇ Baixar</a></div></div>`:'';
+            const _filePart=(r.fileData||r.fileName)?`<div style="margin-top:6px;padding:6px 8px;background:var(--gb);border:0.5px solid var(--gbr);border-radius:6px"><div style="font-size:11px;color:var(--t2);margin-bottom:5px;font-weight:600">📎 ${r.fileName||'Arquivo'}</div><div style="display:flex;gap:6px"><button onclick="viewReplyFile('${data.id}','${_rid}')" style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;background:var(--s2);border:0.5px solid var(--gbr);border-radius:5px;font-size:11px;color:var(--text);cursor:pointer;font-weight:500">👁 Visualizar</button><button onclick="downloadReplyFile('${data.id}','${_rid}','${(r.fileName||'arquivo').replace(/'/g,"")}')" style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;background:var(--s2);border:0.5px solid var(--gbr);border-radius:5px;font-size:11px;color:var(--green);cursor:pointer;font-weight:500">⬇ Baixar</button></div></div>`:'';
             const _body=`<div id="reply-text-${_rid}">${r.text?`<div style="font-size:13px;color:var(--text);margin-bottom:${r.link||r.fileData?'5px':'0'}">${r.text}</div>`:''}${r.link?`<a href="${r.link}" target="_blank" rel="noopener" style="font-size:12px;color:var(--blue);display:inline-flex;align-items:center;gap:4px;text-decoration:none;margin-bottom:${r.fileData?'4px':'0'}">🔗 ${r.link.length>50?r.link.slice(0,50)+'...':r.link}</a>`:''}${_filePart}</div>`;
             return `<div id="reply-${_rid}" style="padding:8px 10px;border-radius:6px;background:${_isDone?'var(--gb)':'var(--s2)'};margin-bottom:8px;border:0.5px solid var(--bdr);opacity:${_isDone?'0.65':'1'}">${_hdr}${_body}</div>`;
           }).join('');
