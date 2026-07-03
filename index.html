@@ -1588,11 +1588,11 @@ function rOv(d){
   // Include cross-firm tasks from fs_flowsales for client users
   const _crossTasks=(()=>{if(S.role==='admin')return[];try{const _fsd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');const _fNm=(FIRMS.find(f=>f.id===S.eid)||{}).name||'';return(_fsd.tasks||[]).filter(t=>(t._sourceFirm===S.eid||t.resp===_fNm||t.resp===S.eid)&&!d.tasks.find(x=>x.id===t.id));}catch(e){return[];}})();
   const _allUrgTasks=[...d.tasks,..._crossTasks];
-  const _urgAll=[...d.demands.filter(x=>x.status==='open'&&x.pri==='high').map(dm=>`<div class="ub">${_usvg}<div class="ux"><strong>Entrega urgente:</strong> ${dm.title}</div><div class="ul">Alta prioridade</div></div>`),..._allUrgTasks.filter(t=>(t.pri==='high'||t.urgent)&&t.status!=='done'&&(S.role==='admin'||_fn0ov(t.assign||'')===_fn0ov(S.user&&S.user.name||''))).map(t=>`<div class="ub">${_usvg}<div class="ux"><strong>Demanda urgente:</strong> ${t.title}</div><div class="ul">${t.pri==='high'?'Alta prioridade':''}${t.urgent&&t.pri!=='high'?'Urgente':''}${t.due?' · Prazo: '+fd(t.due):''}</div></div>`)];if(ua)ua.innerHTML=_urgAll.join('');
+  const _urgAll=[...d.demands.filter(x=>x.status==='open'&&x.pri==='high').map(dm=>`<div class="ub">${_usvg}<div class="ux"><strong>Entrega urgente:</strong> ${dm.title}</div><div class="ul">Alta prioridade</div></div>`),..._allUrgTasks.filter(t=>(t.pri==='high'||t.urgent)&&t.status!=='done'&&((S.role==='admin'&&S.eid==='flowsales')||!t.assign||_fn0ov(t.assign||'')===_fn0ov(S.user&&S.user.name||''))).map(t=>`<div class="ub">${_usvg}<div class="ux"><strong>Demanda urgente:</strong> ${t.title}</div><div class="ul">${t.pri==='high'?'Alta prioridade':''}${t.urgent&&t.pri!=='high'?'Urgente':''}${t.due?' · Prazo: '+fd(t.due):''}</div></div>`)];if(ua)ua.innerHTML=_urgAll.join('');
   document.getElementById('feed').innerHTML=d.activity.slice(0,8).map((a,i)=>`<div class="ai"><div class="ad" style="background:${a.col||'var(--t2)'}"></div><div style="flex:1"><div class="ax">${a.txt}</div><div class="at2">${a.time}</div></div><button class="ai-del" onclick="delActiv(${i})" title="Excluir"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div>`).join('')||'<div class="empty">Sem atividade recente.</div>';
   const fu=d.meetings.filter(m=>inRange(m.date)||!S.calFrom).filter(m=>m.date>=_localDate()).sort((a,b)=>a.date.localeCompare(b.date))[0];
   document.getElementById('nxtmeet').innerHTML=fu?`<div style="font-size:13px;font-weight:500;margin-bottom:4px">${fu.title}</div><div style="font-size:13px;color:var(--t2)">${fd(fu.date)}</div><div style="margin-top:8px"><span class="b bgo">${fu.type}</span></div>`:'<div class="empty" style="padding:12px">Sem próximas reuniões.</div>';
-  const _myTasksOv=S.role==='admin'?d.tasks:d.tasks.filter(t=>{const _fn0=s=>(s||'').trim().split(' ')[0].toLowerCase();return !t.assign||_fn0(t.assign)===_fn0(S.user&&S.user.name||'');});
+  const _myTasksOv=(S.role==='admin'&&S.eid==='flowsales')?d.tasks:d.tasks.filter(t=>{const _fn0=s=>(s||'').trim().split(' ')[0].toLowerCase();return !t.assign||_fn0(t.assign)===_fn0(S.user&&S.user.name||'');});
   const done=_myTasksOv.filter(t=>t.status==='done').length;const total=_myTasksOv.length;
   const pct=total?Math.round(done/total*100):0;
   const weeks=[...new Set(_myTasksOv.map(t=>t.week))].sort((a,b)=>a-b);
@@ -1839,7 +1839,7 @@ function rTasks(d){
   (()=>{const _fn0b=s=>(s||'').trim().split(' ')[0].toLowerCase();const _myB=_fn0b(S.user&&S.user.name||'');const _allT=[...d.tasks,..._fsTasks.filter(ft=>!d.tasks.find(t=>t.id===ft.id))];const _delCnt=_allT.filter(t=>t.assign&&_fn0b(t.assign)!==_myB).length;const _db=document.getElementById('fo-delegated');if(_db)_db.textContent='Delegadas'+(_delCnt>0?' ('+_delCnt+')':'');})();
   const el=document.getElementById('tlist');
   if(!tasks.length){el.innerHTML='<div class="empty">Nenhuma task.</div>';return;}
-  el.innerHTML=tasks.map(t=>`<div class="trow"><input type="checkbox" class="tck-cb" ${S.selTasks.has(t.id)?'checked':''} onchange="toggleSel('${t.id}',this)"><div class="tck${t.status==='done'?' on':''}" onclick="tgTask('${t.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tb2"><div class="tt${t.status==='done'?' dn':''}">${t.urgent?'<span style="color:var(--red);font-size:13px;font-weight:700;margin-right:5px;letter-spacing:.05em">URGENTE</span>':''}${t.title}</div>${t.desc?`<div style="font-size:12px;color:var(--t2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:500px">${t.desc.length>100?t.desc.slice(0,100)+'\u2026':t.desc}</div>`:''}<div class="ti"><span>Atribuída a: ${t.assign||t.resp}</span>${t.created?`<span style="color:var(--t3)">|</span><span title="Criada em">📅 Criada em: ${fd(t.created)}</span>`+(t.createdBy?`<span style="color:var(--t3)">|</span><span>👤 Criada por: ${t.createdBy}${t._sourceFirmName?' ('+t._sourceFirmName+')':''}</span>`:''):''}${t.due?`<span style="color:var(--t3)">|</span><span title="Prazo" style="color:${t.status!=='done'&&t.due<_localDate()?'var(--red)':'inherit'}">⏰ Prazo: ${fd(t.due)}</span>`:''}${slbl[t.status]||''}${t.pri&&t.pri!=='med'?prlbl[t.pri]||'':''}</div></div><div class="tacts"><button class="ib" onclick="openTaskThread('${t.id}')" style="color:var(--blue);font-size:12px;font-weight:500;padding:2px 7px;border:0.5px solid var(--blue);border-radius:4px">Visualizar${t.replies&&t.replies.length?` <span style="font-size:11px;font-weight:700;background:var(--blue);color:#fff;border-radius:8px;padding:0 4px;margin-left:2px">${t.replies.length}</span>`:''}</button><button class="ib edit" onclick="edTask('${t.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="ib del" onclick="delTask('${t.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div></div>`).join('');
+  el.innerHTML=tasks.map(t=>`<div class="trow"><input type="checkbox" class="tck-cb" ${S.selTasks.has(t.id)?'checked':''} onchange="toggleSel('${t.id}',this)"><div class="tck${t.status==='done'?' on':''}" onclick="tgTask('${t.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tb2"><div class="tt${t.status==='done'?' dn':''}">${t.urgent?'<span style="color:var(--red);font-size:13px;font-weight:700;margin-right:5px;letter-spacing:.05em">URGENTE</span>':''}${t.title}</div>${t.desc?`<div style="font-size:12px;color:var(--t2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:500px">${t.desc.length>100?t.desc.slice(0,100)+'\u2026':t.desc}</div>`:''}<div class="ti"><span>Atribuída a: ${t.assign||t.resp}</span>${t.created?`<span style="color:var(--t3)">|</span><span title="Criada em">📅 Criada em: ${fd(t.created)}</span>`+(t.createdBy?`<span style="color:var(--t3)">|</span><span>👤 Criada por: ${t.createdBy}${t._sourceFirmName?' ('+t._sourceFirmName+')':''}</span>`:''):''}${t.due?`<span style="color:var(--t3)">|</span><span title="Prazo" style="color:${t.status!=='done'&&t.due<_localDate()?'var(--red)':'inherit'}">⏰ Prazo: ${fd(t.due)}</span>`:''}${slbl[t.status]||''}${t.pri&&t.pri!=='med'?prlbl[t.pri]||'':''}</div></div><div class="tacts"><button class="ib" onclick="openTaskThread('${t.id}')" style="color:var(--blue);font-size:12px;font-weight:500;padding:2px 7px;border:0.5px solid var(--blue);border-radius:4px">Visualizar${(()=>{const _uc=t.replies?(t.replies.filter(r=>!r.done).length):0;return _uc?` <span style="font-size:11px;font-weight:700;background:var(--blue);color:#fff;border-radius:8px;padding:0 4px;margin-left:2px">${_uc}</span>`:''})()}</button><button class="ib edit" onclick="edTask('${t.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="ib del" onclick="delTask('${t.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div></div>`).join('');
 }
 function fown(f){if(!S.hasOwnProperty('ownf'))S.ownf='all';S.ownf=f;['all','mine','delegated'].forEach(x=>{const b=document.getElementById('fo-'+x);if(b){b.style.borderColor='';b.style.color='';}});const a=document.getElementById('fo-'+f);if(a){a.style.borderColor='var(--gbr)';a.style.color='var(--gold)';}rTasks(ld());}
 function ftask(f){S.tf=f;['all','pend','done','late'].forEach(x=>{const b=document.getElementById('ft-'+x);if(b){b.style.borderColor='';b.style.color='';}});const a=document.getElementById('ft-'+f);if(a){a.style.borderColor='var(--gbr)';a.style.color='var(--gold)';}rTasks(ld());}
@@ -3042,8 +3042,9 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
             const _isDone=!!r.done;
             const _canEdit=S.user&&r.from===S.user.name&&!_isDone;
             const _editBtn=_canEdit?`<button onclick="_editReplyInline('${data.id}','${_rid}',this)" title="Editar" style="background:none;border:none;cursor:pointer;color:var(--t2);font-size:12px;padding:0 3px;line-height:1">✏️</button>`:'';
+            const _delBtn=_canEdit?`<button onclick="_delReply('${data.id}','${_rid}')" title="Excluir" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:12px;padding:0 3px;line-height:1">🗑</button>`:'';
             const _doneBtn=_isDone?`<span style="color:var(--green);font-size:11px;margin-left:4px">✔ Lido</span>`:`<button onclick="_markReplyDone('${data.id}','${_rid}')" title="Marcar como lida" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;line-height:1">✔️</button>`;
-            const _hdr=`<div style="display:flex;align-items:center;gap:4px;margin-bottom:4px"><span style="font-size:11px;color:var(--t2);font-weight:600;flex:1">${r.from} <span style="font-weight:400">· ${r.time}${r.edited?' · editado':''}</span></span>${_editBtn}${_doneBtn}</div>`;
+            const _hdr=`<div style="display:flex;align-items:center;gap:4px;margin-bottom:4px"><span style="font-size:11px;color:var(--t2);font-weight:600;flex:1">${r.from} <span style="font-weight:400">· ${r.time}${r.edited?' · editado':''}</span></span>${_editBtn}${_delBtn}${_doneBtn}</div>`;
             const _filePart=r.fileData?`<div style="margin-top:6px;padding:6px 8px;background:var(--gb);border:0.5px solid var(--gbr);border-radius:6px"><div style="font-size:11px;color:var(--t2);margin-bottom:5px;font-weight:600">📎 ${r.fileName||'Arquivo'}</div><div style="display:flex;gap:6px"><a href="${r.fileData}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;background:var(--s2);border:0.5px solid var(--gbr);border-radius:5px;font-size:11px;color:var(--text);text-decoration:none;font-weight:500">👁 Visualizar</a><a href="${r.fileData}" download="${r.fileName||'arquivo'}" style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;background:var(--s2);border:0.5px solid var(--gbr);border-radius:5px;font-size:11px;color:var(--green);text-decoration:none;font-weight:500">⬇ Baixar</a></div></div>`:'';
             const _body=`<div id="reply-text-${_rid}">${r.text?`<div style="font-size:13px;color:var(--text);margin-bottom:${r.link||r.fileData?'5px':'0'}">${r.text}</div>`:''}${r.link?`<a href="${r.link}" target="_blank" rel="noopener" style="font-size:12px;color:var(--blue);display:inline-flex;align-items:center;gap:4px;text-decoration:none;margin-bottom:${r.fileData?'4px':'0'}">🔗 ${r.link.length>50?r.link.slice(0,50)+'...':r.link}</a>`:''}${_filePart}</div>`;
             return `<div id="reply-${_rid}" style="padding:8px 10px;border-radius:6px;background:${_isDone?'var(--gb)':'var(--s2)'};margin-bottom:8px;border:0.5px solid var(--bdr);opacity:${_isDone?'0.65':'1'}">${_hdr}${_body}</div>`;
@@ -3111,13 +3112,26 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
   _save=tpl.save;document.getElementById('ov').classList.add('on');
   setTimeout(()=>{const f=mb.querySelector('input,textarea');if(f)f.focus();if(document.getElementById('m-quick-ptcp'))_buildMeetPtcp();},60);
 }
+function _delReply(taskId,replyId){
+  if(!confirm('Excluir esta resposta?'))return;
+  const d=ld();
+  let t=d.tasks.find(x=>x.id===taskId);let _tInFS=false;
+  if(!t){try{const _fsd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');const _ft=(_fsd.tasks||[]).find(x=>x.id===taskId);if(_ft){t=_ft;_tInFS=true;}}catch(e){}}
+  if(!t)return;
+  t.replies=(t.replies||[]).filter((r,ri)=>r.id!==replyId&&!(replyId.startsWith('ri')&&ri===+replyId.slice(2))&&!(!isNaN(replyId)&&ri===+replyId));
+  if(_tInFS){
+    try{const _fsd2=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');const _fi=(_fsd2.tasks||[]).findIndex(x=>x.id===taskId);if(_fi>=0)_fsd2.tasks[_fi]=t;localStorage.setItem('fs_flowsales',JSON.stringify(_fsd2));_fbSave('flowsales',_fsd2);}catch(e){}
+    sv(d);
+  }else{sv(d);}
+  openTaskThread(taskId);renderAll();
+}
 function _markReplyDone(taskId,replyId){
   const d=ld();
   let t=d.tasks.find(x=>x.id===taskId);let _tInFS=false;
   if(!t){try{const _fsd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');const _ft=(_fsd.tasks||[]).find(x=>x.id===taskId);if(_ft){t=_ft;_tInFS=true;}}catch(e){}}
   if(!t)return;
   // Marcar resposta como lida
-  if(t.replies){const _ri=t.replies.findIndex(r=>r.id===replyId||(!r.id&&('ri'+t.replies.indexOf(r))===replyId));if(_ri>=0)t.replies[_ri].done=true;}
+  if(t.replies){const _ri=t.replies.findIndex(r=>r.id===replyId||(replyId.startsWith('ri')&&!isNaN(replyId.slice(2))&&t.replies.indexOf(r)===+replyId.slice(2)));if(_ri>=0)t.replies[_ri].done=true;}
   // Marcar notificações de resposta dessa demanda como lidas
   const _markN=notifs=>(notifs||[]).map(n=>{if(n.id&&n.id.startsWith('reply_'+taskId))n.read=true;return n;});
   d.notifs=_markN(d.notifs);
@@ -3132,7 +3146,7 @@ function _editReplyInline(taskId,replyId,btn){
   const d=ld();let t=d.tasks.find(x=>x.id===taskId);let _tInFS=false;
   if(!t){try{const _fsd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');const _ft=(_fsd.tasks||[]).find(x=>x.id===taskId);if(_ft){t=_ft;_tInFS=true;}}catch(e){}}
   if(!t)return;
-  const _r=t.replies&&(t.replies.find(r=>r.id===replyId)||(!isNaN(replyId)?t.replies[+replyId]:null));
+  const _r=t.replies&&(t.replies.find(r=>r.id===replyId)||(replyId.startsWith('ri')&&!isNaN(replyId.slice(2))?t.replies[+replyId.slice(2)]:(!isNaN(replyId)?t.replies[+replyId]:null)));
   if(!_r)return;
   if(btn)btn.style.display='none';
   _div.innerHTML=`<textarea id="edit-ta-${replyId}" style="width:100%;min-height:60px;background:var(--s3);border:0.5px solid var(--gbr);border-radius:6px;padding:6px 8px;font-size:13px;color:var(--text);resize:vertical;box-sizing:border-box;font-family:inherit">${_r.text||''}</textarea><div style="display:flex;gap:6px;margin-top:6px"><button onclick="_saveReplyEdit('${taskId}','${replyId}',${_tInFS})" style="padding:4px 12px;background:var(--gold);border:none;border-radius:6px;color:#000;font-size:12px;font-weight:600;cursor:pointer">Salvar</button><button onclick="openTaskThread('${taskId}')" style="padding:4px 12px;background:var(--s2);border:0.5px solid var(--gbr);border-radius:6px;color:var(--t2);font-size:12px;cursor:pointer">Cancelar</button></div>`;
@@ -3144,9 +3158,9 @@ function _saveReplyEdit(taskId,replyId,tInFS){
   const d=ld();let t=d.tasks.find(x=>x.id===taskId);let _tInFS=!!tInFS;
   if(!t){try{const _fsd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');const _ft=(_fsd.tasks||[]).find(x=>x.id===taskId);if(_ft){t=_ft;_tInFS=true;}}catch(e){}}
   if(!t)return;
-  const _ri=t.replies&&(t.replies.findIndex(r=>r.id===replyId)||(!isNaN(replyId)?+replyId:-1));
-  if(_ri===-1&&t.replies)return;
-  const _r=t.replies[typeof _ri==='number'?_ri:0];
+  const _ri=(t.replies||[]).findIndex(r=>r.id===replyId||(replyId.startsWith('ri')&&!isNaN(replyId.slice(2))&&(t.replies||[]).indexOf(r)===+replyId.slice(2))||(!isNaN(replyId)&&(t.replies||[]).indexOf(r)===+replyId));
+  if(_ri===-1)return;
+  const _r=t.replies[_ri];
   if(!_r)return;
   _r.text=newText;_r.edited=true;
   if(_tInFS){
