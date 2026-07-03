@@ -1426,10 +1426,11 @@ async function doLogin(){
   try{
     await _fbSecureLogin(em,pw,u.role,u.eid);
   }catch(e){
+    console.error('[Login] Falha na autenticação segura:',e);
     if(btn){btn.disabled=false;btn.textContent='Entrar';}
     er.textContent = e&&e.message==='senha-dessincronizada'
       ? 'Sua senha precisa ser redefinida. Enviamos um e-mail com o link.'
-      : 'Erro de conexão segura. Verifique sua internet e tente novamente.';
+      : 'Erro de conexão segura ('+((e&&(e.code||e.message))||'desconhecido')+'). Verifique sua internet e tente novamente.';
     return;
   }
   if(btn){btn.disabled=false;btn.textContent='Entrar';}
