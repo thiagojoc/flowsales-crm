@@ -641,6 +641,7 @@ signInAnonymously(_auth).catch(e=>console.error('[FB Auth] signInAnonymously fal
           <div class="kpi-hero" id="kpi-hero"></div>
           <div class="kpi-g6" id="kpi-g6"></div>
           <div class="card"><div class="ch"><div class="ct">Discriminação de vendas</div><div id="vendas-add-btn"></div></div><div id="kpi-vendas-breakdown"></div></div>
+          <div class="card"><div class="ch"><div class="ct">Vendas por origem</div></div><div id="kpi-vendas-origem"></div></div>
           <div class="card">
             <div class="ch"><div class="ct">Funil de resultados</div></div>
             <div class="funnel-wrap" id="kpi-funnel"></div>
@@ -1729,7 +1730,9 @@ function rTimeline(d){
     if(!FIRMS.length){wrap.innerHTML='<div class="empty">Nenhum escritório cadastrado.</div>';return;}
     wrap.innerHTML=FIRMS.map(firm=>{
       let fd2={};try{fd2=JSON.parse(localStorage.getItem('fs_'+firm.id)||'{}');}catch(e){}
-      const tasks=fd2.implementations||[];
+      const _entWeek=dateStr=>{if(!dateStr||!firm.start)return 1;try{const _dd=Math.round((new Date(dateStr+'T12:00:00')-new Date(firm.start+'T12:00:00'))/86400000);return Math.max(1,Math.floor(_dd/7)+1);}catch(e){return 1;}};
+      const _entImpl=(fd2.entregas||[]).map(e=>({id:'ent_'+e.id,title:'🎁 '+e.title,week:_entWeek(e.date),done:true,due:e.date}));
+      const tasks=[...(fd2.implementations||[]),..._entImpl];
       const weeks=[...new Set(tasks.map(t=>t.week))].filter(Boolean).sort((a,b)=>a-b);
       if(!weeks.length)return'';
       const firmDone=tasks.filter(t=>t.done).length;
@@ -1765,7 +1768,15 @@ function rTimeline(d){
   // implementations stored in firm data; fallback: check fs_flowsales for admin-created implementations
   const _baseImpls=d.implementations||[];
   const _fsImpls=(()=>{if(_baseImpls.length)return[];try{const _fsd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');return(_fsd.implementations||[]).filter(i=>i._sourceFirm===S.eid||i._firmId===S.eid);}catch(e){return[];}})();
-  const _allImpls=[..._baseImpls,..._fsImpls];
+  // Entregas de valor (aba "Entregas") também contam na jornada — convertendo
+  // a data de cada uma pra semana do contrato, já que elas usam data e não semana.
+  const _entregaWeek=dateStr=>{
+    const _fw=(FIRMS.find(f=>f.id===S.eid)||{}).start;
+    if(!dateStr||!_fw)return 1;
+    try{const _diffD=Math.round((new Date(dateStr+'T12:00:00')-new Date(_fw+'T12:00:00'))/86400000);return Math.max(1,Math.floor(_diffD/7)+1);}catch(e){return 1;}
+  };
+  const _entregasAsImpl=(d.entregas||[]).map(e=>({id:'ent_'+e.id,title:'🎁 '+e.title,week:_entregaWeek(e.date),done:true,due:e.date}));
+  const _allImpls=[..._baseImpls,..._fsImpls,..._entregasAsImpl];
   const weeks=[...new Set(_allImpls.map(t=>t.week))].filter(Boolean).sort((a,b)=>a-b);
   const welcomeEntry='<div class="card" style="margin-bottom:8px;border-left:3px solid var(--gold)"><div style="display:flex;align-items:center;gap:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><div><div style="font-size:13px;font-weight:600;color:var(--text)">Bem vindo(a) ao programa</div><div style="font-size:12px;color:var(--t2);margin-top:2px">Início da jornada. Você deu o primeiro passo para transformar o marketing e o comercial do seu escritório.</div></div></div></div>';
   if(!weeks.length){wrap.innerHTML=welcomeEntry;return;}
@@ -1859,11 +1870,38 @@ function rScore(d){
   sw.innerHTML=`<div style="display:flex;align-items:center;gap:20px;padding:4px 0 8px"><div style="text-align:center;flex-shrink:0;min-width:72px"><div style="font-size:52px;font-weight:700;color:${col};line-height:1;text-shadow:0 0 30px ${col}55">${score}</div><div style="font-size:12px;color:var(--t2);margin-top:3px;text-transform:uppercase;letter-spacing:.06em">de 100</div></div><div style="flex:1"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="height:6px;background:var(--s3);border-radius:3px;flex:1;overflow:hidden"><div style="height:100%;width:${score}%;background:${col};border-radius:3px;transition:width .6s ease"></div></div><span style="font-size:12px;font-weight:600;color:${col};white-space:nowrap">${lbl}</span></div><div style="font-size:12px;color:var(--t2);line-height:1.6">${desc}</div></div></div>`;
 }
 
+// Cores fixas por origem (identidade, não por posição/ordenação) — validado
+// contraste/CVD para o fundo claro dos cards (ver skill de dataviz).
+const _origColors={
+  'Meta Ads':'#2a78d6','Google Ads':'#1baf7a','Indicação':'#eda100','WhatsApp':'#008300',
+  'Instagram':'#4a3aa7','Site':'#e34948','Evento':'#e87ba4','Outro':'#eb6834'
+};
+const _origColorDefault='#8a8a8a';
+function _renderVendasOrigem(vendasItems){
+  const el=document.getElementById('kpi-vendas-origem');
+  if(!el)return;
+  if(!vendasItems.length){el.innerHTML='<div class="empty">Nenhum registro ainda.</div>';return;}
+  const groups={};
+  vendasItems.forEach(vi=>{
+    const key=vi.orig||'Não informada';
+    if(!groups[key])groups[key]={count:0,total:0};
+    groups[key].count++;
+    groups[key].total+=(+vi.val||0);
+  });
+  const entries=Object.entries(groups).sort((a,b)=>b[1].total-a[1].total);
+  const maxTotal=Math.max(...entries.map(([,g])=>g.total),1);
+  el.innerHTML=entries.map(([orig,g])=>{
+    const color=_origColors[orig]||_origColorDefault;
+    const pct=Math.round(g.total/maxTotal*100);
+    return `<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px"><span style="font-weight:500;color:var(--text)">${orig}</span><span style="color:var(--t2)">${g.count} venda${g.count!==1?'s':''} · R$ ${g.total.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div><div style="height:8px;background:var(--s3);border-radius:4px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${color};border-radius:4px"></div></div></div>`;
+  }).join('');
+}
 function rKpis(d){
   const k=d.kpis;
   const roi=k.invest?((k.rev/k.invest)).toFixed(1)+'x':'--';
   const mp=k.revG?Math.min(Math.round(k.rev/k.revG*100),100):0;
-  document.getElementById('kpi-hero').innerHTML=`<div class="kpi-hero-main"><div class="kpi-hero-lbl">Faturamento atribuído ao período</div><div class="kpi-hero-val">R$ ${k.rev.toLocaleString('pt-BR')}</div><div class="kpi-hero-sub">Meta: R$ ${k.revG.toLocaleString('pt-BR')} &nbsp;·&nbsp; ${mp}% atingido</div></div><div class="kpi-hero-roi"><div class="kpi-hero-roi-lbl">ROI estimado</div><div class="kpi-hero-roi-val" style="color:var(--green)">${roi}</div><div style="font-size:13px;color:var(--t2)">sobre o investimento</div></div>`;
+  const _receitaBruta=k.receitaBruta||0;
+  document.getElementById('kpi-hero').innerHTML=`<div class="kpi-hero-main"><div class="kpi-hero-lbl">Faturamento atribuído ao período</div><div class="kpi-hero-val">R$ ${k.rev.toLocaleString('pt-BR')}</div><div class="kpi-hero-sub">Meta: R$ ${k.revG.toLocaleString('pt-BR')} &nbsp;·&nbsp; ${mp}% atingido${_receitaBruta>k.rev?` &nbsp;·&nbsp; Receita bruta: R$ ${_receitaBruta.toLocaleString('pt-BR')}`:''}</div></div><div class="kpi-hero-roi"><div class="kpi-hero-roi-lbl">ROI estimado</div><div class="kpi-hero-roi-val" style="color:var(--green)">${roi}</div><div style="font-size:13px;color:var(--t2)">sobre o investimento</div></div>`;
   const cac=k.vendas?'R$ '+Math.round(k.invest/k.vendas).toLocaleString('pt-BR'):'--';
   const roas=k.invest?(k.rev/k.invest).toFixed(2)+'x':'--';
   const roasC=roas!=='--'?parseFloat(roas)>=2?'var(--green)':parseFloat(roas)>=1?'var(--gold)':'var(--red)':'var(--t2)';
@@ -1901,6 +1939,7 @@ function rKpis(d){
           +(vi.seller?'<span>'+vi.seller+'</span>':'')
           +(vi.email?'<span>'+vi.email+'</span>':'')
           +(vi.phone?'<span>'+vi.phone+'</span>':'')
+          +(vi.parcelado&&vi.numParcelas>1?'<span style="color:var(--gold);font-weight:600">'+vi.numParcelas+'x</span>':'')
           +'</div>'
           +'</div>'
           +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">'
@@ -1917,6 +1956,7 @@ function rKpis(d){
       vbEl.innerHTML=rows+total_row;
     }
   }
+  _renderVendasOrigem(vendasItems);
   document.getElementById('kpi-g6').innerHTML=metrics.map(i=>{
     if(i.bar===false)return`<div class="kpi-mc"><div class="kpi-lbl">${i.l}</div><div class="kpi-val">${i.v}</div><div class="kpi-sub kpi-nt">${i.sub}</div></div>`;
     const p=i.g?Math.min(Math.round(i.v/i.g*100),100):0;const gc=p>=100?'var(--green)':p>=60?'var(--gold)':'var(--red)';
@@ -2155,7 +2195,7 @@ function delMeet(id){if(!confirm('Excluir?'))return;const d=ld();d.meetings=d.me
 function rFinanceiro(d){
   const gastos=d.gastos||[];
   const totalGastos=gastos.reduce((s,g)=>s+(+g.val||0),0);
-  const fat=(d.vendasItems||[]).reduce((s,vi)=>s+(+vi.val||0),0)||(+(d.kpis&&d.kpis.rev||0));
+  const fat=_calcFaturamento(d.vendasItems||[])||(+(d.kpis&&d.kpis.rev||0));
   const roi=totalGastos>0?((fat/totalGastos)*100).toFixed(1)+'%':'—';
   const roiColor=totalGastos>0&&fat>totalGastos?'var(--green)':totalGastos>0?'var(--red)':'var(--t2)';
   const tg=document.getElementById('fin-total-gastos');const rEl=document.getElementById('fin-roi');const fatEl=document.getElementById('fin-fat');
@@ -2190,6 +2230,48 @@ function fmtFinVal(inp){
   if(!v){inp.value='';return;}
   const n=parseInt(v,10)/100;
   inp.value='R$ '+n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+// ── PARCELAMENTO DE VENDAS ──────────────────────────────────────
+// Gera as parcelas (mensais, a partir da data da venda) com o valor total
+// dividido igualmente (o resto de arredondamento fica na última parcela).
+function _gerarParcelas(valTotal,numParcelas,dateStr){
+  const valParcela=Math.floor((valTotal/numParcelas)*100)/100;
+  const parcelas=[];
+  const base=new Date((dateStr||_localDate())+'T12:00:00');
+  let somaAnteriores=0;
+  for(let i=0;i<numParcelas;i++){
+    const dt=new Date(base);dt.setMonth(dt.getMonth()+i);
+    const isUltima=i===numParcelas-1;
+    const val=isUltima?Math.round((valTotal-somaAnteriores)*100)/100:valParcela;
+    somaAnteriores+=val;
+    parcelas.push({num:i+1,date:dt.toISOString().split('T')[0],val});
+  }
+  return parcelas;
+}
+function _updateParcelaPreview(){
+  const el=document.getElementById('vi-parc-preview');if(!el)return;
+  const on=document.getElementById('vi-parc-on');if(!on||!on.checked)return;
+  const _rv=(document.getElementById('vi-val').value||'').replace(/[^\d,\.]/g,'').replace(/\./g,'').replace(',','.');
+  const val=parseFloat(_rv)||0;
+  const num=Math.max(2,+document.getElementById('vi-parc-num').value||2);
+  const parcela=val/num;
+  el.textContent=num+'x de R$ '+parcela.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+// Faturamento (receita reconhecida): venda à vista conta o valor total na hora;
+// venda parcelada só conta cada parcela quando ela vence (evita inflar o mês
+// da venda com o valor do contrato inteiro).
+function _calcFaturamento(vendasItems){
+  const today=_localDate();
+  return (vendasItems||[]).reduce((s,vi)=>{
+    if(vi.parcelado&&Array.isArray(vi.parcelas)){
+      return s+vi.parcelas.filter(p=>p.date<=today).reduce((s2,p)=>s2+(+p.val||0),0);
+    }
+    return s+(+vi.val||0);
+  },0);
+}
+// Receita bruta: valor total contratado, independente de já ter vencido.
+function _calcReceitaBruta(vendasItems){
+  return (vendasItems||[]).reduce((s,vi)=>s+(+vi.val||0),0);
 }
 function addGasto(){
   const ttl=document.getElementById('fin-ttl').value.trim();
@@ -2267,12 +2349,16 @@ function saveEdVenda(){
   const val=parseFloat(_rv)||0;
   const date=document.getElementById('ev-date').value;
   if(!tipo||!cli)return _showToast('Preencha serviço e nome do cliente','var(--red)');
+  // Se for parcelado e o valor total mudou, regera as parcelas proporcionalmente
+  if(vi.parcelado&&Array.isArray(vi.parcelas)&&vi.val!==val){
+    vi.parcelas=_gerarParcelas(val,vi.numParcelas||vi.parcelas.length,(vi.parcelas[0]&&vi.parcelas[0].date)||date);
+  }
   vi.tipo=tipo;vi.cli=cli;vi.val=val;vi.date=date;
   vi.email=document.getElementById('ev-email').value.trim();
   vi.phone=document.getElementById('ev-phone').value.trim();
   vi.orig=document.getElementById('ev-orig').value;
   vi.seller=document.getElementById('ev-seller').value.trim();
-  d.kpis=d.kpis||{};d.kpis.rev=d.vendasItems.reduce((s,v)=>s+(+v.val||0),0);
+  d.kpis=d.kpis||{};d.kpis.rev=_calcFaturamento(d.vendasItems);d.kpis.receitaBruta=_calcReceitaBruta(d.vendasItems);
   sv(d);renderAll();closeEdVenda();_showToast('Venda atualizada ✅','var(--green)');
 }
 
@@ -3299,7 +3385,7 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
       }
     },
     vendasItem:{title:'Registrar tipo de venda',
-      body:`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Data da venda</label><input class="fi" id="vi-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div><div class="fg"><label>Valor cobrado (R$)</label><input class="fi" id="vi-val" type="text" inputmode="numeric" placeholder="R$ 0,00" oninput="fmtFinVal(this)"></div></div><div class="fg"><label>Serviço ou produto</label><input class="fi" id="vi-tipo" placeholder="Planejamento previdenciário, Ação trabalhista..."></div><div class="fg"><label>Nome do cliente</label><input class="fi" id="vi-cli" placeholder="Dr. João Silva..."></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>E-mail do cliente</label><input class="fi" id="vi-email" type="email" placeholder="cliente@email.com"></div><div class="fg"><label>Telefone do cliente</label><input class="fi" id="vi-phone" type="tel" placeholder="(11) 99999-9999"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Origem do cliente</label><select class="fi" id="vi-orig"><option value="">Não informada</option><option>Meta Ads</option><option>Google Ads</option><option>Indicação</option><option>WhatsApp</option><option>Instagram</option><option>Site</option><option>Evento</option><option>Outro</option></select></div><div class="fg"><label>Quem vendeu</label><input class="fi" id="vi-seller" placeholder="Nome do responsável"></div></div><div class="fg" style="margin-bottom:4px"><label>Comprovante / Contrato (opcional)</label><div style="display:flex;align-items:center;gap:8px"><label for="vi-file" style="flex:1;border:1px dashed var(--bdr2);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--t2);cursor:pointer;text-align:center" id="vi-file-lbl">Clique para anexar arquivo</label></div><input type="file" id="vi-file" style="position:absolute;width:0;height:0;opacity:0;pointer-events:none" onchange="document.getElementById('vi-file-lbl').textContent='📎 '+this.files[0].name"></div>`,
+      body:`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Data da venda</label><input class="fi" id="vi-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div><div class="fg"><label>Valor total (R$)</label><input class="fi" id="vi-val" type="text" inputmode="numeric" placeholder="R$ 0,00" oninput="fmtFinVal(this);_updateParcelaPreview()"></div></div><div class="fg"><label>Serviço ou produto</label><input class="fi" id="vi-tipo" placeholder="Planejamento previdenciário, Ação trabalhista..."></div><div class="fg"><label>Nome do cliente</label><input class="fi" id="vi-cli" placeholder="Dr. João Silva..."></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>E-mail do cliente</label><input class="fi" id="vi-email" type="email" placeholder="cliente@email.com"></div><div class="fg"><label>Telefone do cliente</label><input class="fi" id="vi-phone" type="tel" placeholder="(11) 99999-9999"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Origem do cliente</label><select class="fi" id="vi-orig"><option value="">Não informada</option><option>Meta Ads</option><option>Google Ads</option><option>Indicação</option><option>WhatsApp</option><option>Instagram</option><option>Site</option><option>Evento</option><option>Outro</option></select></div><div class="fg"><label>Quem vendeu</label><input class="fi" id="vi-seller" placeholder="Nome do responsável"></div></div><div class="fg" style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="tck-cb" id="vi-parc-on" onchange="document.getElementById('vi-parc-fields').style.display=this.checked?'grid':'none';_updateParcelaPreview()"><label style="text-transform:none;letter-spacing:0;font-size:12px;color:var(--text)">Pagamento parcelado</label></div><div id="vi-parc-fields" style="display:none;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px"><div class="fg"><label>Número de parcelas</label><input class="fi" id="vi-parc-num" type="number" min="2" value="2" oninput="_updateParcelaPreview()"></div><div class="fg"><label>Valor de cada parcela</label><div id="vi-parc-preview" style="font-size:13px;color:var(--t2);padding:9px 0">—</div></div></div><div class="fg" style="margin-bottom:4px"><label>Comprovante / Contrato (opcional)</label><div style="display:flex;align-items:center;gap:8px"><label for="vi-file" style="flex:1;border:1px dashed var(--bdr2);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--t2);cursor:pointer;text-align:center" id="vi-file-lbl">Clique para anexar arquivo</label></div><input type="file" id="vi-file" style="position:absolute;width:0;height:0;opacity:0;pointer-events:none" onchange="document.getElementById('vi-file-lbl').textContent='📎 '+this.files[0].name"></div>`,
       save:()=>{
         const tipo=v('vi-tipo').trim();const cli=v('vi-cli').trim();
         const orig=v('vi-orig');const seller=v('vi-seller').trim();
@@ -3308,10 +3394,13 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
         const val=parseFloat(_rv)||0;
         if(!tipo){alert('Preencha o serviço ou produto.');return;}
         const email=v('vi-email').trim();const phone=v('vi-phone').trim();
+        const parcelado=document.getElementById('vi-parc-on')&&document.getElementById('vi-parc-on').checked;
+        const numParcelas=parcelado?Math.max(2,+v('vi-parc-num')||2):1;
+        const parcelas=parcelado?_gerarParcelas(val,numParcelas,date):null;
         const doSave=(fileData,fileName)=>{
           const d=ld();d.vendasItems=d.vendasItems||[];
-          d.vendasItems.push({id:'vi'+Date.now(),tipo,cli,email,phone,orig,seller,date,val,qty:1,fileData,fileName:fileName||''});
-          d.kpis=d.kpis||{};d.kpis.rev=(d.vendasItems.reduce((s,vi)=>s+(+vi.val||0),0));
+          d.vendasItems.push({id:'vi'+Date.now(),tipo,cli,email,phone,orig,seller,date,val,qty:1,fileData,fileName:fileName||'',parcelado,numParcelas,parcelas});
+          d.kpis=d.kpis||{};d.kpis.rev=_calcFaturamento(d.vendasItems);d.kpis.receitaBruta=_calcReceitaBruta(d.vendasItems);
           d.kpis.vendas=(d.vendasItems||[]).length;
           activ(d,'Venda registrada: '+(cli||tipo)+' · R$ '+Number(val).toLocaleString('pt-BR',{minimumFractionDigits:2}),'var(--green)');
           sv(d);renderAll();cModal(null,1);
@@ -3912,7 +4001,7 @@ function delFSPipe(id){const d=ldFS();d.pipeline=d.pipeline.filter(x=>x.id!==id)
 function tgFSGoal(id){const d=ldFS();const g=d.goals.find(x=>x.id===id);if(g){g.done=!g.done;svFS(d);rFlow();}}
 function delFSGoal(id){const d=ldFS();d.goals=d.goals.filter(x=>x.id!==id);svFS(d);rFlow();}
 function openAddVenda(){openM('vendasItem');}
-function delVendasItem(id){if(!confirm('Excluir esta venda?'))return;const d=ld();d.vendasItems=(d.vendasItems||[]).filter(x=>x.id!==id);d.kpis=d.kpis||{};d.kpis.rev=d.vendasItems.reduce((s,vi)=>s+(+vi.val||0),0);d.kpis.vendas=d.vendasItems.length;sv(d);renderAll();}
+function delVendasItem(id){if(!confirm('Excluir esta venda?'))return;const d=ld();d.vendasItems=(d.vendasItems||[]).filter(x=>x.id!==id);d.kpis=d.kpis||{};d.kpis.rev=_calcFaturamento(d.vendasItems);d.kpis.receitaBruta=_calcReceitaBruta(d.vendasItems);d.kpis.vendas=d.vendasItems.length;sv(d);renderAll();}
 function activ(d,txt,col){d.activity=d.activity||[];d.activity.unshift({txt,col,time:new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})});if(d.activity.length>30)d.activity.length=30;}
 function fd(s){if(!s)return '';const [y,m,d]=s.split('-');if(!y||!m||!d)return s;return `${d}/${m}/${y}`;}
 // ── GUEST HELPERS ─────────────────────────────────────────────
