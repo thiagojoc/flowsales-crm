@@ -1,0 +1,58 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Fonte da verdade de "quem é quem" (role/eid por e-mail).
+    // Só os e-mails de admin abaixo podem escrever aqui — qualquer outro
+    // usuário autenticado só pode LER a própria entrada (pelo e-mail dele).
+    match /roleAssignments/{email} {
+      allow read: if request.auth != null && request.auth.token.email == email;
+      allow write: if request.auth != null &&
+        request.auth.token.email in [
+          'tcaetano1706@gmail.com',
+          'carlos@flowsales.com'
+        ];
+    }
+
+    // Perfil por usuário autenticado (uid). Só ele mesmo lê/cria o próprio
+    // perfil, e só se role/eid baterem com o roleAssignments dele (evita
+    // que alguém se autodeclare admin ou de outro escritório).
+    match /userProfiles/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.role == get(/databases/$(database)/documents/roleAssignments/$(request.auth.token.email)).data.role
+        && request.resource.data.eid  == get(/databases/$(database)/documents/roleAssignments/$(request.auth.token.email)).data.eid;
+      allow delete: if false;
+    }
+
+    // Config compartilhada (lista de escritórios, usuários dinâmicos legados,
+    // overrides de senha em transição). Fica liberada pra qualquer usuário
+    // autenticado (inclusive anônimo) — é uma etapa de transição até que
+    // todo mundo tenha migrado para o Firebase Auth; depois disso o campo
+    // "pass" deixa de existir aqui.
+    match /flowsales_crm/__config {
+      allow read, write: if request.auth != null;
+    }
+
+    // Dados de cada escritório: só o dono (eid bate com o perfil) ou admin.
+    match /flowsales_crm/{eid} {
+      allow read, write: if request.auth != null && (
+        get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data.eid == eid ||
+        get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data.role == 'admin'
+      );
+
+      match /files/{fileId} {
+        allow read, write: if request.auth != null && (
+          get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data.eid == eid ||
+          get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data.role == 'admin'
+        );
+      }
+    }
+
+    // Qualquer coisa fora do previsto acima: negado por padrão.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

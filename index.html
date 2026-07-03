@@ -416,23 +416,48 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="datetime-local
 }
 </style>
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, updateDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-const _app = initializeApp({
+import { getAuth, onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+const _fbConfig = {
   apiKey:"AIzaSyBTqzj-9-AOI181sPCKvRsVGDujkWogIGI",
   authDomain:"flowbody-30162.firebaseapp.com",
   projectId:"flowbody-30162",
   storageBucket:"flowbody-30162.firebasestorage.app",
   messagingSenderId:"440511544358",
   appId:"1:440511544358:web:00dc29d16295ed23f3fae7"
-});
+};
+const _app = initializeApp(_fbConfig);
 const _db = getFirestore(_app);
+const _auth = getAuth(_app);
 window._fbReady = true;
 window._fbDB = _db;
 window._fbDoc = doc;
 window._fbSetDoc = setDoc; window._fbUpdateDoc = updateDoc;
 window._fbGetDoc = getDoc;
 window._fbOnSnapshot = onSnapshot;
+window._fbAuth = _auth;
+window._fbSignInEmail = signInWithEmailAndPassword;
+window._fbUpdatePassword = updatePassword;
+window._fbSendPasswordReset = (email)=>sendPasswordResetEmail(_auth,email);
+// Conta nova é criada num app Firebase secundário para não derrubar a sessão logada no principal
+window._fbCreateEmail = async (email,pass)=>{
+  const _tmpApp = initializeApp(_fbConfig, 'secondary-'+Date.now());
+  const _tmpAuth = getAuth(_tmpApp);
+  try{
+    const cred = await createUserWithEmailAndPassword(_tmpAuth, email, pass);
+    return cred.user.uid;
+  } finally {
+    await deleteApp(_tmpApp).catch(()=>{});
+  }
+};
+window._fbAuthReady = new Promise(res=>{
+  let _resolved=false;
+  const unsub = onAuthStateChanged(_auth, (user)=>{
+    if(user&&!_resolved){_resolved=true;unsub();res(user);}
+  });
+});
+signInAnonymously(_auth).catch(e=>console.error('[FB Auth] signInAnonymously falhou:',e.code||e.message));
 (window._fbResolvers||[]).forEach(r=>r()); window._fbResolvers=[];
 </script>
 </head>
@@ -1066,6 +1091,71 @@ function _setSyncDot(st){
   el.title=st==='ok'?'Dados sincronizados':st==='err'?'Erro ao sincronizar':'Sincronizando...';
   el.style.background=st==='ok'?'var(--green)':st==='err'?'var(--red)':'var(--gold)';
 }
+
+// ── FIREBASE AUTH (segurança real por trás do login) ──────────
+// Garante que exista uma sessão Firebase Auth de verdade para o e-mail já
+// validado pelas regras antigas de login (legadas). Migra automaticamente
+// contas antigas na primeira vez que fazem login, sem trocar a senha delas.
+async function _fbSecureLogin(email,pass,role,eid){
+  await _waitFB();
+  const auth=window._fbAuth;
+  try{
+    await window._fbSignInEmail(auth,email,pass);
+  }catch(e){
+    const code=e&&e.code;
+    if(code==='auth/user-not-found'||code==='auth/invalid-credential'||code==='auth/invalid-login-credentials'){
+      await window._fbCreateEmail(email,pass);
+      await window._fbSignInEmail(auth,email,pass);
+    }else if(code==='auth/wrong-password'){
+      // Conta já migrada, mas a senha mudou pelo fluxo antigo e não sincronizou.
+      // Não temos como forçar a troca sem a senha antiga: manda link de redefinição.
+      window._fbSendPasswordReset(email).catch(()=>{});
+      throw new Error('senha-dessincronizada');
+    }else{
+      throw e;
+    }
+  }
+  const uid=auth.currentUser.uid;
+  await _fbEnsureRoleAssignment(email,role,eid);
+  await _fbEnsureProfile(uid,email,role,eid);
+  _stripPlaintextPassword(email);
+}
+// Cria (se ainda não existir) o registro de "fonte da verdade" role/eid para
+// este e-mail. Depois que as regras do Firestore forem travadas, só e-mails
+// de admin conseguem gravar aqui — para novos escritórios, é o admin que
+// grava na criação do escritório (ver newFirm save).
+async function _fbEnsureRoleAssignment(email,role,eid){
+  try{
+    const ref=window._fbDoc(window._fbDB,'roleAssignments',email);
+    const snap=await window._fbGetDoc(ref);
+    if(!snap.exists()){
+      await window._fbSetDoc(ref,{email,role,eid:eid||null});
+    }
+  }catch(e){ console.warn('[FB Auth] roleAssignments (esperado falhar se não-admin, após travar regras):',e.code||e.message); }
+}
+async function _fbEnsureProfile(uid,email,role,eid){
+  try{
+    const ref=window._fbDoc(window._fbDB,'userProfiles',uid);
+    await window._fbSetDoc(ref,{email,role,eid:eid||null,__ts:Date.now()});
+  }catch(e){ console.error('[FB Auth] userProfile falhou:',e.code||e.message); }
+}
+// Remove a senha em texto puro do Firestore assim que o e-mail tiver uma
+// conta Firebase Auth de verdade (a senha real passa a viver só no Firebase Auth).
+function _stripPlaintextPassword(email){
+  let changed=false;
+  const du=_fbDynUsers.find(x=>x.email===email && x.pass);
+  if(du){delete du.pass;changed=true;}
+  const c=getCredsOverrides();
+  Object.keys(c).forEach(k=>{if(c[k].email===email && c[k].pass){delete c[k].pass;changed=true;}});
+  if(changed){
+    localStorage.setItem('fs_dynusers',JSON.stringify(_fbDynUsers));
+    localStorage.setItem('fs_creds',JSON.stringify(c));
+    _waitFB().then(()=>{
+      const ref=window._fbDoc(window._fbDB,'flowsales_crm','__config');
+      window._fbSetDoc(ref,{users:_fbDynUsers,creds:c,__ts:Date.now()},{merge:true}).catch(()=>{});
+    }).catch(()=>{});
+  }
+}
 function _scheduleSave(){
   _setSyncDot('pending');
   clearTimeout(_syncTimer);
@@ -1251,6 +1341,15 @@ function saveCredsOverride(origEmail,email,pass){
     const ref=window._fbDoc(window._fbDB,'flowsales_crm','__config');
     window._fbSetDoc(ref,{creds:c,__ts:Date.now()},{merge:true}).catch(e=>console.error('[FB] creds save:',e));
   }).catch(()=>{});
+  // Mantém a senha do Firebase Auth sincronizada, senão o login trava em outro navegador
+  _waitFB().then(async()=>{
+    try{
+      const auth=window._fbAuth;
+      if(auth.currentUser&&(auth.currentUser.email||'').toLowerCase()===email.toLowerCase()){
+        await window._fbUpdatePassword(auth.currentUser,pass);
+      }
+    }catch(e){console.error('[FB Auth] updatePassword falhou:',e.code||e.message);}
+  }).catch(()=>{});
 }
 function resolveUser(em,pw){
   const overrides=getCredsOverrides();
@@ -1273,12 +1372,24 @@ function resolveUser(em,pw){
   if(dyn)return dyn;
   return null;
 }
-function doLogin(){
+async function doLogin(){
   const em=document.getElementById('le').value.trim().toLowerCase();
   const pw=document.getElementById('lp').value;
   const er=document.getElementById('lerr');er.textContent='';
   const u=resolveUser(em,pw);
   if(!u){er.textContent='E-mail ou senha incorretos.';return;}
+  const btn=document.querySelector('.lbtn');
+  if(btn){btn.disabled=true;btn.textContent='Entrando...';}
+  try{
+    await _fbSecureLogin(em,pw,u.role,u.eid);
+  }catch(e){
+    if(btn){btn.disabled=false;btn.textContent='Entrar';}
+    er.textContent = e&&e.message==='senha-dessincronizada'
+      ? 'Sua senha precisa ser redefinida. Enviamos um e-mail com o link.'
+      : 'Erro de conexão segura. Verifique sua internet e tente novamente.';
+    return;
+  }
+  if(btn){btn.disabled=false;btn.textContent='Entrar';}
   S.user=u;S.role=u.role;if(u.eid)S.eid=u.eid;
   localStorage.setItem('fs_sess',JSON.stringify({email:u.email}));showApp();
 }
@@ -1298,7 +1409,21 @@ function forgotPass(){
   document.body.appendChild(m);
   m.addEventListener('click',e=>{if(e.target===m)m.remove();});
 }
-function checkSess(){const s=localStorage.getItem('fs_sess');if(!s)return;const{email}=JSON.parse(s);const u=USERS.find(x=>x.email===email)||_fbDynUsers.find(x=>x.email===email);if(!u)return;S.user=u;S.role=u.role;if(u.eid)S.eid=u.eid;showApp();}
+async function checkSess(){
+  const s=localStorage.getItem('fs_sess');if(!s)return;
+  const{email}=JSON.parse(s);
+  await _waitFB();
+  const user=await window._fbAuthReady;
+  if(!user||user.isAnonymous||(user.email||'').toLowerCase()!==email){
+    // Sessão do Firebase Auth expirou/sumiu — sem a senha não dá pra restaurar com segurança
+    localStorage.removeItem('fs_sess');
+    return;
+  }
+  const u=USERS.find(x=>x.email===email)||_fbDynUsers.find(x=>x.email===email);
+  if(!u)return;
+  S.user=u;S.role=u.role;if(u.eid)S.eid=u.eid;
+  showApp();
+}
 function cleanupPhantomDemand(){
   // Remove the default phantom demand d1 if it exists in localStorage
   FIRMS.forEach(f=>{const key='fs_'+f.id;const s=localStorage.getItem(key);if(!s)return;const d=JSON.parse(s);const before=d.demands.length;d.demands=d.demands.filter(x=>x.id!=='d1');if(d.demands.length!==before){localStorage.setItem(key,JSON.stringify(d));console.log('Removed phantom demand d1 from',f.id);}});
@@ -1841,7 +1966,7 @@ function rTasks(d){
   if(!tasks.length){el.innerHTML='<div class="empty">Nenhuma task.</div>';return;}
   el.innerHTML=tasks.map(t=>`<div class="trow"><input type="checkbox" class="tck-cb" ${S.selTasks.has(t.id)?'checked':''} onchange="toggleSel('${t.id}',this)"><div class="tck${t.status==='done'?' on':''}" onclick="tgTask('${t.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tb2"><div class="tt${t.status==='done'?' dn':''}">${t.urgent?'<span style="color:var(--red);font-size:13px;font-weight:700;margin-right:5px;letter-spacing:.05em">URGENTE</span>':''}${t.title}</div>${t.desc?`<div style="font-size:12px;color:var(--t2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:500px">${t.desc.length>100?t.desc.slice(0,100)+'\u2026':t.desc}</div>`:''}<div class="ti"><span>Atribuída a: ${t.assign||t.resp}</span>${t.created?`<span style="color:var(--t3)">|</span><span title="Criada em">📅 Criada em: ${fd(t.created)}</span>`+(t.createdBy?`<span style="color:var(--t3)">|</span><span>👤 Criada por: ${t.createdBy}${t._sourceFirmName?' ('+t._sourceFirmName+')':''}</span>`:''):''}${t.due?`<span style="color:var(--t3)">|</span><span title="Prazo" style="color:${t.status!=='done'&&t.due<_localDate()?'var(--red)':'inherit'}">⏰ Prazo: ${fd(t.due)}</span>`:''}${slbl[t.status]||''}${t.pri&&t.pri!=='med'?prlbl[t.pri]||'':''}</div></div><div class="tacts"><button class="ib" onclick="openTaskThread('${t.id}')" style="color:var(--blue);font-size:12px;font-weight:500;padding:2px 7px;border:0.5px solid var(--blue);border-radius:4px">Visualizar${(()=>{const _uc=t.replies?(t.replies.filter(r=>!r.done).length):0;return _uc?` <span style="font-size:11px;font-weight:700;background:var(--blue);color:#fff;border-radius:8px;padding:0 4px;margin-left:2px">${_uc}</span>`:''})()}</button><button class="ib edit" onclick="edTask('${t.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="ib del" onclick="delTask('${t.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div></div>`).join('');
 }
-function fown(f){if(!S.hasOwnProperty('ownf'))S.ownf='all';S.ownf=f;['all','mine','delegated'].forEach(x=>{const b=document.getElementById('fo-'+x);if(b){b.style.borderColor='';b.style.color='';}});const a=document.getElementById('fo-'+f);if(a){a.style.borderColor='var(--gbr)';a.style.color='var(--gold)';}rTasks(ld());}
+function fown(f){if(!S.hasOwnProperty('ownf'))S.ownf='all';S.ownf=f;if(f==='all'){S.tf='all';['pend','done','late'].forEach(x=>{const b=document.getElementById('ft-'+x);if(b){b.style.borderColor='';b.style.color='';}});}['all','mine','delegated'].forEach(x=>{const b=document.getElementById('fo-'+x);if(b){b.style.borderColor='';b.style.color='';}});const a=document.getElementById('fo-'+f);if(a){a.style.borderColor='var(--gbr)';a.style.color='var(--gold)';}rTasks(ld());}
 function ftask(f){S.tf=f;['all','pend','done','late'].forEach(x=>{const b=document.getElementById('ft-'+x);if(b){b.style.borderColor='';b.style.color='';}});const a=document.getElementById('ft-'+f);if(a){a.style.borderColor='var(--gbr)';a.style.color='var(--gold)';}rTasks(ld());}
 function applyWkFilter(){const sel=document.getElementById('wk-sel');S.wkf=sel?sel.value:'all';rTasks(ld());}
 function applyDateFilter(){S.datef=document.getElementById('date-sel').value;rTasks(ld());}
@@ -2960,10 +3085,24 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
         localStorage.setItem('fs_'+id,JSON.stringify(emptyData));
         // Sobe dados iniciais do novo escritório para Firebase
         _waitFB().then(()=>{window._fbSetDoc(window._fbDoc(window._fbDB,'flowsales_crm',id),emptyData).catch(e=>console.error('[FB] new firm:',e));}).catch(()=>{});
-        // Create client user
+        // Create client user — grava em _fbDynUsers (sincroniza com Firebase, funciona em qualquer aparelho)
         const userEmail=v('af-email').trim().toLowerCase();
-        if(userEmail&&!USERS.find(u=>u.email===userEmail)){
-          USERS.push({email:userEmail,pass:nm.split(' ')[0].toLowerCase()+'2026',name:nm,role:'client',eid:id,init:nm.substring(0,2).toUpperCase()});
+        if(userEmail&&!USERS.find(u=>u.email===userEmail)&&!_fbDynUsers.find(u=>u.email===userEmail)){
+          const initialPass=nm.split(' ')[0].toLowerCase()+'2026';
+          _fbDynUsers.push({email:userEmail,pass:initialPass,name:nm,role:'client',eid:id,init:nm.substring(0,2).toUpperCase()});
+          localStorage.setItem('fs_dynusers',JSON.stringify(_fbDynUsers));
+          _waitFB().then(()=>{
+            const ref=window._fbDoc(window._fbDB,'flowsales_crm','__config');
+            window._fbSetDoc(ref,{users:_fbDynUsers,__ts:Date.now()},{merge:true}).catch(e=>console.error('[FB] new client user:',e));
+          }).catch(()=>{});
+          // Provisiona login seguro (Firebase Auth) já na criação, sem esperar o 1º login do cliente
+          _waitFB().then(async()=>{
+            try{
+              const uid=await window._fbCreateEmail(userEmail,initialPass);
+              await _fbEnsureRoleAssignment(userEmail,'client',id);
+              await _fbEnsureProfile(uid,userEmail,'client',id);
+            }catch(e){console.error('[FB Auth] provisionar cliente falhou:',e.code||e.message);}
+          }).catch(()=>{});
         }
         setupFirmSelect();rFirms();cModal(null,1);_showToast('Escritório "'+nm+'" criado! ✅','var(--green)');
       }
