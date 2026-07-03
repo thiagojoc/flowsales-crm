@@ -1147,11 +1147,18 @@ async function _fbSecureLogin(email,pass,role,eid){
   }catch(e){
     const code=e&&e.code;
     if(code==='auth/user-not-found'||code==='auth/invalid-credential'||code==='auth/invalid-login-credentials'){
-      await window._fbCreateEmail(email,pass);
-      await window._fbSignInEmail(auth,email,pass);
+      // Pode ser conta nova (ainda não migrada) OU uma senha trocada pelo fluxo
+      // antigo que ficou fora de sincronia com o Firebase Auth. Tenta criar; se
+      // a conta já existir (ou a senha for fraca demais pro Firebase aceitar),
+      // não dá pra forçar a troca sem a senha antiga — manda link de redefinição.
+      try{
+        await window._fbCreateEmail(email,pass);
+        await window._fbSignInEmail(auth,email,pass);
+      }catch(e2){
+        window._fbSendPasswordReset(email).catch(()=>{});
+        throw new Error('senha-dessincronizada');
+      }
     }else if(code==='auth/wrong-password'){
-      // Conta já migrada, mas a senha mudou pelo fluxo antigo e não sincronizou.
-      // Não temos como forçar a troca sem a senha antiga: manda link de redefinição.
       window._fbSendPasswordReset(email).catch(()=>{});
       throw new Error('senha-dessincronizada');
     }else{
@@ -1435,7 +1442,7 @@ async function doLogin(){
   }
   if(btn){btn.disabled=false;btn.textContent='Entrar';}
   S.user=u;S.role=u.role;if(u.eid)S.eid=u.eid;
-  localStorage.setItem('fs_sess',JSON.stringify({email:u.email}));showApp();
+  localStorage.setItem('fs_sess',JSON.stringify({email:u.email,authEmail:em}));showApp();
 }
 function doLogout(){if(_fbUnsub){_fbUnsub();_fbUnsub=null;}localStorage.removeItem('fs_sess');document.getElementById('login').style.display='flex';document.getElementById('app').style.display='none';}
 function forgotPass(){
@@ -1455,10 +1462,12 @@ function forgotPass(){
 }
 async function checkSess(){
   const s=localStorage.getItem('fs_sess');if(!s)return;
-  const{email}=JSON.parse(s);
+  const parsed=JSON.parse(s);
+  const email=parsed.email; // e-mail original (chave em USERS/_fbDynUsers)
+  const authEmail=(parsed.authEmail||email||'').toLowerCase(); // e-mail usado no Firebase Auth (pode ter sido trocado via override)
   await _waitFB();
   const user=await window._fbAuthReady;
-  if(!user||user.isAnonymous||(user.email||'').toLowerCase()!==email){
+  if(!user||user.isAnonymous||(user.email||'').toLowerCase()!==authEmail){
     // Sessão do Firebase Auth expirou/sumiu — sem a senha não dá pra restaurar com segurança
     localStorage.removeItem('fs_sess');
     return;
