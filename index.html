@@ -1422,22 +1422,57 @@ function resolveUser(em,pw){
   if(dyn)return dyn;
   return null;
 }
+// Acha o perfil (nome/role/eid) só pelo e-mail, sem checar senha — usado quando
+// o Firebase Auth JÁ confirmou que a senha está certa (ele é a fonte da verdade
+// de senha; a legada só serve mais pra achar role/eid, e pra quem ainda não migrou).
+function _resolveUserByEmail(em){
+  const overrides=getCredsOverrides();
+  for(const origEmail of Object.keys(overrides)){
+    const o=overrides[origEmail];
+    if(o.email===em){ return USERS.find(x=>x.email===origEmail)||_fbDynUsers.find(x=>x.email===origEmail)||null; }
+  }
+  const direct=USERS.find(x=>x.email===em);
+  if(direct)return direct;
+  return _fbDynUsers.find(x=>x.email===em)||null;
+}
 async function doLogin(){
   const em=document.getElementById('le').value.trim().toLowerCase();
   const pw=document.getElementById('lp').value;
   const er=document.getElementById('lerr');er.textContent='';
-  const u=resolveUser(em,pw);
-  if(!u){er.textContent='E-mail ou senha incorretos.';return;}
   const btn=document.querySelector('.lbtn');
   if(btn){btn.disabled=true;btn.textContent='Entrando...';}
+  await _waitFB();
+  const auth=window._fbAuth;
+  let u=null;
   try{
-    await _fbSecureLogin(em,pw,u.role,u.eid);
+    // 1) Pergunta pro Firebase primeiro — ele é quem sabe de verdade se a senha está certa
+    // (cobre senha redefinida direto por lá, sem depender do cadastro antigo).
+    await window._fbSignInEmail(auth,em,pw);
+    u=_resolveUserByEmail(em);
+    if(u){
+      await _fbEnsureRoleAssignment(em,u.role,u.eid);
+      await _fbEnsureProfile(auth.currentUser.uid,em,u.role,u.eid);
+      _stripPlaintextPassword(em);
+    }
   }catch(e){
-    console.error('[Login] Falha na autenticação segura:',e);
+    // 2) Ainda não migrado (ou senha errada no Firebase) — tenta o cadastro antigo
+    u=resolveUser(em,pw);
+    if(u){
+      try{
+        await _fbSecureLogin(em,pw,u.role,u.eid);
+      }catch(e2){
+        console.error('[Login] Falha na autenticação segura:',e2);
+        if(btn){btn.disabled=false;btn.textContent='Entrar';}
+        er.textContent = e2&&e2.message==='senha-dessincronizada'
+          ? 'Sua senha precisa ser redefinida. Enviamos um e-mail com o link.'
+          : 'Erro de conexão segura ('+((e2&&(e2.code||e2.message))||'desconhecido')+'). Verifique sua internet e tente novamente.';
+        return;
+      }
+    }
+  }
+  if(!u){
     if(btn){btn.disabled=false;btn.textContent='Entrar';}
-    er.textContent = e&&e.message==='senha-dessincronizada'
-      ? 'Sua senha precisa ser redefinida. Enviamos um e-mail com o link.'
-      : 'Erro de conexão segura ('+((e&&(e.code||e.message))||'desconhecido')+'). Verifique sua internet e tente novamente.';
+    er.textContent='E-mail ou senha incorretos.';
     return;
   }
   if(btn){btn.disabled=false;btn.textContent='Entrar';}
