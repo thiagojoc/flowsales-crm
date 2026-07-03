@@ -383,6 +383,7 @@ textarea{resize:none;min-height:100px;line-height:1.65;}
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getFirestore, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const _app = initializeApp({
   apiKey:'AIzaSyBTqzj-9-AOI181sPCKvRsVGDujkWogIGI',
@@ -393,10 +394,14 @@ const _app = initializeApp({
   appId:'1:440511544358:web:00dc29d16295ed23f3fae7'
 });
 const _db = getFirestore(_app);
+const _auth = getAuth(_app);
 window._fdb = _db;
 window._fdoc = doc;
 window._fsetDoc = setDoc;
 window._fgetDoc = getDoc;
+// As regras do Firestore exigem login (mesmo anônimo) para gravar —
+// sem isso o cadastro público deste formulário para de funcionar.
+window._fbFormAuthReady = signInAnonymously(_auth).catch(e=>console.error('[Auth] signInAnonymously falhou:',e.code||e.message));
 window._fbFormReady = true;
 if(window._fbFormResolve) window._fbFormResolve();
 </script>
@@ -526,7 +531,8 @@ function getSocios(){
 const prog = [33, 66, 100];
 
 function _waitFbForm(){
-  return window._fbFormReady ? Promise.resolve() : new Promise(r=>{ window._fbFormResolve=r; });
+  const base = window._fbFormReady ? Promise.resolve() : new Promise(r=>{ window._fbFormResolve=r; });
+  return base.then(()=>window._fbFormAuthReady);
 }
 
 // ── VALIDAÇÃO ─────────────────────────────────────────────────

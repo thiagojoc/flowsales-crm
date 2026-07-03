@@ -416,23 +416,48 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="datetime-local
 }
 </style>
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, updateDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-const _app = initializeApp({
+import { getAuth, onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+const _fbConfig = {
   apiKey:"AIzaSyBTqzj-9-AOI181sPCKvRsVGDujkWogIGI",
   authDomain:"flowbody-30162.firebaseapp.com",
   projectId:"flowbody-30162",
   storageBucket:"flowbody-30162.firebasestorage.app",
   messagingSenderId:"440511544358",
   appId:"1:440511544358:web:00dc29d16295ed23f3fae7"
-});
+};
+const _app = initializeApp(_fbConfig);
 const _db = getFirestore(_app);
+const _auth = getAuth(_app);
 window._fbReady = true;
 window._fbDB = _db;
 window._fbDoc = doc;
 window._fbSetDoc = setDoc; window._fbUpdateDoc = updateDoc;
 window._fbGetDoc = getDoc;
 window._fbOnSnapshot = onSnapshot;
+window._fbAuth = _auth;
+window._fbSignInEmail = signInWithEmailAndPassword;
+window._fbUpdatePassword = updatePassword;
+window._fbSendPasswordReset = (email)=>sendPasswordResetEmail(_auth,email);
+// Conta nova é criada num app Firebase secundário para não derrubar a sessão logada no principal
+window._fbCreateEmail = async (email,pass)=>{
+  const _tmpApp = initializeApp(_fbConfig, 'secondary-'+Date.now());
+  const _tmpAuth = getAuth(_tmpApp);
+  try{
+    const cred = await createUserWithEmailAndPassword(_tmpAuth, email, pass);
+    return cred.user.uid;
+  } finally {
+    await deleteApp(_tmpApp).catch(()=>{});
+  }
+};
+window._fbAuthReady = new Promise(res=>{
+  let _resolved=false;
+  const unsub = onAuthStateChanged(_auth, (user)=>{
+    if(user&&!_resolved){_resolved=true;unsub();res(user);}
+  });
+});
+signInAnonymously(_auth).catch(e=>console.error('[FB Auth] signInAnonymously falhou:',e.code||e.message));
 (window._fbResolvers||[]).forEach(r=>r()); window._fbResolvers=[];
 </script>
 </head>
@@ -632,6 +657,10 @@ window._fbOnSnapshot = onSnapshot;
           <div class="card" id="ghl-kpis-card" style="display:none">
             <div class="ch"><div class="ct"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:-2px"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>GoHighLevel — dados em tempo real</div><button class="ca" id="ghl-sync-btn" onclick="syncGHL()">Sincronizar</button></div>
             <div id="ghl-kpis-content"><div class="empty">Clique em Sincronizar para buscar dados do GHL.</div></div>
+          </div>
+          <div class="card" id="meta-kpis-card" style="display:none">
+            <div class="ch"><div class="ct"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>Meta Ads — dados em tempo real</div><button class="ca" id="meta-sync-btn" onclick="syncMeta()">Sincronizar</button></div>
+            <div id="meta-kpis-content"><div class="empty">Clique em Sincronizar para buscar dados da Meta.</div></div>
           </div>
         </div>
 
@@ -983,10 +1012,49 @@ let _fbProfiles = {}; // fotos/nomes sincronizados via Firebase
 
 function _waitFB(){if(window._fbReady)return Promise.resolve();return new Promise(r=>{if(!window._fbResolvers)window._fbResolvers=[];window._fbResolvers.push(r);});}
 
+// Tamanho máximo por arquivo guardado no Firestore (documento tem limite de 1MiB;
+// base64 engorda ~33% o tamanho original, então ficamos com folga).
+const MAX_FILE_BYTES = 700*1024;
+function _b64Size(dataUrl){ return dataUrl ? Math.ceil(dataUrl.length*0.75) : 0; }
+function _fileTooBig(dataUrl){ return _b64Size(dataUrl) > MAX_FILE_BYTES; }
+
+// Guarda o conteúdo (base64) de UM arquivo numa subcoleção própria do escritório,
+// separado do documento principal — assim ele sobrevive trocando de navegador/
+// aparelho, sem esbarrar no limite de 1MiB do documento principal.
+const _fbBlobUploaded = new Set(); // evita re-subir o mesmo arquivo sem necessidade
+async function _fbSaveFileBlob(eid, fileId, dataUrl, meta){
+  if(!dataUrl) return;
+  const cacheKey = eid+'/'+fileId;
+  if(_fbBlobUploaded.has(cacheKey)) return;
+  try{
+    await _waitFB();
+    const ref=window._fbDoc(window._fbDB,'flowsales_crm',eid,'files',fileId);
+    await window._fbSetDoc(ref,Object.assign({data:dataUrl},meta||{}));
+    _fbBlobUploaded.add(cacheKey);
+  }catch(e){ console.error('[FB] ❌ Salvar arquivo '+fileId+':',e.code||e.message); }
+}
+async function _fbLoadFileBlob(eid, fileId){
+  try{
+    await _waitFB();
+    const ref=window._fbDoc(window._fbDB,'flowsales_crm',eid,'files',fileId);
+    const snap=await window._fbGetDoc(ref);
+    return snap.exists() ? snap.data().data : null;
+  }catch(e){ console.error('[FB] ❌ Carregar arquivo '+fileId+':',e.code||e.message); return null; }
+}
+
 async function _fbSave(eid, data){
   try{
     await _waitFB();
-    // Strip base64 file data before saving to Firebase (avoids 1MB limit)
+    // Sobe cada arquivo (base64) para a subcoleção própria antes de tirá-lo do
+    // documento principal — assim ele fica salvo na nuvem, não só no navegador.
+    (data.files||[]).forEach(f=>{ if(f.data) _fbSaveFileBlob(eid,f.id,f.data,{name:f.name,type:f.type}); });
+    (data.gastos||[]).forEach(g=>{ if(g.fileData) _fbSaveFileBlob(eid,'gasto_'+g.id,g.fileData,{name:g.fileName||''}); });
+    (data.vendasItems||[]).forEach(vi=>{ if(vi.fileData) _fbSaveFileBlob(eid,'venda_'+vi.id,vi.fileData,{name:vi.fileName||''}); });
+    (data.tasks||[]).forEach(t=>{
+      if(t.taskFile&&t.taskFile.data) _fbSaveFileBlob(eid,'task_'+t.id,t.taskFile.data,{name:t.taskFile.name,type:t.taskFile.type});
+      (t.replies||[]).forEach(r=>{ if(r.fileData) _fbSaveFileBlob(eid,'reply_'+r.id,r.fileData,{name:r.fileName||''}); });
+    });
+    // Strip base64 file data before saving o documento principal (evita limite de 1MB)
     const safe=Object.assign({},data);
     if(safe.files&&safe.files.length){safe.files=safe.files.map(f=>{const c=Object.assign({},f);delete c.data;return c;});}
     if(safe.gastos&&safe.gastos.length){safe.gastos=safe.gastos.map(g=>{const c=Object.assign({},g);delete c.fileData;return c;});}    if(safe.vendasItems&&safe.vendasItems.length){safe.vendasItems=safe.vendasItems.map(vi=>{const c2=Object.assign({},vi);delete c2.fileData;return c2;});}
@@ -1065,6 +1133,71 @@ function _setSyncDot(st){
   if(!el)return;
   el.title=st==='ok'?'Dados sincronizados':st==='err'?'Erro ao sincronizar':'Sincronizando...';
   el.style.background=st==='ok'?'var(--green)':st==='err'?'var(--red)':'var(--gold)';
+}
+
+// ── FIREBASE AUTH (segurança real por trás do login) ──────────
+// Garante que exista uma sessão Firebase Auth de verdade para o e-mail já
+// validado pelas regras antigas de login (legadas). Migra automaticamente
+// contas antigas na primeira vez que fazem login, sem trocar a senha delas.
+async function _fbSecureLogin(email,pass,role,eid){
+  await _waitFB();
+  const auth=window._fbAuth;
+  try{
+    await window._fbSignInEmail(auth,email,pass);
+  }catch(e){
+    const code=e&&e.code;
+    if(code==='auth/user-not-found'||code==='auth/invalid-credential'||code==='auth/invalid-login-credentials'){
+      await window._fbCreateEmail(email,pass);
+      await window._fbSignInEmail(auth,email,pass);
+    }else if(code==='auth/wrong-password'){
+      // Conta já migrada, mas a senha mudou pelo fluxo antigo e não sincronizou.
+      // Não temos como forçar a troca sem a senha antiga: manda link de redefinição.
+      window._fbSendPasswordReset(email).catch(()=>{});
+      throw new Error('senha-dessincronizada');
+    }else{
+      throw e;
+    }
+  }
+  const uid=auth.currentUser.uid;
+  await _fbEnsureRoleAssignment(email,role,eid);
+  await _fbEnsureProfile(uid,email,role,eid);
+  _stripPlaintextPassword(email);
+}
+// Cria (se ainda não existir) o registro de "fonte da verdade" role/eid para
+// este e-mail. Depois que as regras do Firestore forem travadas, só e-mails
+// de admin conseguem gravar aqui — para novos escritórios, é o admin que
+// grava na criação do escritório (ver newFirm save).
+async function _fbEnsureRoleAssignment(email,role,eid){
+  try{
+    const ref=window._fbDoc(window._fbDB,'roleAssignments',email);
+    const snap=await window._fbGetDoc(ref);
+    if(!snap.exists()){
+      await window._fbSetDoc(ref,{email,role,eid:eid||null});
+    }
+  }catch(e){ console.warn('[FB Auth] roleAssignments (esperado falhar se não-admin, após travar regras):',e.code||e.message); }
+}
+async function _fbEnsureProfile(uid,email,role,eid){
+  try{
+    const ref=window._fbDoc(window._fbDB,'userProfiles',uid);
+    await window._fbSetDoc(ref,{email,role,eid:eid||null,__ts:Date.now()});
+  }catch(e){ console.error('[FB Auth] userProfile falhou:',e.code||e.message); }
+}
+// Remove a senha em texto puro do Firestore assim que o e-mail tiver uma
+// conta Firebase Auth de verdade (a senha real passa a viver só no Firebase Auth).
+function _stripPlaintextPassword(email){
+  let changed=false;
+  const du=_fbDynUsers.find(x=>x.email===email && x.pass);
+  if(du){delete du.pass;changed=true;}
+  const c=getCredsOverrides();
+  Object.keys(c).forEach(k=>{if(c[k].email===email && c[k].pass){delete c[k].pass;changed=true;}});
+  if(changed){
+    localStorage.setItem('fs_dynusers',JSON.stringify(_fbDynUsers));
+    localStorage.setItem('fs_creds',JSON.stringify(c));
+    _waitFB().then(()=>{
+      const ref=window._fbDoc(window._fbDB,'flowsales_crm','__config');
+      window._fbSetDoc(ref,{users:_fbDynUsers,creds:c,__ts:Date.now()},{merge:true}).catch(()=>{});
+    }).catch(()=>{});
+  }
 }
 function _scheduleSave(){
   _setSyncDot('pending');
@@ -1251,6 +1384,15 @@ function saveCredsOverride(origEmail,email,pass){
     const ref=window._fbDoc(window._fbDB,'flowsales_crm','__config');
     window._fbSetDoc(ref,{creds:c,__ts:Date.now()},{merge:true}).catch(e=>console.error('[FB] creds save:',e));
   }).catch(()=>{});
+  // Mantém a senha do Firebase Auth sincronizada, senão o login trava em outro navegador
+  _waitFB().then(async()=>{
+    try{
+      const auth=window._fbAuth;
+      if(auth.currentUser&&(auth.currentUser.email||'').toLowerCase()===email.toLowerCase()){
+        await window._fbUpdatePassword(auth.currentUser,pass);
+      }
+    }catch(e){console.error('[FB Auth] updatePassword falhou:',e.code||e.message);}
+  }).catch(()=>{});
 }
 function resolveUser(em,pw){
   const overrides=getCredsOverrides();
@@ -1273,12 +1415,24 @@ function resolveUser(em,pw){
   if(dyn)return dyn;
   return null;
 }
-function doLogin(){
+async function doLogin(){
   const em=document.getElementById('le').value.trim().toLowerCase();
   const pw=document.getElementById('lp').value;
   const er=document.getElementById('lerr');er.textContent='';
   const u=resolveUser(em,pw);
   if(!u){er.textContent='E-mail ou senha incorretos.';return;}
+  const btn=document.querySelector('.lbtn');
+  if(btn){btn.disabled=true;btn.textContent='Entrando...';}
+  try{
+    await _fbSecureLogin(em,pw,u.role,u.eid);
+  }catch(e){
+    if(btn){btn.disabled=false;btn.textContent='Entrar';}
+    er.textContent = e&&e.message==='senha-dessincronizada'
+      ? 'Sua senha precisa ser redefinida. Enviamos um e-mail com o link.'
+      : 'Erro de conexão segura. Verifique sua internet e tente novamente.';
+    return;
+  }
+  if(btn){btn.disabled=false;btn.textContent='Entrar';}
   S.user=u;S.role=u.role;if(u.eid)S.eid=u.eid;
   localStorage.setItem('fs_sess',JSON.stringify({email:u.email}));showApp();
 }
@@ -1298,7 +1452,21 @@ function forgotPass(){
   document.body.appendChild(m);
   m.addEventListener('click',e=>{if(e.target===m)m.remove();});
 }
-function checkSess(){const s=localStorage.getItem('fs_sess');if(!s)return;const{email}=JSON.parse(s);const u=USERS.find(x=>x.email===email)||_fbDynUsers.find(x=>x.email===email);if(!u)return;S.user=u;S.role=u.role;if(u.eid)S.eid=u.eid;showApp();}
+async function checkSess(){
+  const s=localStorage.getItem('fs_sess');if(!s)return;
+  const{email}=JSON.parse(s);
+  await _waitFB();
+  const user=await window._fbAuthReady;
+  if(!user||user.isAnonymous||(user.email||'').toLowerCase()!==email){
+    // Sessão do Firebase Auth expirou/sumiu — sem a senha não dá pra restaurar com segurança
+    localStorage.removeItem('fs_sess');
+    return;
+  }
+  const u=USERS.find(x=>x.email===email)||_fbDynUsers.find(x=>x.email===email);
+  if(!u)return;
+  S.user=u;S.role=u.role;if(u.eid)S.eid=u.eid;
+  showApp();
+}
 function cleanupPhantomDemand(){
   // Remove the default phantom demand d1 if it exists in localStorage
   FIRMS.forEach(f=>{const key='fs_'+f.id;const s=localStorage.getItem(key);if(!s)return;const d=JSON.parse(s);const before=d.demands.length;d.demands=d.demands.filter(x=>x.id!=='d1');if(d.demands.length!==before){localStorage.setItem(key,JSON.stringify(d));console.log('Removed phantom demand d1 from',f.id);}});
@@ -1507,7 +1675,7 @@ function _clickupTask(t){
       createTask(li.id);
     }).catch(()=>{});
 }
-function renderAll(){const d=ld();const _td=_localDate();d.tasks.forEach(t=>{if(t.status==='pending'&&t.due&&t.due<_td)t.status='late';});rOv(d);rKpis(d);rGhlKpis(d);rScore(d);rMetas(d);rTasks(d);rMeet(d);rFiles(d);rChat(d);rDem(d);rTimeline(d);rPerfil(d);rNotif(d);rBadges(d);rFlow();rFirms();rFinanceiro(d);}
+function renderAll(){const d=ld();const _td=_localDate();d.tasks.forEach(t=>{if(t.status==='pending'&&t.due&&t.due<_td)t.status='late';});rOv(d);rKpis(d);rGhlKpis(d);rMetaKpis(d);rScore(d);rMetas(d);rTasks(d);rMeet(d);rFiles(d);rChat(d);rDem(d);rTimeline(d);rPerfil(d);rNotif(d);rBadges(d);rFlow();rFirms();rFinanceiro(d);}
 
 function rTimeline(d){
   const wrap=document.getElementById('timeline-wrap');if(!wrap)return;
@@ -1735,7 +1903,7 @@ function rGhlKpis(d){
   const tagHtml=tags.length?tags.map(([t,c])=>`<div class="traf-row"><span class="traf-lbl">${t}</span><span class="traf-val">${c} lead${c!==1?'s':''}</span></div>`).join(''):'<div class="empty" style="padding:8px 0">Nenhum lead ganho com tag registrada.</div>';
   const showRate=g.reunAgd?Math.round(g.reunReal/g.reunAgd*100):0;
   const convRate=g.reunReal?Math.round(g.vendas/g.reunReal*100):0;
-  el.innerHTML=`<div style="font-size:10px;color:var(--t2);margin-bottom:12px">Última sincronização: ${syncDate}</div><div class="kpi-g6" style="margin-bottom:14px"><div class="kpi-mc"><div class="kpi-lbl">Reuniões agendadas</div><div class="kpi-val" style="color:var(--gold)">${g.reunAgd}</div><div class="kpi-sub kpi-nt">${g.totalEvents} evento${g.totalEvents!==1?'s':''} no calendário</div></div><div class="kpi-mc"><div class="kpi-lbl">Reuniões realizadas</div><div class="kpi-val" style="color:var(--green)">${g.reunReal}</div><div class="kpi-sub kpi-nt">${showRate}% de show rate</div></div><div class="kpi-mc"><div class="kpi-lbl">Vendas ganhas</div><div class="kpi-val" style="color:var(--green)">${g.vendas}</div><div class="kpi-sub kpi-nt">${convRate}% conversão</div></div><div class="kpi-mc"><div class="kpi-lbl">Valor vendido</div><div class="kpi-val" style="color:var(--gold)">R$ ${(g.valorTotal||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${g.vendas} cliente${g.vendas!==1?'s':''} × MRR</div></div></div><div style="font-size:11px;font-weight:500;color:var(--t2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Produtos / Tags (leads ganhos)</div>${tagHtml}`;
+  el.innerHTML=`<div style="font-size:10px;color:var(--t2);margin-bottom:12px">Última sincronização: ${syncDate}</div><div class="kpi-g6" style="margin-bottom:14px"><div class="kpi-mc"><div class="kpi-lbl">Leads</div><div class="kpi-val" style="color:var(--blue)">${g.leads||0}</div><div class="kpi-sub kpi-nt">no período selecionado</div></div><div class="kpi-mc"><div class="kpi-lbl">Reuniões agendadas</div><div class="kpi-val" style="color:var(--gold)">${g.reunAgd}</div><div class="kpi-sub kpi-nt">${g.totalEvents} evento${g.totalEvents!==1?'s':''} no calendário</div></div><div class="kpi-mc"><div class="kpi-lbl">Reuniões realizadas</div><div class="kpi-val" style="color:var(--green)">${g.reunReal}</div><div class="kpi-sub kpi-nt">${showRate}% de show rate</div></div><div class="kpi-mc"><div class="kpi-lbl">Vendas ganhas</div><div class="kpi-val" style="color:var(--green)">${g.vendas}</div><div class="kpi-sub kpi-nt">${convRate}% conversão</div></div><div class="kpi-mc"><div class="kpi-lbl">Valor vendido</div><div class="kpi-val" style="color:var(--gold)">R$ ${(g.valorTotal||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${g.vendas} cliente${g.vendas!==1?'s':''} × MRR</div></div></div><div style="font-size:11px;font-weight:500;color:var(--t2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Produtos / Tags (leads ganhos)</div>${tagHtml}`;
 }
 async function syncGHL(){
   const d=ld();const fe=d.firmExtra||{};
@@ -1747,9 +1915,10 @@ async function syncGHL(){
   const from=S.calFrom?new Date(S.calFrom+'T00:00:00').getTime():Date.now()-30*24*3600000;
   const to=S.calTo?new Date(S.calTo+'T23:59:59').getTime():Date.now();
   try{
-    const [evR,oppsR]=await Promise.all([
+    const [evR,oppsR,allOppsR]=await Promise.all([
       calendarId?fetch(`${BASE}/calendars/events?locationId=${locationId}&calendarId=${calendarId}&startTime=${from}&endTime=${to}`,{headers:h}).then(r=>r.json()):Promise.resolve({events:[]}),
-      fetch(`${BASE}/opportunities/search?location_id=${locationId}&status=won&limit=100`,{headers:h}).then(r=>r.json())
+      fetch(`${BASE}/opportunities/search?location_id=${locationId}&status=won&limit=100`,{headers:h}).then(r=>r.json()),
+      fetch(`${BASE}/opportunities/search?location_id=${locationId}&limit=100`,{headers:h}).then(r=>r.json())
     ]);
     const events=evR.events||[];
     const agendadas=events.filter(e=>!['cancelled','no_show','invalid'].includes(e.appointmentStatus)).length;
@@ -1757,14 +1926,59 @@ async function syncGHL(){
     const wonOpps=oppsR.opportunities||[];
     const vendas=wonOpps.length;
     const valorTotal=wonOpps.reduce((s,o)=>s+(o.monetaryValue||3500),0);
+    const leads=(allOppsR.meta&&allOppsR.meta.total)||(allOppsR.opportunities||[]).length;
     const tagCounts={};
     wonOpps.forEach(o=>(o.contact?.tags||[]).forEach(t=>{tagCounts[t]=(tagCounts[t]||0)+1;}));
-    d.ghlKpis={syncedAt:new Date().toISOString(),reunAgd:agendadas,reunReal:realizadas,vendas,valorTotal,tagBreakdown:tagCounts,totalEvents:events.length};
+    d.ghlKpis={syncedAt:new Date().toISOString(),reunAgd:agendadas,reunReal:realizadas,vendas,valorTotal,leads,tagBreakdown:tagCounts,totalEvents:events.length};
     if(!d.kpis)d.kpis={};
-    d.kpis.reunAgd=agendadas;d.kpis.reunReal=realizadas;d.kpis.vendas=vendas;
+    d.kpis.reunAgd=agendadas;d.kpis.reunReal=realizadas;d.kpis.vendas=vendas;d.kpis.leads=leads;
     if(valorTotal>0)d.kpis.rev=valorTotal;
     sv(d);renderAll();
   }catch(e){alert('Erro ao sincronizar GHL: '+e.message);}
+  finally{if(btn){btn.disabled=false;btn.textContent='Sincronizar';}}
+}
+
+function rMetaKpis(d){
+  const card=document.getElementById('meta-kpis-card');
+  const el=document.getElementById('meta-kpis-content');
+  if(!card||!el)return;
+  const fe=d.firmExtra||{};
+  const hasConfig=!!(fe.metaToken&&fe.metaAccId);
+  if(!hasConfig&&!d.metaKpis){card.style.display='none';return;}
+  card.style.display='';
+  const m=d.metaKpis;
+  if(!m){el.innerHTML='<div class="empty">Clique em Sincronizar para buscar dados da Meta.</div>';return;}
+  const syncDate=new Date(m.syncedAt).toLocaleString('pt-BR');
+  const ctr=m.impressions?((m.clicks/m.impressions)*100).toFixed(2):'0.00';
+  const cpl=m.leads?Math.round(m.spend/m.leads):0;
+  el.innerHTML=`<div style="font-size:10px;color:var(--t2);margin-bottom:12px">Última sincronização: ${syncDate}</div><div class="kpi-g6" style="margin-bottom:14px"><div class="kpi-mc"><div class="kpi-lbl">Investimento</div><div class="kpi-val" style="color:var(--gold)">R$ ${(m.spend||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">no período selecionado</div></div><div class="kpi-mc"><div class="kpi-lbl">Impressões</div><div class="kpi-val" style="color:var(--blue)">${(m.impressions||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${(m.reach||0).toLocaleString('pt-BR')} pessoas alcançadas</div></div><div class="kpi-mc"><div class="kpi-lbl">Cliques</div><div class="kpi-val" style="color:var(--green)">${(m.clicks||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${ctr}% CTR</div></div><div class="kpi-mc"><div class="kpi-lbl">Leads gerados</div><div class="kpi-val" style="color:var(--green)">${m.leads||0}</div><div class="kpi-sub kpi-nt">R$ ${cpl.toLocaleString('pt-BR')} custo por lead</div></div></div>`;
+}
+async function syncMeta(){
+  const d=ld();const fe=d.firmExtra||{};
+  const token=fe.metaToken;let accId=fe.metaAccId;
+  if(!token||!accId){alert('Configure o Token e o Ad Account ID da Meta em Editar dados do escritório.');return;}
+  accId=accId.trim();if(!accId.startsWith('act_'))accId='act_'+accId;
+  const btn=document.getElementById('meta-sync-btn');if(btn){btn.disabled=true;btn.textContent='Buscando...';}
+  const since=S.calFrom||new Date(Date.now()-30*24*3600000).toISOString().split('T')[0];
+  const until=S.calTo||new Date().toISOString().split('T')[0];
+  const fields='spend,impressions,clicks,reach,actions,cpc,cpm';
+  const timeRange=encodeURIComponent(JSON.stringify({since,until}));
+  const url=`https://graph.facebook.com/v19.0/${accId}/insights?fields=${fields}&time_range=${timeRange}&access_token=${encodeURIComponent(token)}`;
+  try{
+    const r=await fetch(url);const j=await r.json();
+    if(j.error)throw new Error(j.error.message||'Erro na API da Meta');
+    const row=(j.data&&j.data[0])||{};
+    const actions=row.actions||[];
+    const leadTypes=['lead','onsite_conversion.lead_grouped','leadgen_grouping','offsite_conversion.fb_pixel_lead'];
+    const leads=actions.filter(a=>leadTypes.includes(a.action_type)).reduce((s,a)=>s+(+a.value||0),0);
+    d.metaKpis={syncedAt:new Date().toISOString(),spend:+row.spend||0,impressions:+row.impressions||0,clicks:+row.clicks||0,reach:+row.reach||0,leads,cpc:+row.cpc||0,cpm:+row.cpm||0};
+    if(!d.kpis)d.kpis={};
+    d.kpis.invest=+row.spend||d.kpis.invest||0;
+    d.kpis.impressoes=+row.impressions||d.kpis.impressoes||0;
+    d.kpis.cliques=+row.clicks||d.kpis.cliques||0;
+    if(leads>0){d.kpis.leads=leads;d.kpis.cpl=Math.round((+row.spend||0)/leads);}
+    sv(d);renderAll();
+  }catch(e){alert('Erro ao sincronizar Meta Ads: '+e.message);}
   finally{if(btn){btn.disabled=false;btn.textContent='Sincronizar';}}
 }
 
@@ -1841,7 +2055,7 @@ function rTasks(d){
   if(!tasks.length){el.innerHTML='<div class="empty">Nenhuma task.</div>';return;}
   el.innerHTML=tasks.map(t=>`<div class="trow"><input type="checkbox" class="tck-cb" ${S.selTasks.has(t.id)?'checked':''} onchange="toggleSel('${t.id}',this)"><div class="tck${t.status==='done'?' on':''}" onclick="tgTask('${t.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tb2"><div class="tt${t.status==='done'?' dn':''}">${t.urgent?'<span style="color:var(--red);font-size:13px;font-weight:700;margin-right:5px;letter-spacing:.05em">URGENTE</span>':''}${t.title}</div>${t.desc?`<div style="font-size:12px;color:var(--t2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:500px">${t.desc.length>100?t.desc.slice(0,100)+'\u2026':t.desc}</div>`:''}<div class="ti"><span>Atribuída a: ${t.assign||t.resp}</span>${t.created?`<span style="color:var(--t3)">|</span><span title="Criada em">📅 Criada em: ${fd(t.created)}</span>`+(t.createdBy?`<span style="color:var(--t3)">|</span><span>👤 Criada por: ${t.createdBy}${t._sourceFirmName?' ('+t._sourceFirmName+')':''}</span>`:''):''}${t.due?`<span style="color:var(--t3)">|</span><span title="Prazo" style="color:${t.status!=='done'&&t.due<_localDate()?'var(--red)':'inherit'}">⏰ Prazo: ${fd(t.due)}</span>`:''}${slbl[t.status]||''}${t.pri&&t.pri!=='med'?prlbl[t.pri]||'':''}</div></div><div class="tacts"><button class="ib" onclick="openTaskThread('${t.id}')" style="color:var(--blue);font-size:12px;font-weight:500;padding:2px 7px;border:0.5px solid var(--blue);border-radius:4px">Visualizar${(()=>{const _uc=t.replies?(t.replies.filter(r=>!r.done).length):0;return _uc?` <span style="font-size:11px;font-weight:700;background:var(--blue);color:#fff;border-radius:8px;padding:0 4px;margin-left:2px">${_uc}</span>`:''})()}</button><button class="ib edit" onclick="edTask('${t.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="ib del" onclick="delTask('${t.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div></div>`).join('');
 }
-function fown(f){if(!S.hasOwnProperty('ownf'))S.ownf='all';S.ownf=f;['all','mine','delegated'].forEach(x=>{const b=document.getElementById('fo-'+x);if(b){b.style.borderColor='';b.style.color='';}});const a=document.getElementById('fo-'+f);if(a){a.style.borderColor='var(--gbr)';a.style.color='var(--gold)';}rTasks(ld());}
+function fown(f){if(!S.hasOwnProperty('ownf'))S.ownf='all';S.ownf=f;if(f==='all'){S.tf='all';['pend','done','late'].forEach(x=>{const b=document.getElementById('ft-'+x);if(b){b.style.borderColor='';b.style.color='';}});}['all','mine','delegated'].forEach(x=>{const b=document.getElementById('fo-'+x);if(b){b.style.borderColor='';b.style.color='';}});const a=document.getElementById('fo-'+f);if(a){a.style.borderColor='var(--gbr)';a.style.color='var(--gold)';}rTasks(ld());}
 function ftask(f){S.tf=f;['all','pend','done','late'].forEach(x=>{const b=document.getElementById('ft-'+x);if(b){b.style.borderColor='';b.style.color='';}});const a=document.getElementById('ft-'+f);if(a){a.style.borderColor='var(--gbr)';a.style.color='var(--gold)';}rTasks(ld());}
 function applyWkFilter(){const sel=document.getElementById('wk-sel');S.wkf=sel?sel.value:'all';rTasks(ld());}
 function applyDateFilter(){S.datef=document.getElementById('date-sel').value;rTasks(ld());}
@@ -2034,7 +2248,35 @@ function rFiles(d){
   if(S.ff==='all'){const _el2=document.getElementById('flist');if(_el2._pendingLinks){_el2.innerHTML=_el2._pendingLinks+_el2.innerHTML;_el2._pendingLinks=null;}}
 }
 function ffile(f){S.ff=f;['all','doc','img','script','link'].forEach(x=>{const b=document.getElementById('at-'+x);if(b)b.classList.remove('on');});const a=document.getElementById('at-'+f);if(a)a.classList.add('on');rFiles(ld());}
-function viewFile(id){const d=ld();const f=d.files.find(x=>x.id===id);if(!f)return;if(f.data){const w=window.open();w.document.write(`<html><body style="margin:0;background:#000"><iframe src="${f.data}" style="width:100%;height:100vh;border:none"></iframe></body></html>`);}else{_showReuploadModal(id,f);}}
+function _openFileWindow(dataUrl){const w=window.open();w.document.write(`<html><body style="margin:0;background:#000"><iframe src="${dataUrl}" style="width:100%;height:100vh;border:none"></iframe></body></html>`);}
+async function viewFile(id){
+  const d=ld();const f=d.files.find(x=>x.id===id);if(!f)return;
+  if(f.data){_openFileWindow(f.data);return;}
+  const remote=await _fbLoadFileBlob(S.eid,id);
+  if(remote){
+    const d2=ld();const f2=d2.files.find(x=>x.id===id);if(f2){f2.data=remote;localStorage.setItem('fs_'+S.eid,JSON.stringify(d2));}
+    _openFileWindow(remote);
+    return;
+  }
+  _showReuploadModal(id,f);
+}
+async function _getReplyFileData(taskId,replyId){
+  const d=ld();const t=d.tasks.find(x=>x.id===taskId);const r=t&&(t.replies||[]).find(x=>x.id===replyId);
+  if(r&&r.fileData)return r.fileData;
+  const remote=await _fbLoadFileBlob(S.eid,'reply_'+replyId);
+  if(remote&&r){r.fileData=remote;localStorage.setItem('fs_'+S.eid,JSON.stringify(d));}
+  return remote;
+}
+async function viewReplyFile(taskId,replyId){
+  const data=await _getReplyFileData(taskId,replyId);
+  if(!data){_showToast('Arquivo não encontrado','var(--red)');return;}
+  _openFileWindow(data);
+}
+async function downloadReplyFile(taskId,replyId,fileName){
+  const data=await _getReplyFileData(taskId,replyId);
+  if(!data){_showToast('Arquivo não encontrado','var(--red)');return;}
+  const a=document.createElement('a');a.href=data;a.download=fileName||'arquivo';document.body.appendChild(a);a.click();a.remove();
+}
 function _showReuploadModal(id,f){
   const ov=document.getElementById('ov');const tt=document.getElementById('m-tt');const mb=document.getElementById('m-body');const mf=document.getElementById('moff');
   if(!ov||!tt||!mb||!mf)return;
@@ -2063,6 +2305,9 @@ function _upfNext(){
   const size=file.size>1048576?(file.size/1048576).toFixed(1)+' MB':(file.size/1024).toFixed(0)+' KB';
   const reader=new FileReader();
   reader.onload=e=>{
+    if(_fileTooBig(e.target.result)){
+      _showToast('⚠️ "'+file.name+'" é grande demais (máx. ~700KB) e não será salvo na nuvem — só neste navegador.','var(--red)');
+    }
     _upfCurrent={data:e.target.result,name:file.name,type,size};
     document.getElementById('upf-ttl').value=file.name.replace(/\.[^.]+$/,'');
     document.getElementById('upf-dat').value=new Date().toISOString().split('T')[0];
@@ -2830,8 +3075,8 @@ function openM(type,data){
       }
     },
         edFirmAdmin:{title:'Editar escritório',
-      body:()=>{const _efe=(()=>{try{return JSON.parse(localStorage.getItem('fs_'+data.id)||'{}').firmExtra||{};}catch(e){return{};}})();return`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Nome</label><input class="fi" id="ef-nm" value="${data?data.name||'':''}"></div><div class="fg"><label>Área</label><input class="fi" id="ef-area" value="${data?data.area||'':''}"></div><div class="fg"><label>Cidade / UF</label><input class="fi" id="ef-city" value="${data?data.city||'':''}"></div><div class="fg"><label>Telefone</label><input class="fi" id="ef-ph" value="${data?data.phone||'':''}"></div><div class="fg"><label>E-mail de contato</label><input class="fi" id="ef-em" type="email" value="${data?data.email||'':''}"></div><div class="fg"><label>Mensalidade (R$)</label><input class="fi" id="ef-fee" type="number" value="${data?data.fee||3500:3500}"></div><div class="fg"><label>OAB</label><input class="fi" id="ef-oab" value="${data?data.oab||'':''}"></div><div class="fg"><label>Início do contrato</label><input class="fi" id="ef-start" type="date" value="${data?data.start||'':''}"></div><div class="fg"><label>Vencimento mensal</label><input class="fi" id="ef-due" type="date" value="${data?data.due||'':''}"></div></div><div style="margin-top:12px;padding-top:12px;border-top:0.5px solid var(--bdr)"><div style="font-size:13px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Responsável</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Nome</label><input class="fi" id="ef-resp-nm" value="${data.contact||_efe.respName||''}"></div><div class="fg"><label>WhatsApp</label><input class="fi" id="ef-resp-wa" value="${_efe.respWhatsapp||data.contactPhone||''}"></div><div class="fg"><label>E-mail</label><input class="fi" id="ef-resp-em" type="email" value="${data.contactEmail||_efe.respEmail||''}"></div><div class="fg"><label>OAB</label><input class="fi" id="ef-resp-oab" value="${_efe.respOAB||''}"></div><div class="fg"><label>Áreas de atuação</label><input class="fi" id="ef-resp-areas" value="${_efe.respAreas||''}"></div><div class="fg"><label>Instagram</label><input class="fi" id="ef-resp-ig" value="${_efe.respIG||_efe.respInstagram||''}" placeholder="@responsavel"></div><div class="fg"><label>Endereço</label><input class="fi" id="ef-resp-addr" value="${_efe.respAddress||''}" placeholder="Rua, número, cidade/UF"></div><div class="fg"><label>Senha de acesso</label><input class="fi" id="ef-resp-pass" autocomplete="new-password" value="${(()=>{const _rnu=(_efe.respName||data.contact||'').trim().toLowerCase();const _ru=(_fbDynUsers||[]).find(u=>u.eid===data.id&&u.role==='client'&&(u.name||'').trim().toLowerCase()===_rnu);return (_ru?_ru.pass:'').trim();})()} " placeholder="Sem acesso cadastrado"></div><div class="fg"><label>Foto</label>${(()=>{const _rph=_efe.respPhoto;if(_rph)return '<img src="'+_rph+'" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:0.5px solid var(--gbr);display:block;margin-top:4px">';return '<div style="width:38px;height:38px;border-radius:50%;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;margin-top:4px">'+(_efe.respName||data.contact||'?')[0].toUpperCase()+'</div>';})()} </div></div></div><div style="margin-top:12px;padding-top:12px;border-top:0.5px solid var(--bdr)"><div style="font-size:12px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Integrações</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>GHL API Key</label><input class="fi" id="ef-ghl" placeholder="Cole a API key do GoHighLevel" value="${data?data.ghlKey||'':''}"></div><div class="fg"><label>Meta BM Token</label><input class="fi" id="ef-meta" placeholder="Token da Business Manager" value="${data?data.metaToken||'':''}"></div><div class="fg" style="grid-column:1/-1"><label>Link da pasta no Google Drive</label><input class="fi" id="ef-drive" placeholder="https://drive.google.com/drive/folders/..." value="${data?data.driveUrl||'':''}"></div></div></div><div style='margin-top:12px;padding-top:12px;border-top:0.5px solid var(--bdr)'><div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:8px'><div style='font-size:12px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.07em'>Sócios</div><button class='ca' onclick="cModal(null,1);setTimeout(()=>openM('partner'),150)">+ Sócio</button></div><div id='ef-partners'>${(()=>{try{const _fd=JSON.parse(localStorage.getItem('fs_'+data.id)||'{}');return(_fd.partners||[]).map(p=>`<div style='display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--bdr)'><div style='width:26px;height:26px;border-radius:50%;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0'>${(p.name||'?')[0].toUpperCase()}</div><div style='flex:1;min-width:0'><div style='font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis'>${p.name}</div><div style='font-size:12px;color:var(--t2)'>${p.role||'Sócio'}${p.oab?' · '+p.oab:''}</div></div><button class='ib edit' data-pid='${p.id}' data-fid='${data.id}' onclick='_editFirmPartner(this.dataset.fid,this.dataset.pid)' style='flex-shrink:0'><svg width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7'/><path d='M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z'/></svg></button><button class='ib del' data-pid='${p.id}' onclick='delPartner(this.dataset.pid)' style='flex-shrink:0'><svg width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><polyline points='3 6 5 6 21 6'/><path d='M19 6l-1 14H6L5 6'/></svg></button></div>`).join('')||'<div style=\'color:var(--t2);font-size:13px;padding:8px 0\'>Nenhum sócio cadastrado.</div>';}catch(e){return '';}})()}</div></div>`;},
-      save:()=>{const f=FIRMS.find(x=>x.id===data.id);if(!f)return;f.name=v('ef-nm')||f.name;f.area=v('ef-area');f.city=v('ef-city');f.phone=v('ef-ph');f.email=v('ef-em');f.fee=+(v('ef-fee')||f.fee);f.oab=v('ef-oab');f.start=v('ef-start');f.due=v('ef-due');f.ghlKey=v('ef-ghl');f.metaToken=v('ef-meta');f.driveUrl=v('ef-drive');f.contact=v('ef-resp-nm');f.contactEmail=v('ef-resp-em');_saveFirms();try{const _efd=JSON.parse(localStorage.getItem('fs_'+data.id)||'{}');_efd.firmExtra=_efd.firmExtra||{};_efd.firmExtra.respName=v('ef-resp-nm');_efd.firmExtra.respWhatsapp=v('ef-resp-wa');_efd.firmExtra.respEmail=v('ef-resp-em');_efd.firmExtra.respOAB=v('ef-resp-oab');_efd.firmExtra.respAreas=v('ef-resp-areas');_efd.firmExtra.respIG=v('ef-resp-ig');_efd.firmExtra.respAddress=v('ef-resp-addr');const _efPss=v('ef-resp-pass').trim();if(_efPss){const _efNm2=v('ef-resp-nm');const _efEm2=(v('ef-resp-em')||data.contactEmail||'').trim().toLowerCase();const _efRnu=(_efNm2||'').trim().toLowerCase();let _efRu=(_fbDynUsers||[]).find(u=>u.eid===data.id&&u.role==='client'&&(u.name||'').trim().toLowerCase()===_efRnu);if(!_efRu&&_efEm2)_efRu=(_fbDynUsers||[]).find(u=>u.eid===data.id&&u.role==='client'&&u.email===_efEm2);if(_efRu){_efRu.pass=_efPss;if(_efNm2)_efRu.name=_efNm2;if(_efEm2)_efRu.email=_efEm2;}else if(_efNm2||_efEm2){_fbDynUsers.push({email:_efEm2||(_efNm2.split(' ')[0].toLowerCase()+'@firm.local'),pass:_efPss,name:_efNm2,role:'client',eid:data.id,init:(_efNm2||'?').substring(0,2).toUpperCase()});}localStorage.setItem('fs_dynusers',JSON.stringify(_fbDynUsers));_waitFB().then(()=>{const _rcfg=window._fbDoc(window._fbDB,'flowsales_crm','__config');window._fbSetDoc(_rcfg,{users:_fbDynUsers,__ts:Date.now()},{merge:true}).catch(()=>{});}).catch(()=>{});}localStorage.setItem('fs_'+data.id,JSON.stringify(_efd));if(window._waitFB)_waitFB().then(()=>window._fbSetDoc(window._fbDoc(window._fbDB,'flowsales_crm',data.id),{firmExtra:_efd.firmExtra,__ts:Date.now()},{merge:true})).catch(()=>{});}catch(e){}setupFirmSelect();rFirms();_showToast('Escritório atualizado ✅','var(--green)');cModal(null,1);}
+      body:()=>{const _efe=(()=>{try{return JSON.parse(localStorage.getItem('fs_'+data.id)||'{}').firmExtra||{};}catch(e){return{};}})();return`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Nome</label><input class="fi" id="ef-nm" value="${data?data.name||'':''}"></div><div class="fg"><label>Área</label><input class="fi" id="ef-area" value="${data?data.area||'':''}"></div><div class="fg"><label>Cidade / UF</label><input class="fi" id="ef-city" value="${data?data.city||'':''}"></div><div class="fg"><label>Telefone</label><input class="fi" id="ef-ph" value="${data?data.phone||'':''}"></div><div class="fg"><label>E-mail de contato</label><input class="fi" id="ef-em" type="email" value="${data?data.email||'':''}"></div><div class="fg"><label>Mensalidade (R$)</label><input class="fi" id="ef-fee" type="number" value="${data?data.fee||3500:3500}"></div><div class="fg"><label>OAB</label><input class="fi" id="ef-oab" value="${data?data.oab||'':''}"></div><div class="fg"><label>Início do contrato</label><input class="fi" id="ef-start" type="date" value="${data?data.start||'':''}"></div><div class="fg"><label>Vencimento mensal</label><input class="fi" id="ef-due" type="date" value="${data?data.due||'':''}"></div></div><div style="margin-top:12px;padding-top:12px;border-top:0.5px solid var(--bdr)"><div style="font-size:13px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Responsável</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>Nome</label><input class="fi" id="ef-resp-nm" value="${data.contact||_efe.respName||''}"></div><div class="fg"><label>WhatsApp</label><input class="fi" id="ef-resp-wa" value="${_efe.respWhatsapp||data.contactPhone||''}"></div><div class="fg"><label>E-mail</label><input class="fi" id="ef-resp-em" type="email" value="${data.contactEmail||_efe.respEmail||''}"></div><div class="fg"><label>OAB</label><input class="fi" id="ef-resp-oab" value="${_efe.respOAB||''}"></div><div class="fg"><label>Áreas de atuação</label><input class="fi" id="ef-resp-areas" value="${_efe.respAreas||''}"></div><div class="fg"><label>Instagram</label><input class="fi" id="ef-resp-ig" value="${_efe.respIG||_efe.respInstagram||''}" placeholder="@responsavel"></div><div class="fg"><label>Endereço</label><input class="fi" id="ef-resp-addr" value="${_efe.respAddress||''}" placeholder="Rua, número, cidade/UF"></div><div class="fg"><label>Senha de acesso</label><input class="fi" id="ef-resp-pass" autocomplete="new-password" value="${(()=>{const _rnu=(_efe.respName||data.contact||'').trim().toLowerCase();const _ru=(_fbDynUsers||[]).find(u=>u.eid===data.id&&u.role==='client'&&(u.name||'').trim().toLowerCase()===_rnu);return (_ru?_ru.pass:'').trim();})()} " placeholder="Sem acesso cadastrado"></div><div class="fg"><label>Foto</label>${(()=>{const _rph=_efe.respPhoto;if(_rph)return '<img src="'+_rph+'" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:0.5px solid var(--gbr);display:block;margin-top:4px">';return '<div style="width:38px;height:38px;border-radius:50%;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;margin-top:4px">'+(_efe.respName||data.contact||'?')[0].toUpperCase()+'</div>';})()} </div></div></div><div style="margin-top:12px;padding-top:12px;border-top:0.5px solid var(--bdr)"><div style="font-size:12px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Integrações</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>GHL API Token (Private Integration)</label><input class="fi" id="ef-ghl" placeholder="Cole o token do GoHighLevel" value="${_efe.ghlToken||''}"></div><div class="fg"><label>GHL Location ID</label><input class="fi" id="ef-ghl-loc" placeholder="Location ID da subconta" value="${_efe.ghlLocationId||''}"></div><div class="fg"><label>GHL Calendar ID (opcional)</label><input class="fi" id="ef-ghl-cal" placeholder="Para contar reuniões agendadas" value="${_efe.ghlCalendarId||''}"></div><div class="fg"><label>Meta BM Token</label><input class="fi" id="ef-meta" placeholder="Token da Business Manager" value="${_efe.metaToken||''}"></div><div class="fg"><label>Meta Ad Account ID</label><input class="fi" id="ef-meta-acc" placeholder="act_XXXXXXXXXX" value="${_efe.metaAccId||''}"></div><div class="fg" style="grid-column:1/-1"><label>Link da pasta no Google Drive</label><input class="fi" id="ef-drive" placeholder="https://drive.google.com/drive/folders/..." value="${data?data.driveUrl||'':''}"></div></div></div><div style='margin-top:12px;padding-top:12px;border-top:0.5px solid var(--bdr)'><div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:8px'><div style='font-size:12px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.07em'>Sócios</div><button class='ca' onclick="cModal(null,1);setTimeout(()=>openM('partner'),150)">+ Sócio</button></div><div id='ef-partners'>${(()=>{try{const _fd=JSON.parse(localStorage.getItem('fs_'+data.id)||'{}');return(_fd.partners||[]).map(p=>`<div style='display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--bdr)'><div style='width:26px;height:26px;border-radius:50%;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0'>${(p.name||'?')[0].toUpperCase()}</div><div style='flex:1;min-width:0'><div style='font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis'>${p.name}</div><div style='font-size:12px;color:var(--t2)'>${p.role||'Sócio'}${p.oab?' · '+p.oab:''}</div></div><button class='ib edit' data-pid='${p.id}' data-fid='${data.id}' onclick='_editFirmPartner(this.dataset.fid,this.dataset.pid)' style='flex-shrink:0'><svg width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7'/><path d='M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z'/></svg></button><button class='ib del' data-pid='${p.id}' onclick='delPartner(this.dataset.pid)' style='flex-shrink:0'><svg width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><polyline points='3 6 5 6 21 6'/><path d='M19 6l-1 14H6L5 6'/></svg></button></div>`).join('')||'<div style=\'color:var(--t2);font-size:13px;padding:8px 0\'>Nenhum sócio cadastrado.</div>';}catch(e){return '';}})()}</div></div>`;},
+      save:()=>{const f=FIRMS.find(x=>x.id===data.id);if(!f)return;f.name=v('ef-nm')||f.name;f.area=v('ef-area');f.city=v('ef-city');f.phone=v('ef-ph');f.email=v('ef-em');f.fee=+(v('ef-fee')||f.fee);f.oab=v('ef-oab');f.start=v('ef-start');f.due=v('ef-due');f.driveUrl=v('ef-drive');f.contact=v('ef-resp-nm');f.contactEmail=v('ef-resp-em');_saveFirms();try{const _efd=JSON.parse(localStorage.getItem('fs_'+data.id)||'{}');_efd.firmExtra=_efd.firmExtra||{};_efd.firmExtra.ghlToken=v('ef-ghl');_efd.firmExtra.ghlLocationId=v('ef-ghl-loc');_efd.firmExtra.ghlCalendarId=v('ef-ghl-cal');_efd.firmExtra.metaToken=v('ef-meta');_efd.firmExtra.metaAccId=v('ef-meta-acc');_efd.firmExtra.respName=v('ef-resp-nm');_efd.firmExtra.respWhatsapp=v('ef-resp-wa');_efd.firmExtra.respEmail=v('ef-resp-em');_efd.firmExtra.respOAB=v('ef-resp-oab');_efd.firmExtra.respAreas=v('ef-resp-areas');_efd.firmExtra.respIG=v('ef-resp-ig');_efd.firmExtra.respAddress=v('ef-resp-addr');const _efPss=v('ef-resp-pass').trim();if(_efPss){const _efNm2=v('ef-resp-nm');const _efEm2=(v('ef-resp-em')||data.contactEmail||'').trim().toLowerCase();const _efRnu=(_efNm2||'').trim().toLowerCase();let _efRu=(_fbDynUsers||[]).find(u=>u.eid===data.id&&u.role==='client'&&(u.name||'').trim().toLowerCase()===_efRnu);if(!_efRu&&_efEm2)_efRu=(_fbDynUsers||[]).find(u=>u.eid===data.id&&u.role==='client'&&u.email===_efEm2);if(_efRu){_efRu.pass=_efPss;if(_efNm2)_efRu.name=_efNm2;if(_efEm2)_efRu.email=_efEm2;}else if(_efNm2||_efEm2){_fbDynUsers.push({email:_efEm2||(_efNm2.split(' ')[0].toLowerCase()+'@firm.local'),pass:_efPss,name:_efNm2,role:'client',eid:data.id,init:(_efNm2||'?').substring(0,2).toUpperCase()});}localStorage.setItem('fs_dynusers',JSON.stringify(_fbDynUsers));_waitFB().then(()=>{const _rcfg=window._fbDoc(window._fbDB,'flowsales_crm','__config');window._fbSetDoc(_rcfg,{users:_fbDynUsers,__ts:Date.now()},{merge:true}).catch(()=>{});}).catch(()=>{});}localStorage.setItem('fs_'+data.id,JSON.stringify(_efd));if(window._waitFB)_waitFB().then(()=>window._fbSetDoc(window._fbDoc(window._fbDB,'flowsales_crm',data.id),{firmExtra:_efd.firmExtra,__ts:Date.now()},{merge:true})).catch(()=>{});}catch(e){}setupFirmSelect();rFirms();_showToast('Escritório atualizado ✅','var(--green)');cModal(null,1);}
     },
         meet:{title:data?'Editar reunião':'Nova reunião',
       body:(()=>{const isPast=data!=null;return`<div class="fg"><label>Título</label><input class="fi" id="m-ttl" value="${data?data.title:''}"></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px"><div class="fg"><label>Data</label><input class="fi" id="m-dt" type="date" value="${data?data.date:new Date().toISOString().split('T')[0]}"></div><div class="fg"><label>Horário</label><input class="fi" id="m-hr" type="time" value="${data?data.time||'10:00':'10:00'}"></div><div class="fg"><label>Duração</label><select class="fi" id="m-dur"><option value="30"${data&&data.duration==='30'?' selected':''}>30 min</option><option value="60"${!data||data.duration==='60'||!data.duration?' selected':''}>1 hora</option><option value="90"${data&&data.duration==='90'?' selected':''}>1h30</option><option value="120"${data&&data.duration==='120'?' selected':''}>2 horas</option></select></div></div><div class="fg"><label>Tipo</label><select class="fi" id="m-tp"><option${!data||data.type==='Check semanal'?' selected':''}>Check semanal</option><option${data&&data.type==='Onboarding'?' selected':''}>Onboarding</option><option${data&&data.type==='Revisão quinzenal'?' selected':''}>Revisão quinzenal</option><option${data&&data.type==='Alinhamento'?' selected':''}>Alinhamento</option><option${data&&data.type==='Treinamento'?' selected':''}>Treinamento</option><option${data&&data.type==='Emergência'?' selected':''}>Emergência</option></select></div><div class="fg"><label>Participantes</label><div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px" id="m-quick-ptcp"></div><div id="m-guests-chips" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px">${(data&&data.guests?data.guests.split(',').map(g=>g.trim()).filter(Boolean):[]).map(g=>`<span class="guest-chip" style="display:flex;align-items:center;gap:4px;background:var(--gb);border:0.5px solid var(--bdr);border-radius:6px;padding:3px 8px;font-size:13px">${g}<button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:var(--t2);font-size:12px;line-height:1;padding:0 0 0 2px">×</button></span>`).join('')}</div><div style="display:flex;gap:6px"><input class="fi" id="m-guest-inp" placeholder="Ou digite outro convidado..." style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();_addGuest();}"><button type="button" class="ca" onclick="_addGuest()" style="flex-shrink:0;padding:0 12px">+</button></div></div><div class="fg"><label>Notas</label><textarea id="m-nt" style="min-height:60px">${data?data.notes||'':''}</textarea></div><div class="fg"><label>Próximos passos (um por linha)</label><textarea id="m-ac">${data&&data.actions?data.actions.join('\n'):''}</textarea></div>${isPast?`<div class="fg"><label>URL da gravação</label><input class="fi" id="m-rec" type="url" placeholder="https://drive.google.com/..." value="${data?data.recording||'':''}"></div><div class="fg"><label>Resumo gerado</label><textarea id="m-sum" placeholder="Cole aqui o resumo automático da reunião...">${data?data.summary||'':''}</textarea></div>`:''}`})(),
@@ -2960,10 +3205,24 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
         localStorage.setItem('fs_'+id,JSON.stringify(emptyData));
         // Sobe dados iniciais do novo escritório para Firebase
         _waitFB().then(()=>{window._fbSetDoc(window._fbDoc(window._fbDB,'flowsales_crm',id),emptyData).catch(e=>console.error('[FB] new firm:',e));}).catch(()=>{});
-        // Create client user
+        // Create client user — grava em _fbDynUsers (sincroniza com Firebase, funciona em qualquer aparelho)
         const userEmail=v('af-email').trim().toLowerCase();
-        if(userEmail&&!USERS.find(u=>u.email===userEmail)){
-          USERS.push({email:userEmail,pass:nm.split(' ')[0].toLowerCase()+'2026',name:nm,role:'client',eid:id,init:nm.substring(0,2).toUpperCase()});
+        if(userEmail&&!USERS.find(u=>u.email===userEmail)&&!_fbDynUsers.find(u=>u.email===userEmail)){
+          const initialPass=nm.split(' ')[0].toLowerCase()+'2026';
+          _fbDynUsers.push({email:userEmail,pass:initialPass,name:nm,role:'client',eid:id,init:nm.substring(0,2).toUpperCase()});
+          localStorage.setItem('fs_dynusers',JSON.stringify(_fbDynUsers));
+          _waitFB().then(()=>{
+            const ref=window._fbDoc(window._fbDB,'flowsales_crm','__config');
+            window._fbSetDoc(ref,{users:_fbDynUsers,__ts:Date.now()},{merge:true}).catch(e=>console.error('[FB] new client user:',e));
+          }).catch(()=>{});
+          // Provisiona login seguro (Firebase Auth) já na criação, sem esperar o 1º login do cliente
+          _waitFB().then(async()=>{
+            try{
+              const uid=await window._fbCreateEmail(userEmail,initialPass);
+              await _fbEnsureRoleAssignment(userEmail,'client',id);
+              await _fbEnsureProfile(uid,userEmail,'client',id);
+            }catch(e){console.error('[FB Auth] provisionar cliente falhou:',e.code||e.message);}
+          }).catch(()=>{});
         }
         setupFirmSelect();rFirms();cModal(null,1);_showToast('Escritório "'+nm+'" criado! ✅','var(--green)');
       }
@@ -3045,7 +3304,7 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
             const _delBtn=_canEdit?`<button onclick="_delReply('${data.id}','${_rid}')" title="Excluir" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:12px;padding:0 3px;line-height:1">🗑</button>`:'';
             const _doneBtn=_isDone?`<span style="color:var(--green);font-size:11px;margin-left:4px">✔ Lido</span>`:`<button onclick="_markReplyDone('${data.id}','${_rid}')" title="Marcar como lida" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;line-height:1">✔️</button>`;
             const _hdr=`<div style="display:flex;align-items:center;gap:4px;margin-bottom:4px"><span style="font-size:11px;color:var(--t2);font-weight:600;flex:1">${r.from} <span style="font-weight:400">· ${r.time}${r.edited?' · editado':''}</span></span>${_editBtn}${_delBtn}${_doneBtn}</div>`;
-            const _filePart=r.fileData?`<div style="margin-top:6px;padding:6px 8px;background:var(--gb);border:0.5px solid var(--gbr);border-radius:6px"><div style="font-size:11px;color:var(--t2);margin-bottom:5px;font-weight:600">📎 ${r.fileName||'Arquivo'}</div><div style="display:flex;gap:6px"><a href="${r.fileData}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;background:var(--s2);border:0.5px solid var(--gbr);border-radius:5px;font-size:11px;color:var(--text);text-decoration:none;font-weight:500">👁 Visualizar</a><a href="${r.fileData}" download="${r.fileName||'arquivo'}" style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;background:var(--s2);border:0.5px solid var(--gbr);border-radius:5px;font-size:11px;color:var(--green);text-decoration:none;font-weight:500">⬇ Baixar</a></div></div>`:'';
+            const _filePart=(r.fileData||r.fileName)?`<div style="margin-top:6px;padding:6px 8px;background:var(--gb);border:0.5px solid var(--gbr);border-radius:6px"><div style="font-size:11px;color:var(--t2);margin-bottom:5px;font-weight:600">📎 ${r.fileName||'Arquivo'}</div><div style="display:flex;gap:6px"><button onclick="viewReplyFile('${data.id}','${_rid}')" style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;background:var(--s2);border:0.5px solid var(--gbr);border-radius:5px;font-size:11px;color:var(--text);cursor:pointer;font-weight:500">👁 Visualizar</button><button onclick="downloadReplyFile('${data.id}','${_rid}','${(r.fileName||'arquivo').replace(/'/g,"")}')" style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;background:var(--s2);border:0.5px solid var(--gbr);border-radius:5px;font-size:11px;color:var(--green);cursor:pointer;font-weight:500">⬇ Baixar</button></div></div>`:'';
             const _body=`<div id="reply-text-${_rid}">${r.text?`<div style="font-size:13px;color:var(--text);margin-bottom:${r.link||r.fileData?'5px':'0'}">${r.text}</div>`:''}${r.link?`<a href="${r.link}" target="_blank" rel="noopener" style="font-size:12px;color:var(--blue);display:inline-flex;align-items:center;gap:4px;text-decoration:none;margin-bottom:${r.fileData?'4px':'0'}">🔗 ${r.link.length>50?r.link.slice(0,50)+'...':r.link}</a>`:''}${_filePart}</div>`;
             return `<div id="reply-${_rid}" style="padding:8px 10px;border-radius:6px;background:${_isDone?'var(--gb)':'var(--s2)'};margin-bottom:8px;border:0.5px solid var(--bdr);opacity:${_isDone?'0.65':'1'}">${_hdr}${_body}</div>`;
           }).join('');
