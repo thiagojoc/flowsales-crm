@@ -990,7 +990,7 @@ async function _fbSave(eid, data){
     const safe=Object.assign({},data);
     if(safe.files&&safe.files.length){safe.files=safe.files.map(f=>{const c=Object.assign({},f);delete c.data;return c;});}
     if(safe.gastos&&safe.gastos.length){safe.gastos=safe.gastos.map(g=>{const c=Object.assign({},g);delete c.fileData;return c;});}    if(safe.vendasItems&&safe.vendasItems.length){safe.vendasItems=safe.vendasItems.map(vi=>{const c2=Object.assign({},vi);delete c2.fileData;return c2;});}
-  if(safe.tasks&&safe.tasks.length){safe.tasks=safe.tasks.map(t=>{if(!t.taskFile||!t.taskFile.data)return t;const _tc=Object.assign({},t);_tc.taskFile=Object.assign({},t.taskFile);delete _tc.taskFile.data;return _tc;});}
+  if(safe.tasks&&safe.tasks.length){safe.tasks=safe.tasks.map(t=>{const _tc=Object.assign({},t);if(_tc.taskFile&&_tc.taskFile.data){_tc.taskFile=Object.assign({},_tc.taskFile);delete _tc.taskFile.data;}if(_tc.replies&&_tc.replies.length){_tc.replies=_tc.replies.map(r=>{if(!r.fileData)return r;const _rc=Object.assign({},r);delete _rc.fileData;return _rc;});}return _tc;});}
     await window._fbSetDoc(window._fbDoc(window._fbDB,'flowsales_crm',eid),safe);
     _setSyncDot('ok');
   }catch(e){
