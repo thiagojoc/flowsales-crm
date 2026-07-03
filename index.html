@@ -2122,9 +2122,24 @@ function rTasks(d){
     const _intd=ldFS();const _intTasks=(_intd.tasks||[]).filter(t=>t.resp===_firmNm||t.resp===S.eid);
     return [..._adminTasks,..._intTasks];
   }catch(e){return[];}})();
+  // Visão interna do admin (flowsales): também traz demandas atribuídas a
+  // alguém que foram criadas DIRETO dentro do painel de um escritório (não
+  // passam por fs_flowsales) — senão o admin nunca vê essas demandas por aqui.
+  const _allFirmsTasks=(()=>{
+    if(S.eid!=='flowsales'||S.role!=='admin')return[];
+    try{
+      const out=[];
+      FIRMS.forEach(firm=>{
+        const fd3=JSON.parse(localStorage.getItem('fs_'+firm.id)||'{}');
+        (fd3.tasks||[]).forEach(t=>{ if(t.assign) out.push(Object.assign({},t,{_sourceFirm:firm.id,_sourceFirmName:firm.name})); });
+      });
+      return out;
+    }catch(e){return[];}
+  })();
   // In flowsales context, hide cross-firm tasks (they're delegated to partners; admin sees via notif)
   const _baseTasks=S.eid==='flowsales'?d.tasks.filter(t=>!t._sourceFirm):d.tasks;
-  let tasks=[..._baseTasks,..._fsTasks.filter(ft=>!_baseTasks.find(t=>t.id===ft.id))];
+  let tasks=[..._baseTasks,..._fsTasks.filter(ft=>!_baseTasks.find(t=>t.id===ft.id)),
+    ..._allFirmsTasks.filter(ft=>!_baseTasks.find(t=>t.id===ft.id)&&!_fsTasks.find(t=>t.id===ft.id))];
   // Owner filter (Todas / Minhas / Delegadas)
   const _fn0rt=s=>(s||'').trim().split(' ')[0].toLowerCase();
   const _myFN=_fn0rt(S.user&&S.user.name||'');
