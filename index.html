@@ -2809,7 +2809,7 @@ function openM(type,data){
         const _isAdminFS=S.role==='admin'&&S.eid==='flowsales';
         const respSel=isClient?'':`<div class="fg"><label>Responsável</label><select class="fi" id="m-rsp" onchange="_updateTaskAsg()">${_isAdminFS?`<option value="flowsales"${!data||data.resp==='Flow Sales'?' selected':''}>Flow Sales</option>${_allFirmsA.map(fw=>`<option value="${fw.id}"${data&&data.resp===fw.name?' selected':''}>${fw.name}</option>`).join('')}`:`<option${!data||data.resp==='Flow Sales'?' selected':''}>Flow Sales</option><option value="${firmNm}"${data&&(data.resp===firmNm||data.resp==='Escritório')?' selected':''}>${firmNm}</option>`}</select></div>`;
         setTimeout(()=>_updateTaskAsg(),0);
-        return `<div class="fg"><label>Título</label><input class="fi" id="m-ttl" value="${data?data.title:''}"></div><div class="fg"><label>Descrição</label><textarea id="m-dsc">${data?data.desc||'':''}</textarea></div><div style="display:grid;grid-template-columns:${isClient?'1fr':'1fr 1fr'};gap:10px">${respSel}<div class="fg"><label>Atribuída a</label><select class="fi" id="m-asg">${asgOptsLocal}</select></div></div><div class="fg"><label>Prazo *</label><input class="fi" id="m-due" type="date" value="${data?data.due:''}" style="color-scheme:dark"></div><div class="fg"><label>Status</label><select class="fi" id="m-sta"><option value="pending"${!data||data.status==='pending'?' selected':''}>Pendente</option><option value="done"${data&&data.status==='done'?' selected':''}>Concluída</option><option value="late"${data&&data.status==='late'?' selected':''}>Atrasada</option></select></div><div class="fg" style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="tck-cb" id="m-urg" ${data&&data.urgent?'checked':''}><label style="text-transform:none;letter-spacing:0;font-size:12px;color:var(--text)">Marcar como urgente</label></div><div class="fg"><label>Prioridade *</label><select class="fi" id="m-pri"><option value="" disabled ${!data||!data.pri?' selected':''}>Selecionar...</option><option value="high"${data&&data.pri==='high'?' selected':''}>Alta</option><option value="med"${data&&data.pri==='med'?' selected':''}>Média</option><option value="low"${data&&data.pri==='low'?' selected':''}>Baixa</option></select></div><div class="fg"><label>Link (opcional)</label><input class="fi" id="m-lnk" type="url" placeholder="https://..." value="${data&&data.link?data.link:''}"></div><div class="fg"><label>Arquivo (opcional)</label>${data&&data.taskFile?`<div id="m-task-existing" style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:6px 10px;background:var(--s2);border-radius:6px;border:0.5px solid var(--gbr)"><span style="font-size:12px;color:var(--text)">📎 ${data.taskFile.name}</span><button type="button" onclick="document.getElementById('m-task-existing').style.display='none';window._removeTaskFile=true" style="background:none;border:none;cursor:pointer;color:var(--t2);font-size:14px;line-height:1;margin-left:auto">×</button></div>`:''}  <input type="file" class="fi" id="m-task-file-inp" accept="image/*,.pdf,.doc,.docx,.xlsx,.zip,.txt"></div>`;
+        return `<div class="fg"><label>Título</label><input class="fi" id="m-ttl" value="${data?data.title:''}"></div><div class="fg"><label>Descrição</label><textarea id="m-dsc">${data?data.desc||'':''}</textarea></div><div style="display:grid;grid-template-columns:${isClient?'1fr':'1fr 1fr'};gap:10px">${respSel}<div class="fg"><label>Atribuída a</label><select class="fi" id="m-asg">${asgOptsLocal}</select></div></div><div class="fg"><label>Prazo *</label><input class="fi" id="m-due" type="date" value="${data?data.due:''}" style="color-scheme:dark"></div><div class="fg"><label>Status</label><select class="fi" id="m-sta"><option value="pending"${!data||data.status==='pending'?' selected':''}>Pendente</option><option value="done"${data&&data.status==='done'?' selected':''}>Concluída</option><option value="late"${data&&data.status==='late'?' selected':''}>Atrasada</option></select></div><div class="fg" style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="tck-cb" id="m-urg" ${data&&data.urgent?'checked':''}><label style="text-transform:none;letter-spacing:0;font-size:12px;color:var(--text)">Marcar como urgente</label></div><div class="fg"><label>Prioridade *</label><select class="fi" id="m-pri"><option value="" disabled ${!data||!data.pri?' selected':''}>Selecionar...</option><option value="high"${data&&data.pri==='high'?' selected':''}>Alta</option><option value="med"${data&&data.pri==='med'?' selected':''}>Média</option><option value="low"${data&&data.pri==='low'?' selected':''}>Baixa</option></select></div><div class="fg"><label>Link (opcional)</label><input class="fi" id="m-lnk" type="url" placeholder="https://..." value="${data&&data.link?data.link:''}"></div><div class="fg"><label>Arquivo (opcional)</label>${data&&data.taskFile?`<div id="m-task-existing" style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:6px 10px;background:var(--s2);border-radius:6px;border:0.5px solid var(--gbr)"><span style="font-size:12px;color:var(--text)">📎 ${data.taskFile.name}</span><button type="button" onclick="document.getElementById('m-task-existing').style.display='none';window._removeTaskFile=true" style="background:none;border:none;cursor:pointer;color:var(--t2);font-size:14px;line-height:1;margin-left:auto">×</button></div>`:''}  <input type="file" class="fi" id="m-task-file-inp" accept="image/*,.pdf,.doc,.docx,.xlsx,.zip,.txt" style="cursor:pointer"></div>`;
       },
       save:()=>{
         const _ttl=v('m-ttl').trim();const _dsc=v('m-dsc').trim();
@@ -3035,14 +3035,27 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
     taskThread:{title:data?'📋 '+data.title:'Demanda',
       body:()=>{
         const replies=(data&&data.replies)||[];
-        const replHtml=replies.length?replies.map(r=>`<div style="padding:8px 10px;border-radius:6px;background:var(--s2);margin-bottom:8px;border:0.5px solid var(--bdr)"><div style="font-size:11px;color:var(--t2);margin-bottom:3px;font-weight:600">${r.from} <span style="font-weight:400">· ${r.time}</span></div>${r.text?`<div style="font-size:13px;color:var(--text);margin-bottom:${r.link||r.fileData?'5px':'0'}">${r.text}</div>`:''}${r.link?`<a href="${r.link}" target="_blank" rel="noopener" style="font-size:12px;color:var(--blue);display:inline-flex;align-items:center;gap:4px;text-decoration:none">🔗 ${r.link.length>50?r.link.slice(0,50)+'...':r.link}</a>`:''}${r.fileData?`<div style="margin-top:4px"><a href="${r.fileData}" download="${r.fileName||'arquivo'}" style="font-size:12px;color:var(--green);display:inline-flex;align-items:center;gap:4px;text-decoration:none">📎 ${r.fileName||'Arquivo'}</a></div>`:''}</div>`).join(''):'<div style="color:var(--t2);font-size:13px;padding:8px 0;margin-bottom:8px">Sem respostas ainda.</div>';
+        const replHtml=(()=>{
+          if(!replies.length)return '<div style="color:var(--t2);font-size:13px;padding:8px 0;margin-bottom:8px">Sem respostas ainda.</div>';
+          return replies.map((r,ri)=>{
+            const _rid=r.id||('ri'+ri);
+            const _isDone=!!r.done;
+            const _canEdit=S.user&&r.from===S.user.name&&!_isDone;
+            const _editBtn=_canEdit?`<button onclick="_editReplyInline('${data.id}','${_rid}',this)" title="Editar" style="background:none;border:none;cursor:pointer;color:var(--t2);font-size:12px;padding:0 3px;line-height:1">✏️</button>`:'';
+            const _doneBtn=_isDone?`<span style="color:var(--green);font-size:11px;margin-left:4px">✔ Lido</span>`:`<button onclick="_markReplyDone('${data.id}','${_rid}')" title="Marcar como lida" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;line-height:1">✔️</button>`;
+            const _hdr=`<div style="display:flex;align-items:center;gap:4px;margin-bottom:4px"><span style="font-size:11px;color:var(--t2);font-weight:600;flex:1">${r.from} <span style="font-weight:400">· ${r.time}${r.edited?' · editado':''}</span></span>${_editBtn}${_doneBtn}</div>`;
+            const _filePart=r.fileData?`<div style="margin-top:6px;padding:6px 8px;background:var(--gb);border:0.5px solid var(--gbr);border-radius:6px"><div style="font-size:11px;color:var(--t2);margin-bottom:5px;font-weight:600">📎 ${r.fileName||'Arquivo'}</div><div style="display:flex;gap:6px"><a href="${r.fileData}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;background:var(--s2);border:0.5px solid var(--gbr);border-radius:5px;font-size:11px;color:var(--text);text-decoration:none;font-weight:500">👁 Visualizar</a><a href="${r.fileData}" download="${r.fileName||'arquivo'}" style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;background:var(--s2);border:0.5px solid var(--gbr);border-radius:5px;font-size:11px;color:var(--green);text-decoration:none;font-weight:500">⬇ Baixar</a></div></div>`:'';
+            const _body=`<div id="reply-text-${_rid}">${r.text?`<div style="font-size:13px;color:var(--text);margin-bottom:${r.link||r.fileData?'5px':'0'}">${r.text}</div>`:''}${r.link?`<a href="${r.link}" target="_blank" rel="noopener" style="font-size:12px;color:var(--blue);display:inline-flex;align-items:center;gap:4px;text-decoration:none;margin-bottom:${r.fileData?'4px':'0'}">🔗 ${r.link.length>50?r.link.slice(0,50)+'...':r.link}</a>`:''}${_filePart}</div>`;
+            return `<div id="reply-${_rid}" style="padding:8px 10px;border-radius:6px;background:${_isDone?'var(--gb)':'var(--s2)'};margin-bottom:8px;border:0.5px solid var(--bdr);opacity:${_isDone?'0.65':'1'}">${_hdr}${_body}</div>`;
+          }).join('');
+        })();
         // Task metadata display
         const _slbl={done:'<span class="b bg">Concluída</span>',pending:'<span class="b bgo">Pendente</span>',late:'<span class="b br">Atrasada</span>'};
         const _plbl={high:'<span class="b br" style="font-size:11px">▲ Alta</span>',med:'<span class="b bgo" style="font-size:11px">● Média</span>',low:'<span class="b bgr" style="font-size:11px">▼ Baixa</span>'};
         const _metaRow=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;align-items:center">${data&&data.status?(_slbl[data.status]||''):''}${data&&data.pri?(_plbl[data.pri]||''):''}${data&&data.due?`<span style="font-size:12px;color:var(--t2)">⏰ Prazo: ${fd(data.due)}</span>`:''}${data&&data.assign?`<span style="font-size:12px;color:var(--t2)">👤 ${data.assign}</span>`:''}</div>`;
         const _linkRow=data&&data.link?`<div style="margin-top:8px"><a href="${data.link}" target="_blank" rel="noopener" style="font-size:13px;color:var(--blue);display:inline-flex;align-items:center;gap:5px;text-decoration:none;font-weight:500">🔗 <span style="text-decoration:underline">${data.link.length>60?data.link.slice(0,60)+'...':data.link}</span></a></div>`:'';
         const _fileRow=(()=>{if(!data||!data.taskFile)return'';const _tf=data.taskFile;const _hasData=!!_tf.data;const _viewBtn=_hasData?`<a href="${_tf.data}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--s2);border:0.5px solid var(--gbr);border-radius:6px;font-size:12px;color:var(--text);text-decoration:none;font-weight:500">👁 Visualizar</a>`:'<span style="font-size:12px;color:var(--t2)">👁 Arquivo sem preview</span>';const _dlBtn=_hasData?`<a href="${_tf.data}" download="${_tf.name||'arquivo'}" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--s2);border:0.5px solid var(--gbr);border-radius:6px;font-size:12px;color:var(--green);text-decoration:none;font-weight:500">⬇ Baixar</a>`:'';return`<div style="margin-top:8px;padding:8px 10px;background:var(--gb);border:0.5px solid var(--gbr);border-radius:6px"><div style="font-size:12px;color:var(--t2);margin-bottom:6px;font-weight:600">📎 ${_tf.name||'Arquivo'}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${_viewBtn}${_dlBtn}</div></div>`;})();
-        return `<div style="padding:10px 12px;background:var(--gb);border-radius:8px;border:0.5px solid var(--gbr);margin-bottom:14px"><div style="font-size:14px;font-weight:700;color:var(--text)">${data?data.title:''}</div>${data&&data.desc?`<div style="font-size:12px;color:var(--t2);margin-top:4px">${data.desc}</div>`:''} ${_metaRow}${_linkRow}${_fileRow}</div><div style="max-height:200px;overflow-y:auto;margin-bottom:12px">${replHtml}</div><div class="fg"><label>Responder</label><textarea class="fi" id="reply-txt" placeholder="Escreva uma resposta ou comentário..." style="min-height:65px"></textarea></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px"><div class="fg" style="margin:0"><label style="font-size:12px">Anexar arquivo (opcional)</label><input type="file" id="reply-file-inp" class="fi" style="padding:5px;font-size:12px"></div><div class="fg" style="margin:0"><label style="font-size:12px">Link (opcional)</label><input class="fi" id="reply-link-inp" placeholder="https://..." style="font-size:13px"></div></div>`;
+        return `<div style="padding:10px 12px;background:var(--gb);border-radius:8px;border:0.5px solid var(--gbr);margin-bottom:14px"><div style="font-size:14px;font-weight:700;color:var(--text)">${data?data.title:''}</div>${data&&data.desc?`<div style="font-size:12px;color:var(--t2);margin-top:4px">${data.desc}</div>`:''} ${_metaRow}${_linkRow}${_fileRow}</div><div style="max-height:200px;overflow-y:auto;margin-bottom:12px">${replHtml}</div><div class="fg"><label>Responder</label><textarea class="fi" id="reply-txt" placeholder="Escreva uma resposta ou comentário..." style="min-height:65px"></textarea></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px"><div class="fg" style="margin:0"><label style="font-size:12px">Anexar arquivo (opcional)</label><input type="file" id="reply-file-inp" class="fi" style="padding:5px;font-size:12px;cursor:pointer"></div><div class="fg" style="margin:0"><label style="font-size:12px">Link (opcional)</label><input class="fi" id="reply-link-inp" placeholder="https://..." style="font-size:13px"></div></div>`;
       },
       save:()=>{
         const txt=(document.getElementById('reply-txt')||{}).value.trim();
@@ -3060,18 +3073,22 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
         if(!t)return;
         t.replies=t.replies||[];
         const _doSaveReply=fileData=>{
-          const _rep={from:S.user.name,text:txt,time:new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})};
+          const _rep={id:'r'+Date.now(),from:S.user.name,text:txt,time:new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})};
           if(linkVal)_rep.link=linkVal;
           if(fileData){_rep.fileName=fileInp.files[0].name;_rep.fileData=fileData;}
+          t.replies=t.replies||[];
           t.replies.push(_rep);
           activ(d,'Resposta em: '+t.title,'var(--blue)');
-          // Notify creator if different from current user
+          // Notificar todos os envolvidos (criador, atribuído, responsável) exceto quem respondeu
           const _notifSub=(txt||'Arquivo/link adicionado').slice(0,60)+' · '+t.title;
-          const _notifObj={id:'reply_'+t.id+'_'+Date.now(),title:'💬 Resposta na demanda',sub:S.user.name+': '+_notifSub,read:false};
-          if(t.createdBy&&t.createdBy!==S.user.name){
+          const _notifId='reply_'+t.id+'_'+Date.now();
+          const _notifObj={id:_notifId,title:'💬 Resposta na demanda',sub:S.user.name+': '+_notifSub,read:false,taskId:t.id};
+          const _involvedNames=new Set([t.createdBy,t.assign,t.resp].filter(Boolean));
+          _involvedNames.delete(S.user&&S.user.name);
+          _involvedNames.forEach(name=>{
             d.notifs=d.notifs||[];
-            if(!d.notifs.find(n=>n.sub===_notifObj.sub)){d.notifs.unshift({..._notifObj,for:t.createdBy});}
-          }
+            d.notifs.unshift({..._notifObj,for:name});
+          });
           if(_tInFS){
             // Task lives in fs_flowsales, not in local d.tasks — save there
             try{const _fsd2=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');const _fi2=(_fsd2.tasks||[]).findIndex(x=>x.id===t.id);if(_fi2>=0){_fsd2.tasks[_fi2].replies=t.replies;}else{_fsd2.tasks=_fsd2.tasks||[];_fsd2.tasks.push(t);}_fsd2.__ts=Date.now();localStorage.setItem('fs_flowsales',JSON.stringify(_fsd2));_fbSave('flowsales',_fsd2);}catch(_fse){}
@@ -3093,6 +3110,50 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
   mf.innerHTML='<button class="bgh" onclick="cModal(null,1)">Cancelar</button><button class="bpr" onclick="_saveFn()">Salvar</button>';
   _save=tpl.save;document.getElementById('ov').classList.add('on');
   setTimeout(()=>{const f=mb.querySelector('input,textarea');if(f)f.focus();if(document.getElementById('m-quick-ptcp'))_buildMeetPtcp();},60);
+}
+function _markReplyDone(taskId,replyId){
+  const d=ld();
+  let t=d.tasks.find(x=>x.id===taskId);let _tInFS=false;
+  if(!t){try{const _fsd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');const _ft=(_fsd.tasks||[]).find(x=>x.id===taskId);if(_ft){t=_ft;_tInFS=true;}}catch(e){}}
+  if(!t)return;
+  // Marcar resposta como lida
+  if(t.replies){const _ri=t.replies.findIndex(r=>r.id===replyId||(!r.id&&('ri'+t.replies.indexOf(r))===replyId));if(_ri>=0)t.replies[_ri].done=true;}
+  // Marcar notificações de resposta dessa demanda como lidas
+  const _markN=notifs=>(notifs||[]).map(n=>{if(n.id&&n.id.startsWith('reply_'+taskId))n.read=true;return n;});
+  d.notifs=_markN(d.notifs);
+  if(_tInFS){
+    try{const _fsd2=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');const _fi=(_fsd2.tasks||[]).findIndex(x=>x.id===taskId);if(_fi>=0)_fsd2.tasks[_fi]=t;_fsd2.notifs=_markN(_fsd2.notifs);localStorage.setItem('fs_flowsales',JSON.stringify(_fsd2));_fbSave('flowsales',_fsd2);}catch(e){}
+    sv(d);
+  }else{sv(d);}
+  openTaskThread(taskId);renderAll();
+}
+function _editReplyInline(taskId,replyId,btn){
+  const _div=document.getElementById('reply-text-'+replyId);if(!_div)return;
+  const d=ld();let t=d.tasks.find(x=>x.id===taskId);let _tInFS=false;
+  if(!t){try{const _fsd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');const _ft=(_fsd.tasks||[]).find(x=>x.id===taskId);if(_ft){t=_ft;_tInFS=true;}}catch(e){}}
+  if(!t)return;
+  const _r=t.replies&&(t.replies.find(r=>r.id===replyId)||(!isNaN(replyId)?t.replies[+replyId]:null));
+  if(!_r)return;
+  if(btn)btn.style.display='none';
+  _div.innerHTML=`<textarea id="edit-ta-${replyId}" style="width:100%;min-height:60px;background:var(--s3);border:0.5px solid var(--gbr);border-radius:6px;padding:6px 8px;font-size:13px;color:var(--text);resize:vertical;box-sizing:border-box;font-family:inherit">${_r.text||''}</textarea><div style="display:flex;gap:6px;margin-top:6px"><button onclick="_saveReplyEdit('${taskId}','${replyId}',${_tInFS})" style="padding:4px 12px;background:var(--gold);border:none;border-radius:6px;color:#000;font-size:12px;font-weight:600;cursor:pointer">Salvar</button><button onclick="openTaskThread('${taskId}')" style="padding:4px 12px;background:var(--s2);border:0.5px solid var(--gbr);border-radius:6px;color:var(--t2);font-size:12px;cursor:pointer">Cancelar</button></div>`;
+  setTimeout(()=>{const ta=document.getElementById('edit-ta-'+replyId);if(ta){ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length);}},50);
+}
+function _saveReplyEdit(taskId,replyId,tInFS){
+  const ta=document.getElementById('edit-ta-'+replyId);if(!ta)return;
+  const newText=ta.value.trim();
+  const d=ld();let t=d.tasks.find(x=>x.id===taskId);let _tInFS=!!tInFS;
+  if(!t){try{const _fsd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');const _ft=(_fsd.tasks||[]).find(x=>x.id===taskId);if(_ft){t=_ft;_tInFS=true;}}catch(e){}}
+  if(!t)return;
+  const _ri=t.replies&&(t.replies.findIndex(r=>r.id===replyId)||(!isNaN(replyId)?+replyId:-1));
+  if(_ri===-1&&t.replies)return;
+  const _r=t.replies[typeof _ri==='number'?_ri:0];
+  if(!_r)return;
+  _r.text=newText;_r.edited=true;
+  if(_tInFS){
+    try{const _fsd2=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');const _fi=(_fsd2.tasks||[]).findIndex(x=>x.id===taskId);if(_fi>=0)_fsd2.tasks[_fi]=t;localStorage.setItem('fs_flowsales',JSON.stringify(_fsd2));_fbSave('flowsales',_fsd2);}catch(e){}
+    sv(d);
+  }else{sv(d);}
+  openTaskThread(taskId);
 }
 function openTaskThread(id){
   const d=ld();
