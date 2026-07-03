@@ -7,6 +7,12 @@
  *  2. Cole este código e clique em Deploy
  *  3. Copie a URL gerada (ex: https://flowsales-leads.SEU-DOMINIO.workers.dev)
  *  4. No GHL: Settings → Webhooks → Add Webhook → cole a URL → evento: Contact Created
+ *  5. IMPORTANTE (segurança): vá em Settings do Worker → Variables and Secrets →
+ *     adicione um secret "WEBHOOK_BOT_PASSWORD" com a senha da conta de serviço
+ *     (peça essa senha a quem configurou o Firebase Auth do projeto — é uma conta
+ *     dedicada, sem acesso a nada além de gravar notificações de leads).
+ *     Sem esse secret, o Worker não consegue mais gravar no Firestore, porque
+ *     desde a última revisão o banco exige login para leitura/escrita.
  *
  * Para cada escritório, adicione o campo "firm_id" no pipeline do GHL,
  * ou edite FIRM_ID_MAP abaixo para mapear por pipeline/tag.
@@ -14,6 +20,23 @@
 
 const FB_API_KEY = 'AIzaSyBTqzj-9-AOI181sPCKvRsVGDujkWogIGI';
 const FB_PROJECT = 'flowbody-30162';
+const WEBHOOK_BOT_EMAIL = 'webhook-bot@flowsales.internal';
+
+// Faz login da conta de serviço no Firebase Auth e devolve um token válido
+// para autenticar as chamadas ao Firestore (as regras exigem login desde a
+// migração de segurança).
+async function getBotToken(env) {
+  const pass = env.WEBHOOK_BOT_PASSWORD;
+  if (!pass) throw new Error('WEBHOOK_BOT_PASSWORD não configurado nas Variables/Secrets do Worker');
+  const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FB_API_KEY}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: WEBHOOK_BOT_EMAIL, password: pass, returnSecureToken: true })
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error('Login da conta de serviço falhou: ' + (data.error && data.error.message));
+  return data.idToken;
+}
 
 // Mapeamento opcional: se o GHL mandar uma tag ou pipeline específico,
 // mapeia para o firm ID correspondente no Firebase.
@@ -62,9 +85,18 @@ export default {
       });
     }
 
+    let botToken;
+    try {
+      botToken = await getBotToken(env);
+    } catch (e) {
+      console.error('Auth error:', e.message);
+      return new Response('Erro de autenticação do Worker: ' + e.message, { status: 500 });
+    }
+    const authHeaders = { Authorization: `Bearer ${botToken}` };
+
     // Ler doc atual do Firebase
     const readUrl = `https://firestore.googleapis.com/v1/projects/${FB_PROJECT}/databases/(default)/documents/flowsales_crm/${firmId}?key=${FB_API_KEY}`;
-    const readRes = await fetch(readUrl);
+    const readRes = await fetch(readUrl, { headers: authHeaders });
     if (!readRes.ok) {
       return new Response('Erro ao ler Firebase', { status: 502 });
     }
@@ -95,7 +127,7 @@ export default {
 
     const patchRes = await fetch(patchUrl, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
       body: JSON.stringify(patchBody)
     });
 

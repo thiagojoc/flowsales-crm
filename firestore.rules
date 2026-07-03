@@ -3,15 +3,19 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // Fonte da verdade de "quem é quem" (role/eid por e-mail).
-    // Só os e-mails de admin abaixo podem escrever aqui — qualquer outro
-    // usuário autenticado só pode LER a própria entrada (pelo e-mail dele).
+    // Admins podem gravar qualquer entrada. Qualquer outra pessoa só pode
+    // CRIAR a própria entrada (pelo e-mail dela) e só como role 'client' —
+    // isso é o que permite o formulário público de cadastro (form.html)
+    // funcionar sem exigir que um admin cadastre cada cliente manualmente,
+    // sem abrir brecha para alguém se autodeclarar admin.
     match /roleAssignments/{email} {
       allow read: if request.auth != null && request.auth.token.email == email;
-      allow write: if request.auth != null &&
-        request.auth.token.email in [
-          'tcaetano1706@gmail.com',
-          'carlos@flowsales.com'
-        ];
+      allow create: if request.auth != null && (
+        (request.auth.token.email == email && request.resource.data.role == 'client') ||
+        request.auth.token.email in ['tcaetano1706@gmail.com', 'carlos@flowsales.com']
+      );
+      allow update, delete: if request.auth != null &&
+        request.auth.token.email in ['tcaetano1706@gmail.com', 'carlos@flowsales.com'];
     }
 
     // Perfil por usuário autenticado (uid). Só ele mesmo lê/cria o próprio
@@ -36,8 +40,12 @@ service cloud.firestore {
     }
 
     // Dados de cada escritório: só o dono (eid bate com o perfil) ou admin.
+    // Exceção: CRIAR um escritório novo (doc que ainda não existe) é liberado
+    // para qualquer autenticado — é o que o formulário público de cadastro
+    // (form.html) usa. Uma vez criado, só dono/admin conseguem ler ou mexer.
     match /flowsales_crm/{eid} {
-      allow read, write: if request.auth != null && (
+      allow create: if request.auth != null;
+      allow read, update, delete: if request.auth != null && (
         get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data.eid == eid ||
         get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data.role == 'admin'
       );

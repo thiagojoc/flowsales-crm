@@ -92,6 +92,18 @@ var FB_API_KEY    = 'AIzaSyBTqzj-9-AOI181sPCKvRsVGDujkWogIGI';
 var FB_PROJECT    = 'flowbody-30162';
 var ALWAYS_CC     = ['tcaetano1706@gmail.com', 'carlosnunes_jr@hotmail.com'];
 var FROM_NAME     = 'Flow Sales';
+var WEBHOOK_BOT_EMAIL = 'webhook-bot@flowsales.internal';
+
+// As regras do Firestore agora exigem login — sem isso, sendWeeklyReport() não lê nada.
+// Configure uma vez em: Extensions > Apps Script > ⚙️ Project Settings > Script Properties
+// > Add script property > WEBHOOK_BOT_PASSWORD = (senha da conta de serviço).
+function _getBotToken() {
+  var pass = PropertiesService.getScriptProperties().getProperty('WEBHOOK_BOT_PASSWORD');
+  if (!pass) throw new Error('Configure WEBHOOK_BOT_PASSWORD em Project Settings > Script Properties');
+  var token = _fbSignIn(WEBHOOK_BOT_EMAIL, pass);
+  if (!token) throw new Error('Login da conta de serviço falhou (senha errada ou conta não existe)');
+  return token;
+}
 
 function _fbGet(path, token) {
   var url = 'https://firestore.googleapis.com/v1/projects/' + FB_PROJECT +
@@ -151,8 +163,11 @@ function _bar(pct, col) {
 }
 
 function sendWeeklyReport() {
+  var token;
+  try { token = _getBotToken(); } catch (e) { Logger.log('Erro de autenticação: ' + e.message); return; }
+
   // Lê __config para pegar a lista de firms
-  var cfg = _fbGet('flowsales_crm/__config');
+  var cfg = _fbGet('flowsales_crm/__config', token);
   if (!cfg) { Logger.log('Erro ao ler config Firebase'); return; }
   var firms = _fv((cfg.fields || {}).firms) || [];
   if (!firms.length) { Logger.log('Nenhum escritório encontrado'); return; }
@@ -167,7 +182,7 @@ function sendWeeklyReport() {
     var firmId = firm.id;
     if (!firmId) return;
 
-    var doc = _fbGet('flowsales_crm/' + firmId);
+    var doc = _fbGet('flowsales_crm/' + firmId, token);
     if (!doc) return;
     var d = _parseDoc(doc);
 
