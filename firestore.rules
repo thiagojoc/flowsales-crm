@@ -58,7 +58,15 @@ service cloud.firestore {
       }
     }
 
-    // Qualquer coisa fora do previsto acima: negado por padrão.
+    // Este projeto Firebase é compartilhado com o app "Body & Mind"
+    // (thiagojoc/bodyandmind), que usa users/thiago sem login nenhum.
+    // Mantém o comportamento atual dele (não mexe, não trava, não abre mais
+    // do que já estava) — arrumar a segurança desse app é tarefa separada.
+    match /users/{userId} {
+      allow read, write: if true;
+    }
+
+    // Qualquer outra coisa fora do previsto acima: negado por padrão.
     match /{document=**} {
       allow read, write: if false;
     }
