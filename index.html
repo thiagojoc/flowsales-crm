@@ -1055,11 +1055,15 @@ async function _fbSave(eid, data){
       if(t.taskFile&&t.taskFile.data) _fbSaveFileBlob(eid,'task_'+t.id,t.taskFile.data,{name:t.taskFile.name,type:t.taskFile.type});
       (t.replies||[]).forEach(r=>{ if(r.fileData) _fbSaveFileBlob(eid,'reply_'+r.id,r.fileData,{name:r.fileName||''}); });
     });
+    (data.partners||[]).forEach(p=>{ if(p.photo) _fbSaveFileBlob(eid,'partner_'+p.id+'_photo',p.photo,{}); });
+    if(data.firmExtra&&data.firmExtra.respPhoto) _fbSaveFileBlob(eid,'firm_respPhoto',data.firmExtra.respPhoto,{});
     // Strip base64 file data before saving o documento principal (evita limite de 1MB)
     const safe=Object.assign({},data);
     if(safe.files&&safe.files.length){safe.files=safe.files.map(f=>{const c=Object.assign({},f);delete c.data;return c;});}
     if(safe.gastos&&safe.gastos.length){safe.gastos=safe.gastos.map(g=>{const c=Object.assign({},g);delete c.fileData;return c;});}    if(safe.vendasItems&&safe.vendasItems.length){safe.vendasItems=safe.vendasItems.map(vi=>{const c2=Object.assign({},vi);delete c2.fileData;return c2;});}
   if(safe.tasks&&safe.tasks.length){safe.tasks=safe.tasks.map(t=>{const _tc=Object.assign({},t);if(_tc.taskFile&&_tc.taskFile.data){_tc.taskFile=Object.assign({},_tc.taskFile);delete _tc.taskFile.data;}if(_tc.replies&&_tc.replies.length){_tc.replies=_tc.replies.map(r=>{if(!r.fileData)return r;const _rc=Object.assign({},r);delete _rc.fileData;return _rc;});}return _tc;});}
+  if(safe.partners&&safe.partners.length){safe.partners=safe.partners.map(p=>{if(!p.photo)return p;const c=Object.assign({},p);delete c.photo;return c;});}
+  if(safe.firmExtra&&safe.firmExtra.respPhoto){safe.firmExtra=Object.assign({},safe.firmExtra);delete safe.firmExtra.respPhoto;}
     await window._fbSetDoc(window._fbDoc(window._fbDB,'flowsales_crm',eid),safe);
     _setSyncDot('ok');
   }catch(e){
@@ -1723,6 +1727,11 @@ function _clickupTask(t){
 }
 function renderAll(){const d=ld();const _td=_localDate();d.tasks.forEach(t=>{if(t.status==='pending'&&t.due&&t.due<_td)t.status='late';});rOv(d);rKpis(d);rGhlKpis(d);rMetaKpis(d);rScore(d);rMetas(d);rTasks(d);rMeet(d);rFiles(d);rChat(d);rDem(d);rTimeline(d);rPerfil(d);rNotif(d);rBadges(d);rFlow();rFirms();rFinanceiro(d);}
 
+function _entregaCardHtml(e){
+  const catClr={GHL:'var(--blue)',IA:'#7c3aed',Website:'var(--green)',Campanha:'var(--gold)',Reunião:'var(--t2)',Outro:'var(--t2)'};
+  const cc=catClr[e.category]||'var(--gold)';
+  return '<div class="card" style="margin-bottom:8px;border-left:3px solid '+cc+'"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="font-size:11px;font-weight:700;color:'+cc+';text-transform:uppercase;letter-spacing:.06em">🎁 '+(e.category||'Entrega')+'</span><span style="font-size:12px;color:var(--t2)">'+fd(e.date)+'</span></div><div style="font-size:14px;font-weight:600">'+e.title+'</div>'+(e.desc?'<div style="font-size:12px;color:var(--t2);margin-top:4px;line-height:1.5;white-space:pre-wrap">'+e.desc+'</div>':'')+'</div>';
+}
 function rTimeline(d){
   const wrap=document.getElementById('timeline-wrap');if(!wrap)return;
   // Admin no painel FlowSales → mostrar todas as firmas
@@ -1730,11 +1739,10 @@ function rTimeline(d){
     if(!FIRMS.length){wrap.innerHTML='<div class="empty">Nenhum escritório cadastrado.</div>';return;}
     wrap.innerHTML=FIRMS.map(firm=>{
       let fd2={};try{fd2=JSON.parse(localStorage.getItem('fs_'+firm.id)||'{}');}catch(e){}
-      const _entWeek=dateStr=>{if(!dateStr||!firm.start)return 1;try{const _dd=Math.round((new Date(dateStr+'T12:00:00')-new Date(firm.start+'T12:00:00'))/86400000);return Math.max(1,Math.floor(_dd/7)+1);}catch(e){return 1;}};
-      const _entImpl=(fd2.entregas||[]).map(e=>({id:'ent_'+e.id,title:'🎁 '+e.title,week:_entWeek(e.date),done:true,due:e.date}));
-      const tasks=[...(fd2.implementations||[]),..._entImpl];
+      const tasks=fd2.implementations||[];
       const weeks=[...new Set(tasks.map(t=>t.week))].filter(Boolean).sort((a,b)=>a-b);
-      if(!weeks.length)return'';
+      const entregas=(fd2.entregas||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+      if(!weeks.length&&!entregas.length)return'';
       const firmDone=tasks.filter(t=>t.done).length;
       const firmPct=tasks.length?Math.round(firmDone/tasks.length*100):0;
       const firmCol=firmPct===100?'var(--green)':firmPct>0?'var(--gold)':'var(--t2)';
@@ -1760,6 +1768,7 @@ function rTimeline(d){
                 +'</div>';
             }).join('')+'</div></div>';
         }).join('')
+        +(entregas.length?'<div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--bdr)">'+entregas.map(_entregaCardHtml).join('')+'</div>':'')
         +'</div>';
     }).filter(Boolean).join('')||'<div class="empty">Nenhuma jornada registrada.</div>';
     return;
@@ -1768,18 +1777,13 @@ function rTimeline(d){
   // implementations stored in firm data; fallback: check fs_flowsales for admin-created implementations
   const _baseImpls=d.implementations||[];
   const _fsImpls=(()=>{if(_baseImpls.length)return[];try{const _fsd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');return(_fsd.implementations||[]).filter(i=>i._sourceFirm===S.eid||i._firmId===S.eid);}catch(e){return[];}})();
-  // Entregas de valor (aba "Entregas") também contam na jornada — convertendo
-  // a data de cada uma pra semana do contrato, já que elas usam data e não semana.
-  const _entregaWeek=dateStr=>{
-    const _fw=(FIRMS.find(f=>f.id===S.eid)||{}).start;
-    if(!dateStr||!_fw)return 1;
-    try{const _diffD=Math.round((new Date(dateStr+'T12:00:00')-new Date(_fw+'T12:00:00'))/86400000);return Math.max(1,Math.floor(_diffD/7)+1);}catch(e){return 1;}
-  };
-  const _entregasAsImpl=(d.entregas||[]).map(e=>({id:'ent_'+e.id,title:'🎁 '+e.title,week:_entregaWeek(e.date),done:true,due:e.date}));
-  const _allImpls=[..._baseImpls,..._fsImpls,..._entregasAsImpl];
+  const _allImpls=[..._baseImpls,..._fsImpls];
   const weeks=[...new Set(_allImpls.map(t=>t.week))].filter(Boolean).sort((a,b)=>a-b);
+  // Entregas de valor aparecem à parte — não entram na divisão por semana,
+  // só mostradas como o próprio registro (título, categoria, descrição).
+  const _entregasHtml=(d.entregas||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(_entregaCardHtml).join('');
   const welcomeEntry='<div class="card" style="margin-bottom:8px;border-left:3px solid var(--gold)"><div style="display:flex;align-items:center;gap:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><div><div style="font-size:13px;font-weight:600;color:var(--text)">Bem vindo(a) ao programa</div><div style="font-size:12px;color:var(--t2);margin-top:2px">Início da jornada. Você deu o primeiro passo para transformar o marketing e o comercial do seu escritório.</div></div></div></div>';
-  if(!weeks.length){wrap.innerHTML=welcomeEntry;return;}
+  if(!weeks.length&&!_entregasHtml){wrap.innerHTML=welcomeEntry;return;}
   wrap.innerHTML=welcomeEntry+weeks.map(w=>{
     const wt=_allImpls.filter(t=>t.week===w);
     const done=wt.filter(t=>t.done).length;
@@ -1791,7 +1795,7 @@ function rTimeline(d){
         const ic=t.done?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>':'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--t2)" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>';
         return '<div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="flex-shrink:0">'+ic+'</span><span style="color:'+(t.done?'var(--t2)':'var(--text)')+';'+(t.done?'text-decoration:line-through':'')+'">'+t.title+'</span>'+(t.due?'<span style="margin-left:auto;font-size:12px;color:var(--t2);white-space:nowrap">'+fd(t.due)+'</span>':'')+'</div>';
       }).join('')+'</div></div>';
-  }).join('');
+  }).join('')+_entregasHtml;
 }
 
 // ── OVERVIEW ──────────────────────────────────────────────────
@@ -3226,7 +3230,11 @@ function openM(type,data){
         const d=ld();const t={id:data?data.id:'t'+Date.now(),title:v('m-ttl')||_ttl,desc:v('m-dsc')||_dsc,resp,assign:v('m-asg'),week:data?data.week:1,due,status:v('m-sta'),urgent:document.getElementById('m-urg')&&document.getElementById('m-urg').checked,pri:_pri||'med',created:data?data.created:_localDate(),createdBy:data?data.createdBy:(S.user&&S.user.name||''),createdByFirm:data?data.createdByFirm:(S.eid||''),link:_linkVal||(data&&data.link)||''};
         if(taskFile)t.taskFile=taskFile;else if(data&&data.taskFile&&!window._removeTaskFile)t.taskFile=data.taskFile;window._removeTaskFile=false;
         if(data){const i=d.tasks.findIndex(x=>x.id===data.id);if(i>=0){d.tasks[i]=t;if(t.createdBy&&t.createdBy!==(S.user&&S.user.name)){d.notifs=d.notifs||[];d.notifs.unshift({id:'tupd_'+t.id+'_'+Date.now(),title:'📋 Demanda atualizada',sub:t.title+' · alterada por '+(S.user&&S.user.name||''),for:t.createdBy,read:false});}if(t.assign&&t.assign!==(data.assign||'')){const _fnmE=s=>(s||'').trim().split(' ')[0].toLowerCase();const _isMeE=_fnmE(t.assign)===_fnmE(S.user&&S.user.name);if(_isMeE){const nidE='nasgn_ed_'+t.id+'_'+Date.now();d.notifs.unshift({id:nidE,title:'Demanda atribuída a você',sub:t.title+(t.due?' · Prazo: '+fd(t.due):''),read:false});_showToast('📋 Demanda atribuída: '+t.title,'var(--gold)');}else if(t.assign)_desktopNotif('📋 Demanda reatribuída a '+t.assign,t.title);if(S.eid&&S.eid!=='flowsales'){try{const _adme=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');_adme.notifs=_adme.notifs||[];const _xide='xfirm_ed_'+t.id+'_'+Date.now();const _feobj=FIRMS.find(f=>f.id===S.eid)||{};_adme.notifs.unshift({id:_xide,title:'📋 Demanda atualizada — '+(_feobj.name||S.eid),sub:t.title+' · Para: '+t.assign,read:false});localStorage.setItem('fs_flowsales',JSON.stringify(_adme));}catch(_xee){}}}}}
-        else{d.tasks.push(t);if(S.eid&&S.eid!=='flowsales'){try{const _afd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');_afd.tasks=_afd.tasks||[];if(!_afd.tasks.find(x=>x.id===t.id)){const _fn=(FIRMS.find(f=>f.id===S.eid)||{}).name||S.eid;_afd.tasks.unshift(Object.assign({},t,{_sourceFirm:S.eid,_sourceFirmName:_fn}));activ(_afd,'Nova demanda de '+_fn+': '+t.title,'var(--gold)');localStorage.setItem('fs_flowsales',JSON.stringify(_afd));}}catch(_tce){}}activ(d,'Nova demanda: '+t.title,'var(--gold)');if(t.assign){const _fnm=s=>(s||'').trim().split(' ')[0].toLowerCase();const _isMe=_fnm(t.assign)===_fnm(S.user&&S.user.name);if(_isMe){const nid='nasgn_'+t.id;if(!d.notifs.find(n=>n.id===nid)){d.notifs.unshift({id:nid,title:'📋 Nova demanda atribuída a você',sub:t.title+(t.due?' · Prazo: '+fd(t.due):''),for:S.user&&S.user.name,read:false});_showToast('📋 Nova demanda: '+t.title,'var(--gold)');}}else{try{const _xid='demanda_'+t.id;const _fobj=FIRMS.find(f=>f.id===S.eid)||{};const _fsub=t.title+(S.eid&&S.eid!=='flowsales'?' · '+(_fobj.name||S.eid):'')+(t.due?' · Prazo: '+fd(t.due):'');if(S.eid&&S.eid!=='flowsales'){const _admd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');_admd.notifs=_admd.notifs||[];if(!_admd.notifs.find(n=>n.id===_xid)){_admd.notifs.unshift({id:_xid,title:'📋 Nova demanda atribuída a você',sub:_fsub,for:t.assign,read:false});localStorage.setItem('fs_flowsales',JSON.stringify(_admd));}}else{if(!d.notifs.find(n=>n.id===_xid)){d.notifs.unshift({id:_xid,title:'📋 Nova demanda atribuída a você',sub:_fsub,for:t.assign,read:false});}}}catch(_xe){}}}_clickupTask(t);}
+        else{d.tasks.push(t);if(S.eid&&S.eid!=='flowsales'){try{const _afd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');_afd.tasks=_afd.tasks||[];if(!_afd.tasks.find(x=>x.id===t.id)){const _fn=(FIRMS.find(f=>f.id===S.eid)||{}).name||S.eid;_afd.tasks.unshift(Object.assign({},t,{_sourceFirm:S.eid,_sourceFirmName:_fn}));activ(_afd,'Nova demanda de '+_fn+': '+t.title,'var(--gold)');localStorage.setItem('fs_flowsales',JSON.stringify(_afd));}}catch(_tce){}}activ(d,'Nova demanda: '+t.title,'var(--gold)');if(t.assign){const _fnm=s=>(s||'').trim().split(' ')[0].toLowerCase();const _isMe=_fnm(t.assign)===_fnm(S.user&&S.user.name);if(_isMe){const nid='nasgn_'+t.id;if(!d.notifs.find(n=>n.id===nid)){d.notifs.unshift({id:nid,title:'📋 Nova demanda atribuída a você',sub:t.title+(t.due?' · Prazo: '+fd(t.due):''),for:S.user&&S.user.name,read:false});_showToast('📋 Nova demanda: '+t.title,'var(--gold)');}}else{try{const _xid='demanda_'+t.id;const _fobj=FIRMS.find(f=>f.id===S.eid)||{};const _fsub=t.title+(S.eid&&S.eid!=='flowsales'?' · '+(_fobj.name||S.eid):'')+(t.due?' · Prazo: '+fd(t.due):'');
+              // Notifica quem foi atribuído dentro do MESMO documento que estamos salvando —
+              // gravar em fs_flowsales aqui era o bug: a pessoa nunca lia notificação de lá.
+              if(!d.notifs.find(n=>n.id===_xid)){d.notifs.unshift({id:_xid,title:'📋 Nova demanda atribuída a você',sub:_fsub,for:t.assign,read:false});}
+            }catch(_xe){}}}_clickupTask(t);}
         cModal(null,1);sv(d);try{renderAll();populateWkFilter();}catch(e){console.warn("renderAll err",e);}
         };// end _doSaveTask
         if(_fileInpT&&_fileInpT.files&&_fileInpT.files.length){const _fr=new FileReader();_fr.onload=ev=>_doSaveTask({name:_fileInpT.files[0].name,type:_fileInpT.files[0].type,data:ev.target.result});_fr.readAsDataURL(_fileInpT.files[0]);}else{_doSaveTask(null);}
