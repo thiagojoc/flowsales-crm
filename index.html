@@ -2143,6 +2143,13 @@ function rTasks(d){
   // Owner filter (Todas / Minhas / Delegadas)
   const _fn0rt=s=>(s||'').trim().split(' ')[0].toLowerCase();
   const _myFN=_fn0rt(S.user&&S.user.name||'');
+  // Uma demanda pessoal de OUTRO admin (criada por ele, atribuída a ele mesmo)
+  // não deve aparecer pros demais — só as que ele delega, ou as suas próprias.
+  tasks=tasks.filter(t=>{
+    const _assignFn=_fn0rt(t.assign||'');const _createdFn=_fn0rt(t.createdBy||'');
+    const _isSelfTask=_assignFn&&_createdFn&&_assignFn===_createdFn;
+    return !(_isSelfTask&&_assignFn!==_myFN);
+  });
   if(S.ownf==='mine'){tasks=tasks.filter(t=>!t.assign||_fn0rt(t.assign)===_myFN);}
   else if(S.ownf==='delegated'){tasks=tasks.filter(t=>t.assign&&_fn0rt(t.assign)!==_myFN);}
   if(S.tf!=='all')tasks=tasks.filter(t=>t.status===S.tf);
