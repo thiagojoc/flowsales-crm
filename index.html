@@ -2064,6 +2064,7 @@ function rKpis(d){
           +(vi.phone?'<span>'+vi.phone+'</span>':'')
           +(vi.parcelado&&vi.numParcelas>1?'<span style="color:var(--gold);font-weight:600">'+vi.numParcelas+'x</span>':'')
           +'</div>'
+          +(vi.fileName?'<div style="margin-top:5px;display:flex;align-items:center;gap:6px;font-size:12px"><span style="color:var(--blue)">📎 '+vi.fileName+'</span><button type="button" onclick="viewVendaFile(\''+vi.id+'\')" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:12px;text-decoration:underline;padding:0">Ver</button><button type="button" onclick="downloadVendaFile(\''+vi.id+'\',\''+(vi.fileName||'').replace(/\'/g,'')+'\')" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:12px;text-decoration:underline;padding:0">Baixar</button></div>':'')
           +'</div>'
           +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">'
           +(valStr?'<span style="font-size:14px;font-weight:700;color:var(--green)">'+valStr+'</span>':'')
@@ -2521,7 +2522,7 @@ function rFinanceiro(d){
         <span style="font-size:13px;font-weight:700;color:var(--red);margin-left:auto">R$ ${(+g.val).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
       </div>
       <div class="fm">${fd(g.date)}${g.desc?` · ${g.desc}`:''}</div>
-      ${g.fileName?`<div style="font-size:12px;color:var(--blue);margin-top:3px">📎 ${g.fileName}</div>`:''}
+      ${g.fileName?`<div style="font-size:12px;margin-top:3px;display:flex;align-items:center;gap:6px"><span style="color:var(--blue)">📎 ${g.fileName}</span><button type="button" onclick="viewGastoFile('${g.id}')" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:12px;text-decoration:underline;padding:0">Ver</button><button type="button" onclick="downloadGastoFile('${g.id}','${(g.fileName||'').replace(/'/g,"")}')" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:12px;text-decoration:underline;padding:0">Baixar</button></div>`:''}
     </div>
     <button class="fdl" style="color:var(--t2);margin-right:2px" onclick="edGasto('${g.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="fdl" style="color:var(--red)" onclick="delGasto('${g.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
   </div>`).join('');
@@ -2719,6 +2720,62 @@ async function viewReplyFile(taskId,replyId){
 }
 async function downloadReplyFile(taskId,replyId,fileName){
   const data=await _getReplyFileData(taskId,replyId);
+  if(!data){_showToast('Arquivo não encontrado','var(--red)');return;}
+  const a=document.createElement('a');a.href=data;a.download=fileName||'arquivo';document.body.appendChild(a);a.click();a.remove();
+}
+// Anexo principal da demanda: mesmo padrão de busca na nuvem quando falta local
+// (acessando de outro navegador/dispositivo que não fez o upload original).
+async function _getTaskFileData(taskId){
+  const d=ld();let t=d.tasks.find(x=>x.id===taskId);
+  if(!t){try{const _fsd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');t=(_fsd.tasks||[]).find(x=>x.id===taskId);}catch(e){}}
+  if(t&&t.taskFile&&t.taskFile.data)return t.taskFile.data;
+  const remote=await _fbLoadFileBlob(S.eid,'task_'+taskId);
+  if(remote&&t){t.taskFile=t.taskFile||{};t.taskFile.data=remote;localStorage.setItem('fs_'+S.eid,JSON.stringify(d));}
+  return remote;
+}
+async function viewTaskFile(taskId){
+  const data=await _getTaskFileData(taskId);
+  if(!data){_showToast('Arquivo não encontrado','var(--red)');return;}
+  _openFileWindow(data);
+}
+async function downloadTaskFile(taskId,fileName){
+  const data=await _getTaskFileData(taskId);
+  if(!data){_showToast('Arquivo não encontrado','var(--red)');return;}
+  const a=document.createElement('a');a.href=data;a.download=fileName||'arquivo';document.body.appendChild(a);a.click();a.remove();
+}
+// Comprovante de gasto: mesmo padrão de busca na nuvem quando falta local.
+async function _getGastoFileData(gastoId){
+  const d=ld();const g=(d.gastos||[]).find(x=>x.id===gastoId);
+  if(g&&g.fileData)return g.fileData;
+  const remote=await _fbLoadFileBlob(S.eid,'gasto_'+gastoId);
+  if(remote&&g){g.fileData=remote;localStorage.setItem('fs_'+S.eid,JSON.stringify(d));}
+  return remote;
+}
+async function viewGastoFile(gastoId){
+  const data=await _getGastoFileData(gastoId);
+  if(!data){_showToast('Arquivo não encontrado','var(--red)');return;}
+  _openFileWindow(data);
+}
+async function downloadGastoFile(gastoId,fileName){
+  const data=await _getGastoFileData(gastoId);
+  if(!data){_showToast('Arquivo não encontrado','var(--red)');return;}
+  const a=document.createElement('a');a.href=data;a.download=fileName||'arquivo';document.body.appendChild(a);a.click();a.remove();
+}
+// Comprovante/contrato de venda: idem.
+async function _getVendaFileData(vendaId){
+  const d=ld();const vi=(d.vendasItems||[]).find(x=>x.id===vendaId);
+  if(vi&&vi.fileData)return vi.fileData;
+  const remote=await _fbLoadFileBlob(S.eid,'venda_'+vendaId);
+  if(remote&&vi){vi.fileData=remote;localStorage.setItem('fs_'+S.eid,JSON.stringify(d));}
+  return remote;
+}
+async function viewVendaFile(vendaId){
+  const data=await _getVendaFileData(vendaId);
+  if(!data){_showToast('Arquivo não encontrado','var(--red)');return;}
+  _openFileWindow(data);
+}
+async function downloadVendaFile(vendaId,fileName){
+  const data=await _getVendaFileData(vendaId);
   if(!data){_showToast('Arquivo não encontrado','var(--red)');return;}
   const a=document.createElement('a');a.href=data;a.download=fileName||'arquivo';document.body.appendChild(a);a.click();a.remove();
 }
@@ -3804,7 +3861,7 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
         const _plbl={high:'<span class="b br" style="font-size:11px">▲ Alta</span>',med:'<span class="b bgo" style="font-size:11px">● Média</span>',low:'<span class="b bgr" style="font-size:11px">▼ Baixa</span>'};
         const _metaRow=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;align-items:center">${data&&data.status?(_slbl[data.status]||''):''}${data&&data.pri?(_plbl[data.pri]||''):''}${data&&data.due?`<span style="font-size:12px;color:var(--t2)">⏰ Prazo: ${fd(data.due)}</span>`:''}${data&&data.assign?`<span style="font-size:12px;color:var(--t2)">👤 ${data.assign}</span>`:''}</div>`;
         const _linkRow=data&&data.link?`<div style="margin-top:8px"><a href="${data.link}" target="_blank" rel="noopener" style="font-size:13px;color:var(--blue);display:inline-flex;align-items:center;gap:5px;text-decoration:none;font-weight:500">🔗 <span style="text-decoration:underline">${data.link.length>60?data.link.slice(0,60)+'...':data.link}</span></a></div>`:'';
-        const _fileRow=(()=>{if(!data||!data.taskFile)return'';const _tf=data.taskFile;const _hasData=!!_tf.data;const _viewBtn=_hasData?`<a href="${_tf.data}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--s2);border:0.5px solid var(--gbr);border-radius:6px;font-size:12px;color:var(--text);text-decoration:none;font-weight:500">👁 Visualizar</a>`:'<span style="font-size:12px;color:var(--t2)">👁 Arquivo sem preview</span>';const _dlBtn=_hasData?`<a href="${_tf.data}" download="${_tf.name||'arquivo'}" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--s2);border:0.5px solid var(--gbr);border-radius:6px;font-size:12px;color:var(--green);text-decoration:none;font-weight:500">⬇ Baixar</a>`:'';return`<div style="margin-top:8px;padding:8px 10px;background:var(--gb);border:0.5px solid var(--gbr);border-radius:6px"><div style="font-size:12px;color:var(--t2);margin-bottom:6px;font-weight:600">📎 ${_tf.name||'Arquivo'}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${_viewBtn}${_dlBtn}</div></div>`;})();
+        const _fileRow=(()=>{if(!data||!data.taskFile)return'';const _tf=data.taskFile;const _hasData=!!_tf.data;const _viewBtn=_hasData?`<a href="${_tf.data}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--s2);border:0.5px solid var(--gbr);border-radius:6px;font-size:12px;color:var(--text);text-decoration:none;font-weight:500">👁 Visualizar</a>`:`<button type="button" onclick="viewTaskFile('${data.id}')" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--s2);border:0.5px solid var(--gbr);border-radius:6px;font-size:12px;color:var(--text);font-weight:500;cursor:pointer">👁 Visualizar</button>`;const _dlBtn=_hasData?`<a href="${_tf.data}" download="${_tf.name||'arquivo'}" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--s2);border:0.5px solid var(--gbr);border-radius:6px;font-size:12px;color:var(--green);text-decoration:none;font-weight:500">⬇ Baixar</a>`:`<button type="button" onclick="downloadTaskFile('${data.id}','${(_tf.name||'arquivo').replace(/'/g,"")}')" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--s2);border:0.5px solid var(--gbr);border-radius:6px;font-size:12px;color:var(--green);font-weight:500;cursor:pointer">⬇ Baixar</button>`;return`<div style="margin-top:8px;padding:8px 10px;background:var(--gb);border:0.5px solid var(--gbr);border-radius:6px"><div style="font-size:12px;color:var(--t2);margin-bottom:6px;font-weight:600">📎 ${_tf.name||'Arquivo'}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${_viewBtn}${_dlBtn}</div></div>`;})();
         return `<div style="padding:10px 12px;background:var(--gb);border-radius:8px;border:0.5px solid var(--gbr);margin-bottom:14px"><div style="font-size:14px;font-weight:700;color:var(--text)">${data?data.title:''}</div>${data&&data.desc?`<div style="font-size:12px;color:var(--t2);margin-top:4px">${data.desc}</div>`:''} ${_metaRow}${_linkRow}${_fileRow}</div><div style="max-height:200px;overflow-y:auto;margin-bottom:12px">${replHtml}</div><div class="fg"><label>Responder</label><textarea class="fi" id="reply-txt" placeholder="Escreva uma resposta ou comentário..." style="min-height:65px"></textarea></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px"><div class="fg" style="margin:0"><label style="font-size:12px">Anexar arquivo (opcional)</label><input type="file" id="reply-file-inp" class="fi" style="padding:5px;font-size:12px;cursor:pointer"></div><div class="fg" style="margin:0"><label style="font-size:12px">Link (opcional)</label><input class="fi" id="reply-link-inp" placeholder="https://..." style="font-size:13px"></div></div>`;
       },
       save:()=>{
