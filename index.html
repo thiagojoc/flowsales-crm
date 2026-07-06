@@ -1553,6 +1553,7 @@ function showApp(){
   _migrateRemoveDemo();
   _loadFirms();
   setupFirmSelect();loadFirm();renderAll();populateWkFilter();
+  _autoSyncIntegrations();
   // Pedir permissão de notificação desktop
   if('Notification' in window && Notification.permission==='default'){
     Notification.requestPermission();
@@ -1614,7 +1615,7 @@ function selectFirm(id){
   document.querySelectorAll('.firm-opt').forEach(o=>{
     o.classList.toggle('active',o.dataset.fid===id);
   });
-  loadFirm();nav('ov');renderAll();populateWkFilter();
+  loadFirm();nav('ov');renderAll();populateWkFilter();_autoSyncIntegrations();
   // Restaurar avatar do admin ao trocar firma
   if(S.role==='admin'){
     try{
@@ -1994,10 +1995,10 @@ function rGhlKpis(d){
   const convRate=g.reunReal?Math.round(g.vendas/g.reunReal*100):0;
   el.innerHTML=`<div style="font-size:10px;color:var(--t2);margin-bottom:12px">Última sincronização: ${syncDate}</div><div class="kpi-g6" style="margin-bottom:14px"><div class="kpi-mc"><div class="kpi-lbl">Leads</div><div class="kpi-val" style="color:var(--blue)">${g.leads||0}</div><div class="kpi-sub kpi-nt">no período selecionado</div></div><div class="kpi-mc"><div class="kpi-lbl">Reuniões agendadas</div><div class="kpi-val" style="color:var(--gold)">${g.reunAgd}</div><div class="kpi-sub kpi-nt">${g.totalEvents} evento${g.totalEvents!==1?'s':''} no calendário</div></div><div class="kpi-mc"><div class="kpi-lbl">Reuniões realizadas</div><div class="kpi-val" style="color:var(--green)">${g.reunReal}</div><div class="kpi-sub kpi-nt">${showRate}% de show rate</div></div><div class="kpi-mc"><div class="kpi-lbl">Vendas ganhas</div><div class="kpi-val" style="color:var(--green)">${g.vendas}</div><div class="kpi-sub kpi-nt">${convRate}% conversão</div></div><div class="kpi-mc"><div class="kpi-lbl">Valor vendido</div><div class="kpi-val" style="color:var(--gold)">R$ ${(g.valorTotal||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${g.vendas} cliente${g.vendas!==1?'s':''} × MRR</div></div></div><div style="font-size:11px;font-weight:500;color:var(--t2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Produtos / Tags (leads ganhos)</div>${tagHtml}`;
 }
-async function syncGHL(){
+async function syncGHL(silent){
   const d=ld();const fe=d.firmExtra||{};
   const token=fe.ghlToken;const locationId=fe.ghlLocationId;const calendarId=fe.ghlCalendarId;
-  if(!token||!locationId){alert('Configure o Token e Location ID do GHL em Editar dados do escritório.');return;}
+  if(!token||!locationId){if(!silent)alert('Configure o Token e Location ID do GHL em Editar dados do escritório.');return;}
   const btn=document.getElementById('ghl-sync-btn');if(btn){btn.disabled=true;btn.textContent='Buscando...';}
   const h={'Authorization':'Bearer '+token,'Version':'2021-07-28'};
   const BASE='https://services.leadconnectorhq.com';
@@ -2023,7 +2024,7 @@ async function syncGHL(){
     d.kpis.reunAgd=agendadas;d.kpis.reunReal=realizadas;d.kpis.vendas=vendas;d.kpis.leads=leads;
     if(valorTotal>0)d.kpis.rev=valorTotal;
     sv(d);renderAll();
-  }catch(e){alert('Erro ao sincronizar GHL: '+e.message);}
+  }catch(e){if(!silent)alert('Erro ao sincronizar GHL: '+e.message);}
   finally{if(btn){btn.disabled=false;btn.textContent='Sincronizar';}}
 }
 
@@ -2042,10 +2043,10 @@ function rMetaKpis(d){
   const cpl=m.leads?Math.round(m.spend/m.leads):0;
   el.innerHTML=`<div style="font-size:10px;color:var(--t2);margin-bottom:12px">Última sincronização: ${syncDate}</div><div class="kpi-g6" style="margin-bottom:14px"><div class="kpi-mc"><div class="kpi-lbl">Investimento</div><div class="kpi-val" style="color:var(--gold)">R$ ${(m.spend||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">no período selecionado</div></div><div class="kpi-mc"><div class="kpi-lbl">Impressões</div><div class="kpi-val" style="color:var(--blue)">${(m.impressions||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${(m.reach||0).toLocaleString('pt-BR')} pessoas alcançadas</div></div><div class="kpi-mc"><div class="kpi-lbl">Cliques</div><div class="kpi-val" style="color:var(--green)">${(m.clicks||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${ctr}% CTR</div></div><div class="kpi-mc"><div class="kpi-lbl">Leads gerados</div><div class="kpi-val" style="color:var(--green)">${m.leads||0}</div><div class="kpi-sub kpi-nt">R$ ${cpl.toLocaleString('pt-BR')} custo por lead</div></div></div>`;
 }
-async function syncMeta(){
+async function syncMeta(silent){
   const d=ld();const fe=d.firmExtra||{};
   const token=fe.metaToken;let accId=fe.metaAccId;
-  if(!token||!accId){alert('Configure o Token e o Ad Account ID da Meta em Editar dados do escritório.');return;}
+  if(!token||!accId){if(!silent)alert('Configure o Token e o Ad Account ID da Meta em Editar dados do escritório.');return;}
   accId=accId.trim();if(!accId.startsWith('act_'))accId='act_'+accId;
   const btn=document.getElementById('meta-sync-btn');if(btn){btn.disabled=true;btn.textContent='Buscando...';}
   const since=S.calFrom||new Date(Date.now()-30*24*3600000).toISOString().split('T')[0];
@@ -2067,8 +2068,23 @@ async function syncMeta(){
     d.kpis.cliques=+row.clicks||d.kpis.cliques||0;
     if(leads>0){d.kpis.leads=leads;d.kpis.cpl=Math.round((+row.spend||0)/leads);}
     sv(d);renderAll();
-  }catch(e){alert('Erro ao sincronizar Meta Ads: '+e.message);}
+  }catch(e){if(!silent)alert('Erro ao sincronizar Meta Ads: '+e.message);}
   finally{if(btn){btn.disabled=false;btn.textContent='Sincronizar';}}
+}
+// Sincroniza GHL/Meta sozinho ao carregar o painel ou trocar de escritório — só
+// dispara de novo se já fez um tempo desde a última vez, pra não estourar rate
+// limit da API a cada F5 ou navegação.
+const _AUTOSYNC_STALE_MS=10*60*1000;
+function _autoSyncIntegrations(){
+  const d=ld();const fe=d.firmExtra||{};
+  if(fe.ghlToken&&fe.ghlLocationId){
+    const last=(d.ghlKpis&&d.ghlKpis.syncedAt)?new Date(d.ghlKpis.syncedAt).getTime():0;
+    if(Date.now()-last>_AUTOSYNC_STALE_MS)syncGHL(true);
+  }
+  if(fe.metaToken&&fe.metaAccId){
+    const last=(d.metaKpis&&d.metaKpis.syncedAt)?new Date(d.metaKpis.syncedAt).getTime():0;
+    if(Date.now()-last>_AUTOSYNC_STALE_MS)syncMeta(true);
+  }
 }
 
 // ── METAS ─────────────────────────────────────────────────────
