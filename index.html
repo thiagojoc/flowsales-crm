@@ -2014,8 +2014,9 @@ async function syncGHL(silent){
       fetch(`${BASE}/opportunities/search?location_id=${locationId}&limit=100`,{headers:h}).then(r=>r.json())
     ]);
     const events=evR.events||[];
-    const agendadas=events.filter(e=>!['cancelled','no_show','invalid'].includes(e.appointmentStatus)).length;
-    const realizadas=events.filter(e=>['showed','attended','complete','completed'].includes(e.appointmentStatus)).length;
+    const _stAp=e=>(e.appointmentStatus||'').toLowerCase().trim();
+    const agendadas=events.filter(e=>!['cancelled','no_show','noshow','invalid'].includes(_stAp(e))).length;
+    const realizadas=events.filter(e=>['showed','attended','complete','completed'].includes(_stAp(e))).length;
     const wonOpps=oppsR.opportunities||[];
     const vendas=wonOpps.length;
     const valorTotal=wonOpps.reduce((s,o)=>s+(o.monetaryValue||3500),0);
@@ -2093,20 +2094,14 @@ async function syncMeta(silent){
   }catch(e){if(!silent)alert('Erro ao sincronizar Meta Ads: '+e.message);}
   finally{if(btn){btn.disabled=false;btn.textContent='Sincronizar';}}
 }
-// Sincroniza GHL/Meta sozinho ao carregar o painel ou trocar de escritório — só
-// dispara de novo se já fez um tempo desde a última vez, pra não estourar rate
-// limit da API a cada F5 ou navegação.
-const _AUTOSYNC_STALE_MS=10*60*1000;
+// Sincroniza GHL/Meta sozinho ao carregar o painel ou trocar de escritório.
+// Sempre busca fresco (sem cache de "só resincroniza se já fez um tempo") —
+// mudança de status/tag de um lead no GHL precisa aparecer no próximo F5,
+// não só depois de alguns minutos.
 function _autoSyncIntegrations(){
   const d=ld();const fe=d.firmExtra||{};
-  if(fe.ghlToken&&fe.ghlLocationId){
-    const last=(d.ghlKpis&&d.ghlKpis.syncedAt)?new Date(d.ghlKpis.syncedAt).getTime():0;
-    if(Date.now()-last>_AUTOSYNC_STALE_MS)syncGHL(true);
-  }
-  if(fe.metaToken&&fe.metaAccId){
-    const last=(d.metaKpis&&d.metaKpis.syncedAt)?new Date(d.metaKpis.syncedAt).getTime():0;
-    if(Date.now()-last>_AUTOSYNC_STALE_MS)syncMeta(true);
-  }
+  if(fe.ghlToken&&fe.ghlLocationId)syncGHL(true);
+  if(fe.metaToken&&fe.metaAccId)syncMeta(true);
 }
 
 // ── METAS ─────────────────────────────────────────────────────
