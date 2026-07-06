@@ -2579,25 +2579,35 @@ function rChat(d){
   }).join('');
   el.scrollTop=el.scrollHeight;
 }
+// Carrega/salva o chat certo — quando o admin está conversando com um
+// escritório específico (window._chatFirmId), tem que ler/gravar nos dados
+// DAQUELE escritório, não nos dados do próprio painel do admin.
+function _chatLoad(){
+  const _tf=window._chatFirmId||null;
+  return {tf:_tf, d:_tf?(JSON.parse(localStorage.getItem('fs_'+_tf)||'{}')):ld()};
+}
+function _chatSave(tf,d){
+  if(tf){localStorage.setItem('fs_'+tf,JSON.stringify(d));_fbSave(tf,d);}else{sv(d);}
+}
 function editMsg(id){
-  const d=ld();const m=d.msgs.find(x=>x.id===id);if(!m)return;
+  const {d}=_chatLoad();const m=d.msgs.find(x=>x.id===id);if(!m)return;
   if(m.media){alert('Mensagens com mídia não podem ser editadas.');return;}
   const row=document.getElementById('mrow-'+id);if(!row)return;
   const bbl=row.querySelector('.bbl');if(!bbl)return;
   const orig=m.text;
   const esc=orig.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  bbl.innerHTML='<textarea id="edit-ta-'+id+'" style="width:100%;min-width:160px;background:transparent;border:none;border-bottom:1px solid var(--gold);color:inherit;font-size:13px;font-family:inherit;resize:none;outline:none;line-height:1.5" rows="2">'+orig+'</textarea><div style="display:flex;gap:6px;margin-top:6px;justify-content:flex-end"><button onclick="rChat(ld())" class="bgh" style="font-size:13px;padding:3px 10px">Cancelar</button><button onclick="saveEditMsg(\'' + id + '\')" class="bpr" style="font-size:13px;padding:3px 10px">Salvar</button></div>';
+  bbl.innerHTML='<textarea id="edit-ta-'+id+'" style="width:100%;min-width:160px;background:transparent;border:none;border-bottom:1px solid var(--gold);color:inherit;font-size:13px;font-family:inherit;resize:none;outline:none;line-height:1.5" rows="2">'+orig+'</textarea><div style="display:flex;gap:6px;margin-top:6px;justify-content:flex-end"><button onclick="rChat(_chatLoad().d)" class="bgh" style="font-size:13px;padding:3px 10px">Cancelar</button><button onclick="saveEditMsg(\'' + id + '\')" class="bpr" style="font-size:13px;padding:3px 10px">Salvar</button></div>';
   const ta=document.getElementById('edit-ta-'+id);if(ta){ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length);}
 }
 function saveEditMsg(id){
   const ta=document.getElementById('edit-ta-'+id);if(!ta)return;
   const txt=ta.value.trim();if(!txt)return;
-  const d=ld();const m=d.msgs.find(x=>x.id===id);if(!m)return;
-  m.text=txt;m.edited=true;sv(d);rChat(d);
+  const {tf,d}=_chatLoad();const m=d.msgs.find(x=>x.id===id);if(!m)return;
+  m.text=txt;m.edited=true;_chatSave(tf,d);rChat(d);
 }
 function delMsg(id){
   if(!confirm('Excluir mensagem?'))return;
-  const d=ld();d.msgs=d.msgs.filter(x=>x.id!==id);sv(d);rChat(d);
+  const {tf,d}=_chatLoad();d.msgs=d.msgs.filter(x=>x.id!==id);_chatSave(tf,d);rChat(d);
 }
 function toggleEmojiPick(id){
   const ep=document.getElementById(id);if(!ep)return;
@@ -2622,7 +2632,7 @@ function sendMsg(){
   const inp=document.getElementById('cin');const txt=inp.value.trim();if(!txt)return;
   const _tf=window._chatFirmId||null;
   const _cd=_tf?JSON.parse(localStorage.getItem('fs_'+_tf)||'{}'):ld();
-  const _svcd=d=>_tf?localStorage.setItem('fs_'+_tf,JSON.stringify(d)):sv(d);
+  const _svcd=d=>_chatSave(_tf,d);
   const msgId='msg'+Date.now();
   _cd.msgs=_cd.msgs||[];
   _cd.msgs.push({id:msgId,text:txt,from:S.user.name,role:S.role,time:new Date().toISOString()});
@@ -2698,10 +2708,10 @@ function handleChatFile(inp){
     if(file.type.startsWith('image/')){
       _showImgPreview(e.target.result,file.name,file.type);
     } else {
-      const d=ld();
+      const {tf,d}=_chatLoad();
       const msg={id:'m'+Date.now(),text:'',from:S.user.name,role:S.role,time:new Date().toISOString(),media:{name:file.name,type:file.type,data:e.target.result}};
       d.msgs=d.msgs||[];d.msgs.push(msg);
-      activ(d,'Arquivo enviado: '+file.name,'var(--blue)');sv(d);rChat(d);
+      activ(d,'Arquivo enviado: '+file.name,'var(--blue)');_chatSave(tf,d);rChat(d);
     }
     inp.value='';
   };
@@ -2832,10 +2842,10 @@ function _closeImgPreview(){const m=document.getElementById('img-preview-modal')
 function _sendImgPreview(){
   const cvs=document.getElementById('ipm-canvas');if(!cvs)return;
   const dataUrl=cvs.toDataURL(_imgPreviewType||'image/png');
-  const d=ld();
+  const {tf,d}=_chatLoad();
   const msg={id:'m'+Date.now(),text:'',from:S.user.name,role:S.role,time:new Date().toISOString(),media:{name:_imgPreviewName,type:_imgPreviewType||'image/png',data:dataUrl}};
   d.msgs=d.msgs||[];d.msgs.push(msg);
-  activ(d,'Imagem enviada','var(--blue)');sv(d);rChat(d);_closeImgPreview();
+  activ(d,'Imagem enviada','var(--blue)');_chatSave(tf,d);rChat(d);_closeImgPreview();
 }
 let _mediaRec=null,_recChunks=[],_audioPreviewBlob=null;
 function toggleAudio(){
@@ -2896,10 +2906,10 @@ function _sendAudioPreview(){
   if(!_audioPreviewBlob)return;
   const fr=new FileReader();
   fr.onload=ev=>{
-    const d=ld();
+    const {tf,d}=_chatLoad();
     const msg={id:'m'+Date.now(),text:'',from:S.user.name,role:S.role,time:new Date().toISOString(),media:{name:'audio_'+Date.now()+'.webm',type:'audio/webm',data:ev.target.result}};
     d.msgs=d.msgs||[];d.msgs.push(msg);
-    activ(d,'Áudio enviado','var(--gold)');sv(d);rChat(d);
+    activ(d,'Áudio enviado','var(--gold)');_chatSave(tf,d);rChat(d);
     _discardAudio();
   };
   fr.readAsDataURL(_audioPreviewBlob);
