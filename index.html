@@ -1376,6 +1376,9 @@ function applyCal(){
   const lblMap={'all':'Todo o período','today':'Hoje','week':'Esta semana','lastweek':'Semana passada','month':'Este mês','lastmonth':'Mês passado','year':'Este ano','lastyear':'Ano passado','custom':'Personalizado'};const lbl=lblMap[S.calPreset]||'Personalizado';
   document.getElementById('cal-lbl').textContent=S.calPreset==='all'?'Todo o período':(S.calFrom&&S.calTo?`${fd(S.calFrom)} - ${fd(S.calTo)}`:S.calFrom?fd(S.calFrom):lbl);
   closeCal();renderAll();
+  // Muda o período selecionado no dash -> os KPIs do GHL/Meta foram buscados com o
+  // período ANTERIOR, então precisa buscar de novo com o range novo (não é só re-render).
+  syncGHL(true);syncMeta(true);
 }
 function inRange(dateStr){
   if(!S.calFrom) return true;
