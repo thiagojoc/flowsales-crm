@@ -643,7 +643,8 @@ signInAnonymously(_auth).catch(e=>console.error('[FB Auth] signInAnonymously fal
 
         <!-- KPIS -->
         <div class="sec" id="s-kpis">
-          <div class="fr" style="justify-content:flex-end;gap:8px;">
+          <div class="fr" style="justify-content:space-between;gap:8px;">
+            <select class="fi" id="kpi-firm-sel" onchange="setKpiFirm(this.value)" style="display:none;width:auto;font-size:13px;padding:6px 10px"></select>
             <button class="ca" onclick="openM('kpi')">Atualizar métricas</button>
           </div>
           <div class="kpi-hero" id="kpi-hero"></div>
@@ -1736,6 +1737,7 @@ function toggleFirmDrop(e){if(e)e.stopPropagation();if(S.role==='admin')document
 function selectFirm(id){
   S.eid=id;
   delete S.ownf; // reset filter so rTasks defaults correctly for new context
+  S.kpiViewEid=null;const _kfsel=document.getElementById('kpi-firm-sel');if(_kfsel)_kfsel.value=id;
   document.getElementById('firm-drop').classList.remove('on');
   document.querySelectorAll('.firm-opt').forEach(o=>{
     o.classList.toggle('active',o.dataset.fid===id);
@@ -1862,7 +1864,34 @@ function _clickupTask(t){
       createTask(li.id);
     }).catch(()=>{});
 }
-function renderAll(){const d=ld();const _td=_localDate();d.tasks.forEach(t=>{if(t.status==='pending'&&t.due&&t.due<_td)t.status='late';});rOv(d);rKpis(d);rConversoes(d);rMetaKpis(d);rScore(d);rMetas(d);rTasks(d);rMeet(d);rFiles(d);rChat(d);rDem(d);rTimeline(d);rPerfil(d);rNotif(d);rBadges(d);rFlow();rFirms();rFinanceiro(d);}
+// Seletor de escritório só dentro da aba KPIs (admin) — deixa espiar os
+// números de qualquer escritório (ou os da própria Flow Sales) sem trocar
+// o painel inteiro (Demandas/Chat/etc continuam no escritório ativo).
+function _kpiEid(){return(S.role==='admin'&&S.kpiViewEid)?S.kpiViewEid:S.eid;}
+function _kpiData(){
+  const eid=_kpiEid();
+  if(eid===S.eid)return ld();
+  try{return JSON.parse(localStorage.getItem('fs_'+eid)||'{}');}catch(e){return{};}
+}
+function _kpiSave(data){
+  const eid=_kpiEid();
+  if(eid===S.eid){sv(data);return;}
+  localStorage.setItem('fs_'+eid,JSON.stringify(data));
+  _fbSave(eid,data);
+}
+function setKpiFirm(id){S.kpiViewEid=id;rKpis(_kpiData());rConversoes(_kpiData());rMetaKpis(_kpiData());rScore(_kpiData());}
+function _renderKpiFirmSelector(){
+  const sel=document.getElementById('kpi-firm-sel');if(!sel)return;
+  const show=S.role==='admin';
+  sel.style.display=show?'':'none';
+  if(!show)return;
+  if(!sel._built){
+    sel._built=true;
+    sel.innerHTML='<option value="flowsales">Nossos (Flow Sales)</option>'+FIRMS.map(f=>`<option value="${f.id}">${f.name}</option>`).join('');
+    sel.value=S.kpiViewEid||S.eid;
+  }
+}
+function renderAll(){const d=ld();const _td=_localDate();d.tasks.forEach(t=>{if(t.status==='pending'&&t.due&&t.due<_td)t.status='late';});const _kd=_kpiData();rOv(d);_renderKpiFirmSelector();rKpis(_kd);rConversoes(_kd);rMetaKpis(_kd);rScore(_kd);rMetas(d);rTasks(d);rMeet(d);rFiles(d);rChat(d);rDem(d);rTimeline(d);rPerfil(d);rNotif(d);rBadges(d);rFlow();rFirms();rFinanceiro(d);}
 
 function _entregaCardHtml(e){
   const catClr={GHL:'var(--blue)',IA:'#7c3aed',Website:'var(--green)',Campanha:'var(--gold)',Reunião:'var(--t2)',Outro:'var(--t2)'};
@@ -2212,7 +2241,7 @@ function rConversoes(d){
   }).join('')}</div>`;
 }
 async function syncGHL(silent){
-  const d=ld();const fe=d.firmExtra||{};
+  const d=_kpiData();const fe=d.firmExtra||{};
   const token=fe.ghlToken;const locationId=fe.ghlLocationId;const calendarId=fe.ghlCalendarId;
   if(!token||!locationId){if(!silent)alert('Configure o Token e Location ID do GHL em Editar dados do escritório.');return;}
   const btn=document.getElementById('ghl-sync-btn');if(btn){btn.disabled=true;btn.textContent='Buscando...';}
@@ -2297,7 +2326,7 @@ async function syncGHL(silent){
     d.kpis.rev=_calcFaturamento(d.vendasItems);
     d.kpis.receitaBruta=_calcReceitaBruta(d.vendasItems);
     d.kpis.vendas=d.vendasItems.length;
-    sv(d);renderAll();
+    _kpiSave(d);renderAll();
   }catch(e){if(!silent)alert('Erro ao sincronizar GHL: '+e.message);}
   finally{if(btn){btn.disabled=false;btn.textContent='Sincronizar';}}
 }
@@ -2322,7 +2351,7 @@ function rMetaKpis(d){
 }
 function setMetaCampaign(id){S.metaCampaignId=id;syncMeta();}
 async function syncMeta(silent){
-  const d=ld();const fe=d.firmExtra||{};
+  const d=_kpiData();const fe=d.firmExtra||{};
   const token=fe.metaToken;let accId=fe.metaAccId;
   if(!token||!accId){if(!silent)alert('Configure o Token e o Ad Account ID da Meta em Editar dados do escritório.');return;}
   accId=accId.trim();if(!accId.startsWith('act_'))accId='act_'+accId;
@@ -2363,7 +2392,7 @@ async function syncMeta(silent){
       // pra não zerar o número que veio do GHL.
       if(leads>0){d.kpis.leads=leads;d.kpis.cpl=Math.round((+row.spend||0)/leads);}
     }
-    sv(d);renderAll();
+    _kpiSave(d);renderAll();
   }catch(e){if(!silent)alert('Erro ao sincronizar Meta Ads: '+e.message);}
   finally{if(btn){btn.disabled=false;btn.textContent='Sincronizar';}}
 }
