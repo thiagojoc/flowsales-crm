@@ -1778,7 +1778,17 @@ function loadFirm(){
   const _unLF=document.getElementById('un');if(_unLF&&S.user){const _svLF=JSON.parse(localStorage.getItem('fs_upf_'+(S.user.email||''))||'{}');const _feRN=(()=>{try{return JSON.parse(localStorage.getItem('fs_'+S.eid)||'{}').firmExtra?.respName||'';}catch(e){return '';}})();const _lfFull=_svLF.name||S.user.name||_feRN||'';_unLF.textContent=_lfFull;_unLF.title=_lfFull;}
   document.getElementById('sfn').textContent=f.name;
   document.getElementById('sfs').textContent='';
-  document.getElementById('sbdg').textContent='';
+  // Nomes dos envolvidos no escritório (responsável + sócios), mesmo estilo do
+  // "Thiago & Carlos" que aparece no painel interno.
+  try{
+    const _lfd10=JSON.parse(localStorage.getItem('fs_'+S.eid)||'{}');
+    const _seen=new Set();const _names=[];
+    const _addNm=n=>{const t=(n||'').trim();if(!t)return;const fn=t.split(' ')[0];const k=fn.toLowerCase();if(!_seen.has(k)){_seen.add(k);_names.push(fn);}};
+    _addNm((_lfd10.firmExtra||{}).respName);
+    (_lfd10.partners||[]).forEach(p=>_addNm(p.name));
+    const _joined=_names.length>1?_names.slice(0,-1).join(', ')+' & '+_names[_names.length-1]:_names.join('');
+    document.getElementById('sbdg').textContent=_joined;
+  }catch(e){document.getElementById('sbdg').textContent='';}
   const _sphEl=document.getElementById('sfirm-photo');if(_sphEl){_sphEl.src='';_sphEl.style.display='none';const _sph=(()=>{try{const _lfd9=JSON.parse(localStorage.getItem('fs_'+S.eid)||'{}');return _lfd9.firmExtra?.firmPhoto||f.photo||'';}catch(e){return f.photo||'';}})();if(_sph){_sphEl.src=_sph;_sphEl.style.display='';}}
 }
 function populateWkFilter(){const sel=document.getElementById('wk-sel');if(!sel)return;const d=ld();const weeks=[...new Set(d.tasks.map(t=>t.week))].sort((a,b)=>a-b);sel.innerHTML='<option value="all">Todas</option>'+weeks.map(w=>`<option value="${w}">Semana ${w}</option>`).join('');}
@@ -2184,16 +2194,16 @@ function rConversoes(d){
   const k=d.kpis||{};
   const pct=(a,b)=>b?Math.round(a/b*100):0;
   const rows=[
-    {l:'Cliques → Leads',v:pct(k.leads,k.cliques),sub:`${k.leads||0} lead${k.leads!==1?'s':''} de ${(k.cliques||0).toLocaleString('pt-BR')} cliques`},
+    {l:'Cliques → Leads',v:pct(k.leads,k.cliques),sub:`${k.leads||0} de ${(k.cliques||0).toLocaleString('pt-BR')} cliques`},
     {l:'Leads → Reuniões agendadas',v:pct(k.reunAgd,k.leads),sub:`${k.reunAgd||0} de ${k.leads||0} leads`},
-    {l:'Agendadas → Realizadas (show rate)',v:pct(k.reunReal,k.reunAgd),sub:`${k.reunReal||0} de ${k.reunAgd||0} agendadas`},
-    {l:'Realizadas → Vendas (fechamento)',v:pct(k.vendas,k.reunReal),sub:`${k.vendas||0} de ${k.reunReal||0} realizadas`},
-    {l:'Lead → Venda (conversão geral)',v:pct(k.vendas,k.leads),sub:`${k.vendas||0} de ${k.leads||0} leads`},
+    {l:'Agendadas → Realizadas',v:pct(k.reunReal,k.reunAgd),sub:`${k.reunReal||0} de ${k.reunAgd||0} agendadas`},
+    {l:'Realizadas → Vendas',v:pct(k.vendas,k.reunReal),sub:`${k.vendas||0} de ${k.reunReal||0} realizadas`},
+    {l:'Lead → Venda (geral)',v:pct(k.vendas,k.leads),sub:`${k.vendas||0} de ${k.leads||0} leads`},
   ];
-  el.innerHTML=rows.map(r=>{
+  el.innerHTML=`<div class="kpi-g6" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">${rows.map(r=>{
     const cl=r.v>=50?'var(--green)':r.v>=20?'var(--gold)':'var(--red)';
-    return `<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px"><span style="font-weight:500;color:var(--text)">${r.l}</span><span style="font-weight:700;color:${cl}">${r.v}%</span></div><div style="height:8px;background:var(--s3);border-radius:4px;overflow:hidden"><div style="height:100%;width:${Math.min(r.v,100)}%;background:${cl};border-radius:4px"></div></div><div style="font-size:11px;color:var(--t2);margin-top:3px">${r.sub}</div></div>`;
-  }).join('');
+    return `<div class="kpi-mc"><div class="kpi-lbl">${r.l}</div><div class="kpi-val" style="color:${cl}">${r.v}%</div><div class="kpi-sub kpi-nt">${r.sub}</div><div class="kpi-bar"><div class="kpi-fill" style="width:${Math.min(r.v,100)}%;background:${cl}"></div></div></div>`;
+  }).join('')}</div>`;
 }
 async function syncGHL(silent){
   const d=ld();const fe=d.firmExtra||{};
@@ -2335,9 +2345,16 @@ async function syncMeta(silent){
     // é assim que dá pra ver o impacto daquela campanha especificamente no
     // negócio como um todo, não só dentro do card da Meta.
     {
-      d.kpis.invest=+row.spend||d.kpis.invest||0;
-      d.kpis.impressoes=+row.impressions||d.kpis.impressoes||0;
-      d.kpis.cliques=+row.clicks||d.kpis.cliques||0;
+      // Sempre usa o valor fresco da resposta (mesmo que seja 0) — usar "||" com
+      // o valor antigo como fallback fazia o número ficar preso no total da
+      // conta quando a campanha selecionada simplesmente não tinha gasto/dado
+      // nenhum no período, passando a falsa impressão de que nada mudou.
+      d.kpis.invest=+row.spend||0;
+      d.kpis.impressoes=+row.impressions||0;
+      d.kpis.cliques=+row.clicks||0;
+      // "leads" é compartilhado com o sync do GHL (contagem de oportunidades) —
+      // só sobrescreve se a Meta realmente tiver algum lead próprio contado,
+      // pra não zerar o número que veio do GHL.
       if(leads>0){d.kpis.leads=leads;d.kpis.cpl=Math.round((+row.spend||0)/leads);}
     }
     sv(d);renderAll();
