@@ -2262,6 +2262,7 @@ async function syncGHL(silent){
     // Vendas por origem (não só no card de KPIs do GHL) — origem detectada pela tag
     // do lead: "anúncio" = tráfego pago, "indicação" = indicação, "externo" = outro.
     d.vendasItems=d.vendasItems||[];
+    const _wonOppIds=new Set(wonOpps.map(o=>o.id));
     wonOpps.forEach(o=>{
       const viId='vi_ghl_'+o.id;
       const tagsNorm=((o.contact&&o.contact.tags)||[]).map(_normTag);
@@ -2274,6 +2275,9 @@ async function syncGHL(silent){
       if(idx>=0)d.vendasItems[idx]=Object.assign({},d.vendasItems[idx],item);
       else d.vendasItems.push(item);
     });
+    // Se um lead deixou de estar "Won" no GHL (voltou pra aberto/perdido), a
+    // venda que tinha sido criada automaticamente a partir dele some daqui também.
+    d.vendasItems=d.vendasItems.filter(vi=>!vi.ghlOppId||_wonOppIds.has(vi.ghlOppId));
     d.kpis.rev=_calcFaturamento(d.vendasItems);
     d.kpis.receitaBruta=_calcReceitaBruta(d.vendasItems);
     d.kpis.vendas=d.vendasItems.length;
