@@ -1126,10 +1126,73 @@ async function _mirrorMeetingToDoc(targetEid, meeting, notif){
   }catch(e){console.error('[mirror meeting]',e);}
 }
 
+// Compara o documento antigo com o novo e dispara notificação de computador
+// pra qualquer coisa nova relevante pro usuário atual: notificação nova no
+// sininho (tasks, reuniões, entregas — tudo que já vira um item em .notifs)
+// e mensagem nova no chat (mesmo sem @menção).
+function _checkNewActivityForDesktop(prevData, remoteData){
+  const myName=(S.user&&S.user.name)||'';
+  const myFn=myName.trim().split(' ')[0].toLowerCase();
+  const prevNotifs=prevData.notifs||[];
+  const newNotifs=(remoteData.notifs||[]).filter(n=>!prevNotifs.find(p=>p.id===n.id));
+  newNotifs.forEach(n=>{
+    const forFn=(n.for||'').trim().split(' ')[0].toLowerCase();
+    if(!n.for||forFn===myFn)_desktopNotif(n.title||'🔔 Nova notificação',n.sub||'');
+  });
+  const prevMsgs=prevData.msgs||[];
+  const newMsgs=(remoteData.msgs||[]).filter(m=>!prevMsgs.find(p=>p.id===m.id));
+  newMsgs.forEach(m=>{
+    if(m.from!==myName){
+      const isMention=m.text&&(m.text.toLowerCase().includes('@'+myFn)||m.text.includes('@'+myName));
+      if(isMention)_desktopNotif('📩 '+m.from+' mencionou você',(m.text||'').slice(0,80));
+      else _desktopNotif('💬 '+m.from,m.text?m.text.slice(0,80):(m.media?'Enviou um arquivo':''));
+    }
+  });
+}
+// Espelha em segundo plano os escritórios que NÃO são o painel ativo no momento
+// (só pra admin) — sem isso, notificação/mensagem de um escritório só chegava
+// se o admin estivesse com aquele painel especificamente aberto. Cada
+// escritório tem no máximo UM listener rodando: o "ativo" (_startRealtimeSync,
+// no escritório selecionado) ou o "de fundo" (aqui, pra todos os outros).
+let _fbFirmWatchers={};
+function _unwatchFirmBackground(eid){
+  if(_fbFirmWatchers[eid]){_fbFirmWatchers[eid]();delete _fbFirmWatchers[eid];}
+}
+function _watchFirmBackground(eid){
+  if(_fbFirmWatchers[eid])return;
+  let _firstSnap=true;
+  _waitFB().then(()=>{
+    if(_fbFirmWatchers[eid])return; // já foi criado enquanto esperava
+    const ref=window._fbDoc(window._fbDB,'flowsales_crm',eid);
+    _fbFirmWatchers[eid]=window._fbOnSnapshot(ref,snap=>{
+      if(!snap.exists())return;
+      const remote=snap.data();
+      const localRaw=localStorage.getItem('fs_'+eid);
+      const local=localRaw?JSON.parse(localRaw):{};
+      const remoteTs=remote.__ts||0;const localTs=local.__ts||0;
+      if(remoteTs>localTs){
+        // Não notifica retroativamente no primeiro snapshot (ver comentário
+        // equivalente em _startRealtimeSync).
+        if(!_firstSnap)_checkNewActivityForDesktop(local,remote);
+        localStorage.setItem('fs_'+eid,JSON.stringify(remote));
+      }
+      _firstSnap=false;
+    },()=>{});
+  }).catch(()=>{});
+}
+function _syncAdminWatchers(){
+  if(S.role!=='admin')return;
+  const allIds=['flowsales',...FIRMS.map(f=>f.id)];
+  allIds.forEach(eid=>{if(eid!==S.eid)_watchFirmBackground(eid);});
+  _unwatchFirmBackground(S.eid);
+  Object.keys(_fbFirmWatchers).forEach(eid=>{if(!allIds.includes(eid))_unwatchFirmBackground(eid);});
+}
 // Listener em tempo real — atualiza QUALQUER navegador imediatamente quando Firebase muda
 async function _startRealtimeSync(){
   if(_fbUnsub){_fbUnsub();_fbUnsub=null;}
+  _unwatchFirmBackground(S.eid);
   _setSyncDot('pending');
+  let _firstSnap=true;
   try{
     await _waitFB();
     const docRef = window._fbDoc(window._fbDB,'flowsales_crm',S.eid);
@@ -1140,25 +1203,17 @@ async function _startRealtimeSync(){
         const localTs = (localRaw?JSON.parse(localRaw):{}).__ts||0;
         const remoteTs = remote.__ts||0;
         if(remoteTs > localTs){
-          // Verificar se chegou mensagem nova com menção ao usuário atual
-          const prevMsgs=(localRaw?JSON.parse(localRaw):{}). msgs||[];
+          const prevData=localRaw?JSON.parse(localRaw):{};
           // Preserve local file .data (base64) that Firebase strips on upload
           if(localRaw&&remote.files&&remote.files.length){
             const localFiles=(JSON.parse(localRaw).files||[]);
             remote.files=remote.files.map(rf=>{const lf=localFiles.find(x=>x.id===rf.id);return(lf&&lf.data)?Object.assign({},rf,{data:lf.data}):rf;});
           }
           localStorage.setItem('fs_'+S.eid, JSON.stringify(remote));
-          const newMsgs=(remote.msgs||[]).filter(m=>!prevMsgs.find(p=>p.id===m.id));
-          newMsgs.forEach(m=>{
-            if(m.from!==S.user.name){
-              const myName=S.user.name.split(' ')[0];
-              const isMention=m.text&&(m.text.toLowerCase().includes('@'+myName.toLowerCase())||m.text.includes('@'+S.user.name));
-              // Antes só avisava em @menção — qualquer mensagem nova no chat que você
-              // participa é relevante, não só quando alguém te marca.
-              if(isMention)_desktopNotif('📩 '+m.from+' mencionou você',(m.text||'').slice(0,80));
-              else _desktopNotif('💬 '+m.from,m.text?m.text.slice(0,80):(m.media?'Enviou um arquivo':''));
-            }
-          });
+          // Não dispara notificação retroativa pra tudo que já existia no primeiro
+          // snapshot recebido (senão, entrar num escritório com histórico gera uma
+          // enxurrada de popups de coisa antiga).
+          if(!_firstSnap)_checkNewActivityForDesktop(prevData,remote);
           renderAll();
           _showToast('✅ Dados sincronizados','var(--green)');
         } else if(localTs > remoteTs){
@@ -1177,6 +1232,7 @@ async function _startRealtimeSync(){
         _fbSave(S.eid, toUpload);
         _setSyncDot('ok');
       }
+      _firstSnap=false;
     }, err=>{
       console.error('[FB] ❌ Listener:',err.code||err.message);
       _setSyncDot('err');
@@ -1319,6 +1375,7 @@ async function _startFirmsSync(){
       localStorage.setItem('fs_firms',JSON.stringify(FIRMS));
       setupFirmSelect();
       if(document.getElementById('s-firms')?.classList.contains('on')) rFirms();
+      _syncAdminWatchers();
     });
   }catch(e){console.error('[FB] firms sync:',e);}
 }
@@ -1617,6 +1674,7 @@ function showApp(){
     Notification.requestPermission();
   }
   _startRealtimeSync();
+  _syncAdminWatchers();
   if(S.role==='client'&&window._waitFB){
     _waitFB().then(async()=>{
       try{
@@ -1685,6 +1743,7 @@ function selectFirm(id){
   }
   setupFirmSelect();
   _startRealtimeSync();
+  _syncAdminWatchers();
 }
 function loadFirm(){
   const isFS = S.eid==='flowsales';
