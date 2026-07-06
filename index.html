@@ -2580,7 +2580,7 @@ function rChat(d){
         txt='<div style="display:flex;align-items:center;gap:8px;padding:4px 0"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg><span style="font-size:12px">'+(m.media.name||'Arquivo')+'</span><a href="'+m.media.data+'" download="'+(m.media.name||'arquivo')+'" style="color:var(--gold);font-size:12px">Baixar</a></div>'+(m.text?'<div style="font-size:12px">'+m.text+'</div>':'');
       }
     } else {
-      txt=m.text.replace(/@(\w[\w\s]*?)(?=\s|$|[^a-zA-Z])/g,'<span class="mention">@$1</span>');
+      txt=m.text.replace(/@([\p{L}]+)/gu,'<span class="mention">@$1</span>');
     }
     const acts=canEdit?`<div class="chat-msg-acts"><button onclick="editMsg('${m.id}')" title="Editar"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button onclick="delMsg('${m.id}')" title="Excluir"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div>`:'';
     return`<div class="mrow ${out?'out':'in'}" id="mrow-${m.id}"><div class="bbl ${out?'out':'in'}">${txt}</div><div class="mmeta">${m.from} - ${t}${acts}</div></div>`;
@@ -2646,9 +2646,24 @@ function sendMsg(){
   _cd.msgs.push({id:msgId,text:txt,from:S.user.name,role:S.role,time:new Date().toISOString()});
   // Notif para escritório quando admin escreve no chat deles
   if(_tf){_cd.notifs=_cd.notifs||[];_cd.notifs.unshift({id:'admsg_'+msgId,title:'\uD83D\uDCAC Mensagem do FlowSales',sub:S.user.name+': '+txt.slice(0,60),read:false});}
+  // Notif pro time FlowSales quando qualquer escrit\u00F3rio (qualquer cliente, n\u00E3o s\u00F3 um em
+  // especial) manda mensagem no chat \u2014 antes s\u00F3 existia notif no sentido admin -> escrit\u00F3rio.
+  if(!_tf&&S.role==='client'){
+    try{
+      const _afd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');
+      _afd.notifs=_afd.notifs||[];
+      const _fn=(FIRMS.find(f=>f.id===S.eid)||{}).name||S.eid||'';
+      const _nid='cmsg_'+msgId;
+      if(!_afd.notifs.find(n=>n.id===_nid)){
+        _afd.notifs.unshift({id:_nid,title:'\uD83D\uDCAC Mensagem no chat'+(_fn?' \u00B7 '+_fn:''),sub:S.user.name+': '+txt.slice(0,60),read:false});
+        localStorage.setItem('fs_flowsales',JSON.stringify(_afd));
+        _fbSave('flowsales',_afd);
+      }
+    }catch(_cme){}
+  }
   // @menções: cross-notify fs_flowsales com for:name (nunca notifica o remetente)
   if(!_tf){
-    const mentions=[...new Set((txt.match(/@(\w[\w\s]*?)(?=\s|$|[^a-zA-Z\s])/g)||[]).map(m=>m.slice(1).trim()))];
+    const mentions=[...new Set((txt.match(/@([\p{L}]+)/gu)||[]).map(m=>m.slice(1).trim()))];
     mentions.forEach(name=>{
       const notifId='nm_'+msgId+'_'+name.replace(/\s/g,'');
       const _mentionIsMe=(name||'').trim().toLowerCase()===(S.user&&S.user.name||'').trim().toLowerCase();
@@ -2674,7 +2689,7 @@ function _desktopNotif(title, body){
 function ckd(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}}
 let mentionQ='';
 function checkMention(e){
-  const v=e.target.value;const pos=e.target.selectionStart;const before=v.substring(0,pos);const m=before.match(/@(\w*)$/);
+  const v=e.target.value;const pos=e.target.selectionStart;const before=v.substring(0,pos);const m=before.match(/@([\p{L}]*)$/u);
   if(m){mentionQ=m[1];showMentionDrop(mentionQ);}else{closeMentionDrop();}
 }
 function showMentionDrop(q){
@@ -3248,7 +3263,12 @@ function openM(type,data){
         const d=ld();const t={id:data?data.id:'t'+Date.now(),title:v('m-ttl')||_ttl,desc:v('m-dsc')||_dsc,resp,assign:v('m-asg'),week:data?data.week:1,due,status:v('m-sta'),urgent:document.getElementById('m-urg')&&document.getElementById('m-urg').checked,pri:_pri||'med',created:data?data.created:_localDate(),createdBy:data?data.createdBy:(S.user&&S.user.name||''),createdByFirm:data?data.createdByFirm:(S.eid||''),link:_linkVal||(data&&data.link)||''};
         if(taskFile)t.taskFile=taskFile;else if(data&&data.taskFile&&!window._removeTaskFile)t.taskFile=data.taskFile;window._removeTaskFile=false;
         if(data){const i=d.tasks.findIndex(x=>x.id===data.id);if(i>=0){d.tasks[i]=t;if(t.createdBy&&t.createdBy!==(S.user&&S.user.name)){d.notifs=d.notifs||[];d.notifs.unshift({id:'tupd_'+t.id+'_'+Date.now(),title:'📋 Demanda atualizada',sub:t.title+' · alterada por '+(S.user&&S.user.name||''),for:t.createdBy,read:false});}if(t.assign&&t.assign!==(data.assign||'')){const _fnmE=s=>(s||'').trim().split(' ')[0].toLowerCase();const _isMeE=_fnmE(t.assign)===_fnmE(S.user&&S.user.name);if(_isMeE){const nidE='nasgn_ed_'+t.id+'_'+Date.now();d.notifs.unshift({id:nidE,title:'Demanda atribuída a você',sub:t.title+(t.due?' · Prazo: '+fd(t.due):''),read:false});_showToast('📋 Demanda atribuída: '+t.title,'var(--gold)');}else if(t.assign)_desktopNotif('📋 Demanda reatribuída a '+t.assign,t.title);if(S.eid&&S.eid!=='flowsales'){try{const _adme=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');_adme.notifs=_adme.notifs||[];const _xide='xfirm_ed_'+t.id+'_'+Date.now();const _feobj=FIRMS.find(f=>f.id===S.eid)||{};_adme.notifs.unshift({id:_xide,title:'📋 Demanda atualizada — '+(_feobj.name||S.eid),sub:t.title+' · Para: '+t.assign,read:false});localStorage.setItem('fs_flowsales',JSON.stringify(_adme));}catch(_xee){}}}}}
-        else{d.tasks.push(t);if(S.eid&&S.eid!=='flowsales'){try{const _afd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');_afd.tasks=_afd.tasks||[];if(!_afd.tasks.find(x=>x.id===t.id)){const _fn=(FIRMS.find(f=>f.id===S.eid)||{}).name||S.eid;_afd.tasks.unshift(Object.assign({},t,{_sourceFirm:S.eid,_sourceFirmName:_fn}));activ(_afd,'Nova demanda de '+_fn+': '+t.title,'var(--gold)');localStorage.setItem('fs_flowsales',JSON.stringify(_afd));}}catch(_tce){}}activ(d,'Nova demanda: '+t.title,'var(--gold)');if(t.assign){const _fnm=s=>(s||'').trim().split(' ')[0].toLowerCase();const _isMe=_fnm(t.assign)===_fnm(S.user&&S.user.name);if(_isMe){const nid='nasgn_'+t.id;if(!d.notifs.find(n=>n.id===nid)){d.notifs.unshift({id:nid,title:'📋 Nova demanda atribuída a você',sub:t.title+(t.due?' · Prazo: '+fd(t.due):''),for:S.user&&S.user.name,read:false});_showToast('📋 Nova demanda: '+t.title,'var(--gold)');}}else{try{const _xid='demanda_'+t.id;const _fobj=FIRMS.find(f=>f.id===S.eid)||{};const _fsub=t.title+(S.eid&&S.eid!=='flowsales'?' · '+(_fobj.name||S.eid):'')+(t.due?' · Prazo: '+fd(t.due):'');
+        else{d.tasks.push(t);if(S.eid&&S.eid!=='flowsales'){try{const _afd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');_afd.tasks=_afd.tasks||[];if(!_afd.tasks.find(x=>x.id===t.id)){const _fn=(FIRMS.find(f=>f.id===S.eid)||{}).name||S.eid;_afd.tasks.unshift(Object.assign({},t,{_sourceFirm:S.eid,_sourceFirmName:_fn}));activ(_afd,'Nova demanda de '+_fn+': '+t.title,'var(--gold)');localStorage.setItem('fs_flowsales',JSON.stringify(_afd));}}catch(_tce){}}
+        // Admin criando demanda de dentro do próprio painel 'flowsales', atribuindo a um escritório
+        // pelo dropdown Responsável — precisa espelhar no documento DAQUELE escritório, senão a
+        // pessoa lá nunca vê a demanda nem a notificação.
+        if(S.eid==='flowsales'&&resp&&resp!=='flowsales'&&FIRMS.find(f=>f.id===resp)){try{const _tfd=JSON.parse(localStorage.getItem('fs_'+resp)||'{}');_tfd.tasks=_tfd.tasks||[];if(!_tfd.tasks.find(x=>x.id===t.id)){_tfd.tasks.unshift(t);_tfd.notifs=_tfd.notifs||[];const _tnid='nasgn_'+t.id;if(t.assign&&!_tfd.notifs.find(n=>n.id===_tnid)){_tfd.notifs.unshift({id:_tnid,title:'📋 Nova demanda atribuída a você',sub:t.title+(t.due?' · Prazo: '+fd(t.due):''),for:t.assign,read:false});}activ(_tfd,'Nova demanda de FlowSales: '+t.title,'var(--gold)');localStorage.setItem('fs_'+resp,JSON.stringify(_tfd));_fbSave(resp,_tfd);}}catch(_tmfe){}}
+        activ(d,'Nova demanda: '+t.title,'var(--gold)');if(t.assign){const _fnm=s=>(s||'').trim().split(' ')[0].toLowerCase();const _isMe=_fnm(t.assign)===_fnm(S.user&&S.user.name);if(_isMe){const nid='nasgn_'+t.id;if(!d.notifs.find(n=>n.id===nid)){d.notifs.unshift({id:nid,title:'📋 Nova demanda atribuída a você',sub:t.title+(t.due?' · Prazo: '+fd(t.due):''),for:S.user&&S.user.name,read:false});_showToast('📋 Nova demanda: '+t.title,'var(--gold)');}}else{try{const _xid='demanda_'+t.id;const _fobj=FIRMS.find(f=>f.id===S.eid)||{};const _fsub=t.title+(S.eid&&S.eid!=='flowsales'?' · '+(_fobj.name||S.eid):'')+(t.due?' · Prazo: '+fd(t.due):'');
               // Notifica quem foi atribuído dentro do MESMO documento que estamos salvando —
               // gravar em fs_flowsales aqui era o bug: a pessoa nunca lia notificação de lá.
               if(!d.notifs.find(n=>n.id===_xid)){d.notifs.unshift({id:_xid,title:'📋 Nova demanda atribuída a você',sub:_fsub,for:t.assign,read:false});}
