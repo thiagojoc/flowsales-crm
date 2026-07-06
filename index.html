@@ -2181,7 +2181,7 @@ function _renderDailyChart(d){
   vi.forEach(x=>{const day=+((x.date||'').split('-')[2])||0;if(day>=1&&day<=daysInMonth)byDay[day-1]+=(+x.val||0);});
   const max=Math.max(...byDay,1);
   if(!vi.length){el.innerHTML='<div class="empty">Nenhuma venda registrada este mês ainda.</div>';return;}
-  el.innerHTML=`<div style="display:flex;align-items:flex-end;gap:2px;height:120px">${byDay.map((v,i)=>`<div title="Dia ${i+1}: R$ ${v.toLocaleString('pt-BR')}" style="flex:1;background:var(--gold);opacity:${v?1:0.15};height:${Math.max(v/max*100,2)}%;border-radius:2px 2px 0 0"></div>`).join('')}</div><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t2);margin-top:4px"><span>Dia 1</span><span>Dia ${daysInMonth}</span></div>`;
+  el.innerHTML=`<div style="display:flex;align-items:flex-end;gap:2px;height:120px">${byDay.map((v,i)=>`<div title="Dia ${i+1}: R$ ${v.toLocaleString('pt-BR')}" style="flex:1;background:var(--gold);opacity:${v?1:0.15};height:${Math.max(v/max*100,2)}%;border-radius:2px 2px 0 0"></div>`).join('')}</div><div style="display:flex;gap:2px;margin-top:4px">${byDay.map((v,i)=>`<div style="flex:1;text-align:center;font-size:9px;color:var(--t2)">${i+1}</div>`).join('')}</div>`;
 }
 function doneImpl(id){const d=ld();const i=d.implementations.find(x=>x.id===id);if(i){i.done=true;activ(d,'Entregável concluído: '+i.title,'var(--green)');}sv(d);renderAll();}
 // Substitui o antigo card cru "GoHighLevel — dados em tempo real" por um
