@@ -2024,8 +2024,27 @@ async function syncGHL(silent){
     wonOpps.forEach(o=>(o.contact?.tags||[]).forEach(t=>{tagCounts[t]=(tagCounts[t]||0)+1;}));
     d.ghlKpis={syncedAt:new Date().toISOString(),reunAgd:agendadas,reunReal:realizadas,vendas,valorTotal,leads,tagBreakdown:tagCounts,totalEvents:events.length};
     if(!d.kpis)d.kpis={};
-    d.kpis.reunAgd=agendadas;d.kpis.reunReal=realizadas;d.kpis.vendas=vendas;d.kpis.leads=leads;
-    if(valorTotal>0)d.kpis.rev=valorTotal;
+    d.kpis.reunAgd=agendadas;d.kpis.reunReal=realizadas;d.kpis.leads=leads;
+    // Toda venda ganha no GHL vira também um registro na Discriminação de vendas /
+    // Vendas por origem (não só no card de KPIs do GHL) — origem detectada pela tag
+    // do lead: "anúncio" = tráfego pago, "indicação" = indicação, "externo" = outro.
+    d.vendasItems=d.vendasItems||[];
+    const _normTag=t=>(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    wonOpps.forEach(o=>{
+      const viId='vi_ghl_'+o.id;
+      const tagsNorm=((o.contact&&o.contact.tags)||[]).map(_normTag);
+      let orig='Outro';
+      if(tagsNorm.includes('anuncio'))orig='Anúncio';
+      else if(tagsNorm.includes('indicacao'))orig='Indicação';
+      else if(tagsNorm.includes('externo'))orig='Externo';
+      const item={id:viId,ghlOppId:o.id,tipo:o.name||'Venda GHL',cli:(o.contact&&o.contact.name)||o.name||'Lead GHL',email:(o.contact&&o.contact.email)||'',phone:(o.contact&&o.contact.phone)||'',orig,seller:'',date:(o.lastStatusChangeAt||o.updatedAt||o.dateAdded||new Date().toISOString()).split('T')[0],val:+o.monetaryValue||0,qty:1,fileData:null,fileName:'',parcelado:false,numParcelas:1,parcelas:null,_fromGHL:true};
+      const idx=d.vendasItems.findIndex(vi=>vi.id===viId);
+      if(idx>=0)d.vendasItems[idx]=Object.assign({},d.vendasItems[idx],item);
+      else d.vendasItems.push(item);
+    });
+    d.kpis.rev=_calcFaturamento(d.vendasItems);
+    d.kpis.receitaBruta=_calcReceitaBruta(d.vendasItems);
+    d.kpis.vendas=d.vendasItems.length;
     sv(d);renderAll();
   }catch(e){if(!silent)alert('Erro ao sincronizar GHL: '+e.message);}
   finally{if(btn){btn.disabled=false;btn.textContent='Sincronizar';}}
