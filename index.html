@@ -2313,7 +2313,32 @@ function clearTaskFilters(){S.wkf='all';S.datef='';const ws=document.getElementB
 function toggleSel(id,cb){if(cb.checked)S.selTasks.add(id);else S.selTasks.delete(id);updateBulk();}
 function selAll(cb){const d=ld();let tasks=d.tasks;if(S.tf!=='all')tasks=tasks.filter(t=>t.status===S.tf);tasks.forEach(t=>{if(cb.checked)S.selTasks.add(t.id);else S.selTasks.delete(t.id);});updateBulk();rTasks(d);}
 function updateBulk(){const n=S.selTasks.size;document.getElementById('sel-count').textContent=n;document.getElementById('bulk-del').style.display=n?'inline-flex':'none';}
-function bulkDelete(){if(!confirm(`Excluir ${S.selTasks.size} demandas?`))return;const d=ld();d.tasks=d.tasks.filter(t=>!S.selTasks.has(t.id));S.selTasks.clear();sv(d);renderAll();updateBulk();}
+// Demandas cross-firm (criadas de dentro do painel de um escritório, ou de dentro
+// do painel 'flowsales' atribuindo a um escritório) ficam espelhadas com o MESMO
+// id em outro documento. Excluir só do documento atual deixava a cópia órfã lá.
+function _delTaskEverywhere(ids){
+  const idSet=ids instanceof Set?ids:new Set(ids);
+  if(S.eid!=='flowsales'){
+    try{
+      const _fsd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');
+      if((_fsd.tasks||[]).some(t=>idSet.has(t.id))){
+        _fsd.tasks=(_fsd.tasks||[]).filter(t=>!idSet.has(t.id));
+        localStorage.setItem('fs_flowsales',JSON.stringify(_fsd));_fbSave('flowsales',_fsd);
+      }
+    }catch(e){}
+  }
+  FIRMS.forEach(f=>{
+    if(f.id===S.eid)return;
+    try{
+      const _fd=JSON.parse(localStorage.getItem('fs_'+f.id)||'{}');
+      if((_fd.tasks||[]).some(t=>idSet.has(t.id))){
+        _fd.tasks=(_fd.tasks||[]).filter(t=>!idSet.has(t.id));
+        localStorage.setItem('fs_'+f.id,JSON.stringify(_fd));_fbSave(f.id,_fd);
+      }
+    }catch(e){}
+  });
+}
+function bulkDelete(){if(!confirm(`Excluir ${S.selTasks.size} demandas?`))return;const d=ld();d.tasks=d.tasks.filter(t=>!S.selTasks.has(t.id));_delTaskEverywhere(S.selTasks);S.selTasks.clear();sv(d);renderAll();updateBulk();}
 function tgTask(id){const d=ld();const t=d.tasks.find(x=>x.id===id);if(!t)return;t.status=t.status==='done'?'pending':'done';activ(d,(t.status==='done'?'Task concluída: ':'Task reaberta: ')+t.title,t.status==='done'?'var(--green)':'var(--t2)');if(t.status==='done'&&t.createdByFirm&&t.createdByFirm!==S.eid){try{const _cfd=JSON.parse(localStorage.getItem('fs_'+t.createdByFirm)||'{}');_cfd.notifs=_cfd.notifs||[];const _dnid='done_'+t.id;if(!_cfd.notifs.find(n=>n.id===_dnid)){_cfd.notifs.unshift({id:_dnid,title:'✅ Demanda concluída',sub:t.title+(t.assign?' · Por: '+t.assign:''),read:false});localStorage.setItem('fs_'+t.createdByFirm,JSON.stringify(_cfd));}}catch(_de){}}if(t._sourceFirm){try{const _sfd=JSON.parse(localStorage.getItem('fs_'+t._sourceFirm)||'{}');const _si=(_sfd.tasks||[]).findIndex(x=>x.id===t.id);if(_si>=0){_sfd.tasks[_si].status=t.status;localStorage.setItem('fs_'+t._sourceFirm,JSON.stringify(_sfd));}}catch(_sse){}}if(S.eid&&S.eid!=='flowsales'){try{const _fsfd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');const _fsi=(_fsfd.tasks||[]).findIndex(x=>x.id===t.id);if(_fsi>=0){_fsfd.tasks[_fsi].status=t.status;localStorage.setItem('fs_flowsales',JSON.stringify(_fsfd));}}catch(_fse){}}sv(d);renderAll();}
 function edTask(id){
   const d=ld();
@@ -2321,7 +2346,7 @@ function edTask(id){
   if(!t){try{const _fsd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');t=(_fsd.tasks||[]).find(x=>x.id===id);}catch(e){}}
   openM('task',t);
 }
-function delTask(id){if(!confirm('Excluir?'))return;const d=ld();d.tasks=d.tasks.filter(x=>x.id!==id);sv(d);renderAll();}
+function delTask(id){if(!confirm('Excluir?'))return;const d=ld();d.tasks=d.tasks.filter(x=>x.id!==id);_delTaskEverywhere([id]);sv(d);renderAll();}
 
 // ── MEETINGS ──────────────────────────────────────────────────
 function rMeet(d){
