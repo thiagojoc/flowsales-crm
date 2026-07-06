@@ -2274,12 +2274,16 @@ function rMetaKpis(d){
   if(!hasConfig&&!d.metaKpis){card.style.display='none';return;}
   card.style.display='';
   const m=d.metaKpis;
-  if(!m){el.innerHTML='<div class="empty">Clique em Sincronizar para buscar dados da Meta.</div>';return;}
+  const campaigns=d.metaCampaigns||[];
+  const curCamp=S.metaCampaignId||'all';
+  const campSel=campaigns.length?`<div class="fg" style="margin-bottom:12px"><label>Campanha</label><select class="fi" id="meta-camp-sel" onchange="setMetaCampaign(this.value)"><option value="all"${curCamp==='all'?' selected':''}>Todas as campanhas</option>${campaigns.map(c=>`<option value="${c.id}"${curCamp===c.id?' selected':''}>${c.name}${c.status&&c.status!=='ACTIVE'?' ('+c.status+')':''}</option>`).join('')}</select></div>`:'';
+  if(!m){el.innerHTML=campSel+'<div class="empty">Clique em Sincronizar para buscar dados da Meta.</div>';return;}
   const syncDate=new Date(m.syncedAt).toLocaleString('pt-BR');
   const ctr=m.impressions?((m.clicks/m.impressions)*100).toFixed(2):'0.00';
   const cpl=m.leads?Math.round(m.spend/m.leads):0;
-  el.innerHTML=`<div style="font-size:10px;color:var(--t2);margin-bottom:12px">Última sincronização: ${syncDate}</div><div class="kpi-g6" style="margin-bottom:14px"><div class="kpi-mc"><div class="kpi-lbl">Investimento</div><div class="kpi-val" style="color:var(--gold)">R$ ${(m.spend||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">no período selecionado</div></div><div class="kpi-mc"><div class="kpi-lbl">Impressões</div><div class="kpi-val" style="color:var(--blue)">${(m.impressions||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${(m.reach||0).toLocaleString('pt-BR')} pessoas alcançadas</div></div><div class="kpi-mc"><div class="kpi-lbl">Cliques</div><div class="kpi-val" style="color:var(--green)">${(m.clicks||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${ctr}% CTR</div></div><div class="kpi-mc"><div class="kpi-lbl">Leads gerados</div><div class="kpi-val" style="color:var(--green)">${m.leads||0}</div><div class="kpi-sub kpi-nt">R$ ${cpl.toLocaleString('pt-BR')} custo por lead</div></div></div>`;
+  el.innerHTML=campSel+`<div style="font-size:10px;color:var(--t2);margin-bottom:12px">Última sincronização: ${syncDate}${m.campaignId?' · campanha selecionada':' · todas as campanhas'}</div><div class="kpi-g6" style="margin-bottom:14px"><div class="kpi-mc"><div class="kpi-lbl">Investimento</div><div class="kpi-val" style="color:var(--gold)">R$ ${(m.spend||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">no período selecionado</div></div><div class="kpi-mc"><div class="kpi-lbl">Impressões</div><div class="kpi-val" style="color:var(--blue)">${(m.impressions||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${(m.reach||0).toLocaleString('pt-BR')} pessoas alcançadas</div></div><div class="kpi-mc"><div class="kpi-lbl">Cliques</div><div class="kpi-val" style="color:var(--green)">${(m.clicks||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${ctr}% CTR</div></div><div class="kpi-mc"><div class="kpi-lbl">Leads gerados</div><div class="kpi-val" style="color:var(--green)">${m.leads||0}</div><div class="kpi-sub kpi-nt">R$ ${cpl.toLocaleString('pt-BR')} custo por lead</div></div></div>`;
 }
+function setMetaCampaign(id){S.metaCampaignId=id;syncMeta();}
 async function syncMeta(silent){
   const d=ld();const fe=d.firmExtra||{};
   const token=fe.metaToken;let accId=fe.metaAccId;
@@ -2290,20 +2294,31 @@ async function syncMeta(silent){
   const until=S.calTo||new Date().toISOString().split('T')[0];
   const fields='spend,impressions,clicks,reach,actions,cpc,cpm';
   const timeRange=encodeURIComponent(JSON.stringify({since,until}));
-  const url=`https://graph.facebook.com/v19.0/${accId}/insights?fields=${fields}&time_range=${timeRange}&access_token=${encodeURIComponent(token)}`;
+  const campId=S.metaCampaignId&&S.metaCampaignId!=='all'?S.metaCampaignId:null;
+  const insightsTarget=campId||accId;
+  const url=`https://graph.facebook.com/v19.0/${insightsTarget}/insights?fields=${fields}&time_range=${timeRange}&access_token=${encodeURIComponent(token)}`;
+  const campaignsUrl=`https://graph.facebook.com/v19.0/${accId}/campaigns?fields=name,status&limit=200&access_token=${encodeURIComponent(token)}`;
   try{
-    const r=await fetch(url);const j=await r.json();
+    const [r,cr]=await Promise.all([fetch(url),fetch(campaignsUrl)]);
+    const j=await r.json();
     if(j.error)throw new Error(j.error.message||'Erro na API da Meta');
+    const cj=await cr.json().catch(()=>({}));
+    if(!cj.error&&cj.data)d.metaCampaigns=cj.data.map(c=>({id:c.id,name:c.name,status:c.status}));
     const row=(j.data&&j.data[0])||{};
     const actions=row.actions||[];
     const leadTypes=['lead','onsite_conversion.lead_grouped','leadgen_grouping','offsite_conversion.fb_pixel_lead'];
     const leads=actions.filter(a=>leadTypes.includes(a.action_type)).reduce((s,a)=>s+(+a.value||0),0);
-    d.metaKpis={syncedAt:new Date().toISOString(),spend:+row.spend||0,impressions:+row.impressions||0,clicks:+row.clicks||0,reach:+row.reach||0,leads,cpc:+row.cpc||0,cpm:+row.cpm||0};
+    d.metaKpis={syncedAt:new Date().toISOString(),spend:+row.spend||0,impressions:+row.impressions||0,clicks:+row.clicks||0,reach:+row.reach||0,leads,cpc:+row.cpc||0,cpm:+row.cpm||0,campaignId:campId||''};
     if(!d.kpis)d.kpis={};
-    d.kpis.invest=+row.spend||d.kpis.invest||0;
-    d.kpis.impressoes=+row.impressions||d.kpis.impressoes||0;
-    d.kpis.cliques=+row.clicks||d.kpis.cliques||0;
-    if(leads>0){d.kpis.leads=leads;d.kpis.cpl=Math.round((+row.spend||0)/leads);}
+    // Só atualiza os KPIs gerais (funil, ROI, hero) quando a visão é da conta
+    // inteira — olhar uma campanha específica não pode distorcer as métricas
+    // globais do negócio, isso fica só no card da Meta.
+    if(!campId){
+      d.kpis.invest=+row.spend||d.kpis.invest||0;
+      d.kpis.impressoes=+row.impressions||d.kpis.impressoes||0;
+      d.kpis.cliques=+row.clicks||d.kpis.cliques||0;
+      if(leads>0){d.kpis.leads=leads;d.kpis.cpl=Math.round((+row.spend||0)/leads);}
+    }
     sv(d);renderAll();
   }catch(e){if(!silent)alert('Erro ao sincronizar Meta Ads: '+e.message);}
   finally{if(btn){btn.disabled=false;btn.textContent='Sincronizar';}}
