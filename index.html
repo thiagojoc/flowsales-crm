@@ -165,6 +165,9 @@ input[type="date"].fi::-webkit-calendar-picker-indicator:hover{opacity:0.85;}
 .ct{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700;}
 .ct-glow{position:relative;z-index:0;}
 .ct-glow::before{content:'';position:absolute;left:-14px;right:-14px;top:-9px;bottom:-9px;background:radial-gradient(ellipse at center,var(--gbr) 0%,transparent 72%);filter:blur(7px);z-index:-1;border-radius:50%;pointer-events:none;}
+.entrega-card summary::-webkit-details-marker{display:none;}
+.entrega-card summary::marker{content:'';}
+.entrega-card[open] .entrega-chevron{transform:rotate(90deg);}
 .ct svg{width:14px;height:14px;opacity:.55;stroke-width:1.8;}
 .ca{font-size:13px;padding:4px 11px;border:0.5px solid var(--bdr2);border-radius:6px;background:transparent;color:var(--t2);cursor:pointer;font-family:inherit;transition:all .12s;white-space:nowrap;}
 .ca:hover{border-color:var(--gbr);color:var(--gold);}
@@ -644,22 +647,22 @@ signInAnonymously(_auth).catch(e=>console.error('[FB Auth] signInAnonymously fal
           <div class="kpi-g6" id="kpi-g6"></div>
           <div class="card"><div class="ch"><div class="ct ct-glow">Discriminação de vendas</div><div id="vendas-add-btn"></div></div><div id="kpi-vendas-breakdown"></div></div>
           <div class="card"><div class="ch"><div class="ct ct-glow">Vendas por origem</div></div><div id="kpi-vendas-origem"></div></div>
-          <div class="card"><div class="ch"><div class="ct">Leads por origem</div></div><div id="kpi-leads-origem"></div></div>
+          <div class="card"><div class="ch"><div class="ct ct-glow">Leads por origem</div></div><div id="kpi-leads-origem"></div></div>
           <div class="card">
             <div class="ch"><div class="ct ct-glow">Funil de resultados</div></div>
             <div class="funnel-wrap" id="kpi-funnel"></div>
           </div>
 
           <div class="card">
-            <div class="ch"><div class="ct">Métricas do Tráfego Pago</div></div>
+            <div class="ch"><div class="ct ct-glow">Métricas do Tráfego Pago</div></div>
             <div id="kpi-traf"></div>
           </div>
           <div class="card">
-            <div class="ch"><div class="ct">Comparativo mensal</div></div>
+            <div class="ch"><div class="ct ct-glow">Comparativo mensal</div></div>
             <div id="kpi-mo-comp"></div>
           </div>
           <div class="card">
-            <div class="ch"><div class="ct">Faturamento por dia (mês atual)</div></div>
+            <div class="ch"><div class="ct ct-glow">Faturamento por dia (mês atual)</div></div>
             <div id="kpi-daily-chart"></div>
           </div>
           <div class="card" id="ghl-kpis-card">
@@ -667,7 +670,7 @@ signInAnonymously(_auth).catch(e=>console.error('[FB Auth] signInAnonymously fal
             <div id="ghl-kpis-content"><div class="empty">Sem dados suficientes ainda.</div></div>
           </div>
           <div class="card" id="meta-kpis-card" style="display:none">
-            <div class="ch"><div class="ct"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>Meta Ads — dados em tempo real</div><button class="ca" id="meta-sync-btn" onclick="syncMeta()">Sincronizar</button></div>
+            <div class="ch"><div class="ct ct-glow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>Meta Ads dados em tempo real</div><button class="ca" id="meta-sync-btn" onclick="syncMeta()">Sincronizar</button></div>
             <div id="meta-kpis-content"><div class="empty">Clique em Sincronizar para buscar dados da Meta.</div></div>
           </div>
         </div>
@@ -1848,7 +1851,19 @@ function renderAll(){const d=ld();const _td=_localDate();d.tasks.forEach(t=>{if(
 function _entregaCardHtml(e){
   const catClr={GHL:'var(--blue)',IA:'#7c3aed',Website:'var(--green)',Campanha:'var(--gold)',Reunião:'var(--t2)',Outro:'var(--t2)'};
   const cc=catClr[e.category]||'var(--gold)';
-  return '<div class="card" style="margin-bottom:8px;border-left:3px solid '+cc+'"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="font-size:11px;font-weight:700;color:'+cc+';text-transform:uppercase;letter-spacing:.06em">🎁 '+(e.category||'Entrega')+'</span><span style="font-size:12px;color:var(--t2)">'+fd(e.date)+'</span></div><div style="font-size:14px;font-weight:600">'+e.title+'</div>'+(e.desc?'<div style="font-size:12px;color:var(--t2);margin-top:4px;line-height:1.5;white-space:pre-wrap">'+e.desc+'</div>':'')+'</div>';
+  const header='<span class="entrega-chevron" style="flex-shrink:0;transition:transform .15s;color:'+cc+'"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 6 15 12 9 18"/></svg></span>'
+    +'<span style="font-size:11px;font-weight:700;color:'+cc+';text-transform:uppercase;letter-spacing:.06em;flex-shrink:0">🎁 '+(e.category||'Entrega')+'</span>'
+    +'<span style="font-size:12px;color:var(--t2);flex-shrink:0">'+fd(e.date)+'</span>'
+    +'<span style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+e.title+'</span>';
+  // Só vira <details> expansível se tiver descrição pra esconder — senão o
+  // cabeçalho já é tudo que existe, não faz sentido ter seta de expandir.
+  if(!e.desc){
+    return '<div class="card" style="margin-bottom:8px;border-left:3px solid '+cc+';padding:12px 14px"><div style="display:flex;align-items:center;gap:8px">'+header+'</div></div>';
+  }
+  return '<details class="card entrega-card" style="margin-bottom:8px;border-left:3px solid '+cc+';padding:12px 14px">'
+    +'<summary style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px">'+header+'</summary>'
+    +'<div style="font-size:12px;color:var(--t2);margin-top:8px;line-height:1.5;white-space:pre-wrap;padding-left:18px">'+e.desc+'</div>'
+    +'</details>';
 }
 function rTimeline(d){
   const wrap=document.getElementById('timeline-wrap');if(!wrap)return;
@@ -2310,10 +2325,10 @@ async function syncMeta(silent){
     const leads=actions.filter(a=>leadTypes.includes(a.action_type)).reduce((s,a)=>s+(+a.value||0),0);
     d.metaKpis={syncedAt:new Date().toISOString(),spend:+row.spend||0,impressions:+row.impressions||0,clicks:+row.clicks||0,reach:+row.reach||0,leads,cpc:+row.cpc||0,cpm:+row.cpm||0,campaignId:campId||''};
     if(!d.kpis)d.kpis={};
-    // Só atualiza os KPIs gerais (funil, ROI, hero) quando a visão é da conta
-    // inteira — olhar uma campanha específica não pode distorcer as métricas
-    // globais do negócio, isso fica só no card da Meta.
-    if(!campId){
+    // Selecionar uma campanha também atualiza os KPIs gerais (funil, ROI, hero) —
+    // é assim que dá pra ver o impacto daquela campanha especificamente no
+    // negócio como um todo, não só dentro do card da Meta.
+    {
       d.kpis.invest=+row.spend||d.kpis.invest||0;
       d.kpis.impressoes=+row.impressions||d.kpis.impressoes||0;
       d.kpis.cliques=+row.clicks||d.kpis.cliques||0;
