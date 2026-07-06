@@ -2071,14 +2071,16 @@ function rKpis(d){
           +'<div style="flex:1;min-width:0">'
           +'<div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px">'+vi.cli+'</div>'
           +'<div style="font-size:13px;color:var(--t2);margin-bottom:4px">'+vi.tipo+'</div>'
-          +'<div style="display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--t2)">'
-          +(vi.date?'<span>'+vi.date.split('-').reverse().join('/')+'</span>':'')
-          +(vi.orig&&vi.orig?'<span>'+vi.orig+'</span>':'')
-          +(vi.seller?'<span>'+vi.seller+'</span>':'')
-          +(vi.email?'<span>'+vi.email+'</span>':'')
-          +(vi.phone?'<span>'+vi.phone+'</span>':'')
-          +(vi.parcelado&&vi.numParcelas>1?'<span style="color:var(--gold);font-weight:600">'+vi.numParcelas+'x</span>':'')
-          +'</div>'
+          +(function(){
+            var _field=function(lbl,val){return val?'<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1px">'+lbl+'</div><div style="font-size:12px;color:var(--text)">'+val+'</div></div>':'';};
+            var _fields=_field('Data da venda',vi.date?vi.date.split('-').reverse().join('/'):'')
+              +_field('Origem da venda',vi.orig||'')
+              +_field('E-mail',vi.email||'')
+              +_field('Telefone',vi.phone||'')
+              +_field('Proprietário',vi.seller||'');
+            if(!_fields)return'';
+            return '<div style="margin-top:2px"><div style="font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">Dados do lead</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:6px 12px">'+_fields+'</div>'+(vi.parcelado&&vi.numParcelas>1?'<div style="margin-top:6px;font-size:12px;color:var(--gold);font-weight:600">'+vi.numParcelas+'x parcelado</div>':'')+'</div>';
+          })()
           +(vi.fileName?'<div style="margin-top:5px;display:flex;align-items:center;gap:6px;font-size:12px"><span style="color:var(--blue)">📎 '+vi.fileName+'</span><button type="button" onclick="viewVendaFile(\''+vi.id+'\')" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:12px;text-decoration:underline;padding:0">Ver</button><button type="button" onclick="downloadVendaFile(\''+vi.id+'\',\''+(vi.fileName||'').replace(/\'/g,'')+'\')" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:12px;text-decoration:underline;padding:0">Baixar</button></div>':'')
           +'</div>'
           +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">'
