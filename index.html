@@ -1152,9 +1152,11 @@ async function _startRealtimeSync(){
           newMsgs.forEach(m=>{
             if(m.from!==S.user.name){
               const myName=S.user.name.split(' ')[0];
-              if(m.text.toLowerCase().includes('@'+myName.toLowerCase())||m.text.includes('@'+S.user.name)){
-                _desktopNotif('📩 '+m.from+' mencionou você',m.text.slice(0,80));
-              }
+              const isMention=m.text&&(m.text.toLowerCase().includes('@'+myName.toLowerCase())||m.text.includes('@'+S.user.name));
+              // Antes só avisava em @menção — qualquer mensagem nova no chat que você
+              // participa é relevante, não só quando alguém te marca.
+              if(isMention)_desktopNotif('📩 '+m.from+' mencionou você',(m.text||'').slice(0,80));
+              else _desktopNotif('💬 '+m.from,m.text?m.text.slice(0,80):(m.media?'Enviou um arquivo':''));
             }
           });
           renderAll();
