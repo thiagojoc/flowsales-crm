@@ -163,6 +163,8 @@ input[type="date"].fi::-webkit-calendar-picker-indicator:hover{opacity:0.85;}
 .card{background:var(--s1);border:0.5px solid var(--bdr);border-radius:10px;padding:16px 18px;box-shadow:0 1px 6px rgba(0,0,0,0.07);}
 .ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
 .ct{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700;}
+.ct-glow{position:relative;z-index:0;}
+.ct-glow::before{content:'';position:absolute;left:-14px;right:-14px;top:-9px;bottom:-9px;background:radial-gradient(ellipse at center,var(--gbr) 0%,transparent 72%);filter:blur(7px);z-index:-1;border-radius:50%;pointer-events:none;}
 .ct svg{width:14px;height:14px;opacity:.55;stroke-width:1.8;}
 .ca{font-size:13px;padding:4px 11px;border:0.5px solid var(--bdr2);border-radius:6px;background:transparent;color:var(--t2);cursor:pointer;font-family:inherit;transition:all .12s;white-space:nowrap;}
 .ca:hover{border-color:var(--gbr);color:var(--gold);}
@@ -640,24 +642,29 @@ signInAnonymously(_auth).catch(e=>console.error('[FB Auth] signInAnonymously fal
           </div>
           <div class="kpi-hero" id="kpi-hero"></div>
           <div class="kpi-g6" id="kpi-g6"></div>
-          <div class="card"><div class="ch"><div class="ct">Discriminação de vendas</div><div id="vendas-add-btn"></div></div><div id="kpi-vendas-breakdown"></div></div>
-          <div class="card"><div class="ch"><div class="ct">Vendas por origem</div></div><div id="kpi-vendas-origem"></div></div>
+          <div class="card"><div class="ch"><div class="ct ct-glow">Discriminação de vendas</div><div id="vendas-add-btn"></div></div><div id="kpi-vendas-breakdown"></div></div>
+          <div class="card"><div class="ch"><div class="ct ct-glow">Vendas por origem</div></div><div id="kpi-vendas-origem"></div></div>
+          <div class="card"><div class="ch"><div class="ct">Leads por origem</div></div><div id="kpi-leads-origem"></div></div>
           <div class="card">
-            <div class="ch"><div class="ct">Funil de resultados</div></div>
+            <div class="ch"><div class="ct ct-glow">Funil de resultados</div></div>
             <div class="funnel-wrap" id="kpi-funnel"></div>
           </div>
 
           <div class="card">
-            <div class="ch"><div class="ct">Investimento em tráfego</div></div>
+            <div class="ch"><div class="ct">Métricas do Tráfego Pago</div></div>
             <div id="kpi-traf"></div>
           </div>
           <div class="card">
-            <div class="ch"><div class="ct">Histórico por semana</div></div>
-            <div id="kpi-hist"></div>
+            <div class="ch"><div class="ct">Comparativo mensal</div></div>
+            <div id="kpi-mo-comp"></div>
           </div>
-          <div class="card" id="ghl-kpis-card" style="display:none">
-            <div class="ch"><div class="ct"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:-2px"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>GoHighLevel — dados em tempo real</div><button class="ca" id="ghl-sync-btn" onclick="syncGHL()">Sincronizar</button></div>
-            <div id="ghl-kpis-content"><div class="empty">Clique em Sincronizar para buscar dados do GHL.</div></div>
+          <div class="card">
+            <div class="ch"><div class="ct">Faturamento por dia (mês atual)</div></div>
+            <div id="kpi-daily-chart"></div>
+          </div>
+          <div class="card" id="ghl-kpis-card">
+            <div class="ch"><div class="ct ct-glow">Conversões</div></div>
+            <div id="ghl-kpis-content"><div class="empty">Sem dados suficientes ainda.</div></div>
           </div>
           <div class="card" id="meta-kpis-card" style="display:none">
             <div class="ch"><div class="ct"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>Meta Ads — dados em tempo real</div><button class="ca" id="meta-sync-btn" onclick="syncMeta()">Sincronizar</button></div>
@@ -1729,7 +1736,7 @@ function _clickupTask(t){
       createTask(li.id);
     }).catch(()=>{});
 }
-function renderAll(){const d=ld();const _td=_localDate();d.tasks.forEach(t=>{if(t.status==='pending'&&t.due&&t.due<_td)t.status='late';});rOv(d);rKpis(d);rGhlKpis(d);rMetaKpis(d);rScore(d);rMetas(d);rTasks(d);rMeet(d);rFiles(d);rChat(d);rDem(d);rTimeline(d);rPerfil(d);rNotif(d);rBadges(d);rFlow();rFirms();rFinanceiro(d);}
+function renderAll(){const d=ld();const _td=_localDate();d.tasks.forEach(t=>{if(t.status==='pending'&&t.due&&t.due<_td)t.status='late';});rOv(d);rKpis(d);rConversoes(d);rMetaKpis(d);rScore(d);rMetas(d);rTasks(d);rMeet(d);rFiles(d);rChat(d);rDem(d);rTimeline(d);rPerfil(d);rNotif(d);rBadges(d);rFlow();rFirms();rFinanceiro(d);}
 
 function _entregaCardHtml(e){
   const catClr={GHL:'var(--blue)',IA:'#7c3aed',Website:'var(--green)',Campanha:'var(--gold)',Reunião:'var(--t2)',Outro:'var(--t2)'};
@@ -1882,7 +1889,8 @@ function rScore(d){
 // contraste/CVD para o fundo claro dos cards (ver skill de dataviz).
 const _origColors={
   'Meta Ads':'#2a78d6','Google Ads':'#1baf7a','Indicação':'#eda100','WhatsApp':'#008300',
-  'Instagram':'#4a3aa7','Site':'#e34948','Evento':'#e87ba4','Outro':'#eb6834'
+  'Instagram':'#4a3aa7','Site':'#e34948','Evento':'#e87ba4','Outro':'#eb6834',
+  'Anúncio':'#2a78d6','Externo':'#6a6a6a'
 };
 const _origColorDefault='#8a8a8a';
 function _renderVendasOrigem(vendasItems){
@@ -1898,11 +1906,11 @@ function _renderVendasOrigem(vendasItems){
   });
   const entries=Object.entries(groups).sort((a,b)=>b[1].total-a[1].total);
   const maxTotal=Math.max(...entries.map(([,g])=>g.total),1);
-  el.innerHTML=entries.map(([orig,g])=>{
+  el.innerHTML=`<div style="display:flex;align-items:flex-end;gap:14px;height:150px;padding-top:22px">${entries.map(([orig,g])=>{
     const color=_origColors[orig]||_origColorDefault;
-    const pct=Math.round(g.total/maxTotal*100);
-    return `<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px"><span style="font-weight:500;color:var(--text)">${orig}</span><span style="color:var(--t2)">${g.count} venda${g.count!==1?'s':''} · R$ ${g.total.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div><div style="height:8px;background:var(--s3);border-radius:4px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${color};border-radius:4px"></div></div></div>`;
-  }).join('');
+    const pct=Math.max(Math.round(g.total/maxTotal*100),3);
+    return `<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%"><div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:4px;white-space:nowrap">R$ ${g.total.toLocaleString('pt-BR',{maximumFractionDigits:0})}</div><div title="${orig}: ${g.count} venda${g.count!==1?'s':''} · R$ ${g.total.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}" style="width:100%;max-width:48px;background:${color};border-radius:5px 5px 0 0;height:${pct}%"></div></div>`;
+  }).join('')}</div><div style="display:flex;gap:14px;margin-top:8px">${entries.map(([orig,g])=>`<div style="flex:1;min-width:0;text-align:center;font-size:11px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${orig}<br><span style="color:var(--text)">${g.count} venda${g.count!==1?'s':''}</span></div>`).join('')}</div>`;
 }
 function rKpis(d){
   const k=d.kpis;
@@ -1974,29 +1982,93 @@ function rKpis(d){
   const conv=k.cliques?((k.leads/k.cliques)*100).toFixed(1):0;
   const steps=[{n:k.impressoes.toLocaleString('pt-BR'),l:'Impressões'},{n:k.cliques,l:'Cliques',p:`CTR ${ctr}%`},{n:k.leads,l:'Leads',p:`Conv. ${conv}%`},{n:k.reunAgd,l:'Reun. agendadas',p:k.leads?Math.round(k.reunAgd/k.leads*100)+'%':''},{n:k.vendas,l:'Vendas',p:k.reunReal?Math.round(k.vendas/k.reunReal*100)+'%':''}];
   document.getElementById('kpi-funnel').innerHTML=steps.map((s,i)=>(i<steps.length-1?`<div class="fn-step"><div class="fn-n">${s.n}</div><div class="fn-l">${s.l}</div>${s.p?`<div class="fn-p">${s.p}</div>`:''}</div><div class="fn-arr">›</div>`:`<div class="fn-step"><div class="fn-n">${s.n}</div><div class="fn-l">${s.l}</div>${s.p?`<div class="fn-p">${s.p}</div>`:''}</div>`)).join('');
-  // impl/wip sections removed — now in Entregas tab
-  document.getElementById('kpi-traf').innerHTML=`<div class="traf-row"><span class="traf-lbl">Investimento em tráfego</span><span class="traf-val">R$ ${k.invest.toLocaleString('pt-BR')}</span></div><div class="traf-row"><span class="traf-lbl">Impressões totais</span><span class="traf-val">${k.impressoes.toLocaleString('pt-BR')}</span></div><div class="traf-row"><span class="traf-lbl">Cliques</span><span class="traf-val">${k.cliques}</span></div><div class="traf-row"><span class="traf-lbl">CTR</span><span class="traf-val">${ctr}%</span></div><div class="traf-row"><span class="traf-lbl">Leads gerados</span><span class="traf-val">${k.leads}</span></div><div class="traf-row"><span class="traf-lbl">Custo por lead</span><span class="traf-val">R$ ${k.cpl}</span></div>`;
-  const hist=d.kpiHistory||[];
-  const histRows=hist.map(h=>`<tr><td>Sem. ${h.week}</td><td>${h.leads}</td><td>${h.reunAgd}</td><td>${h.vendas}</td><td>${h.conv}%</td><td>${S.role==='admin'?`<button class="ib del" onclick="delKpiHistory(${h.week})" title="Remover"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>`:''}</td></tr>`).join('');
-  document.getElementById('kpi-hist').innerHTML=`<table class="tbl"><thead><tr><th>Semana</th><th>Leads</th><th>Reun. Agd.</th><th>Vendas</th><th>Conversão</th>${S.role==='admin'?'<th></th>':''}</tr></thead><tbody>${histRows}<tr style="opacity:.6"><td>Sem. atual</td><td>${k.leads}</td><td>${k.reunAgd}</td><td>${k.vendas}</td><td>${k.conv}%</td>${S.role==='admin'?`<td><button class="ib ca" onclick="saveKpiHistory()" title="Registrar semana atual no histórico" style="font-size:12px;padding:4px 8px;width:auto">+Registrar</button></td>`:''}</tr></tbody></table>`;
+  // impl/wip sections removed — now em Entregas tab
+  const _leadsTraf=(k.leadsByOrig&&k.leadsByOrig['Anúncio'])||0;
+  document.getElementById('kpi-traf').innerHTML=`<div class="traf-row"><span class="traf-lbl">Investimento em tráfego</span><span class="traf-val">R$ ${k.invest.toLocaleString('pt-BR')}</span></div><div class="traf-row"><span class="traf-lbl">Impressões totais</span><span class="traf-val">${k.impressoes.toLocaleString('pt-BR')}</span></div><div class="traf-row"><span class="traf-lbl">Cliques</span><span class="traf-val">${k.cliques}</span></div><div class="traf-row"><span class="traf-lbl">CTR</span><span class="traf-val">${ctr}%</span></div><div class="traf-row"><span class="traf-lbl">Leads gerados (tráfego pago)</span><span class="traf-val">${_leadsTraf}</span></div><div class="traf-row"><span class="traf-lbl">Custo por lead</span><span class="traf-val">R$ ${k.cpl}</span></div>`;
+  _renderLeadsOrigem(k.leadsByOrig);
+  _renderMonthComparison(d);
+  _renderDailyChart(d);
+}
+// Leads sincronizados do GHL, agrupados pela tag de origem do lead (mesma
+// convenção usada em vendas: anúncio/indicação/externo).
+function _renderLeadsOrigem(leadsByOrig){
+  const el=document.getElementById('kpi-leads-origem');if(!el)return;
+  const entries=Object.entries(leadsByOrig||{}).filter(([,c])=>c>0).sort((a,b)=>b[1]-a[1]);
+  if(!entries.length){el.innerHTML='<div class="empty">Nenhum lead sincronizado ainda.</div>';return;}
+  const max=Math.max(...entries.map(([,c])=>c),1);
+  el.innerHTML=`<div style="display:flex;align-items:flex-end;gap:14px;height:150px;padding-top:22px">${entries.map(([orig,c])=>{
+    const color=_origColors[orig]||_origColorDefault;
+    const pct=Math.max(Math.round(c/max*100),3);
+    return `<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%"><div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:4px">${c}</div><div title="${orig}: ${c} lead${c!==1?'s':''}" style="width:100%;max-width:48px;background:${color};border-radius:5px 5px 0 0;height:${pct}%"></div></div>`;
+  }).join('')}</div><div style="display:flex;gap:14px;margin-top:8px">${entries.map(([orig])=>`<div style="flex:1;min-width:0;text-align:center;font-size:11px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${orig}</div>`).join('')}</div>`;
+}
+function _ym(dateStr){return (dateStr||'').slice(0,7);}
+function _monthDelta(cur,prev){
+  if(!prev)return{pct:null,dir:cur>0?'up':'flat'};
+  const pct=Math.round(((cur-prev)/prev)*100);
+  return{pct,dir:pct>0?'up':pct<0?'down':'flat'};
+}
+// Comparativo mês atual vs mês passado — substitui o antigo "Histórico por
+// semana" (que exigia registro manual toda semana e ninguém lembrava de clicar).
+function _renderMonthComparison(d){
+  const el=document.getElementById('kpi-mo-comp');if(!el)return;
+  const now=new Date();
+  const curYM=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const prevD=new Date(now.getFullYear(),now.getMonth()-1,1);
+  const prevYM=`${prevD.getFullYear()}-${String(prevD.getMonth()+1).padStart(2,'0')}`;
+  const vi=d.vendasItems||[];
+  const vendasCur=vi.filter(x=>_ym(x.date)===curYM);
+  const vendasPrev=vi.filter(x=>_ym(x.date)===prevYM);
+  const km=d.kpiMonthly||{};
+  const rows=[];
+  const _push=(lbl,cur,prev,fmt)=>{
+    const delta=_monthDelta(cur,prev);
+    const arrow=delta.dir==='up'?'▲':delta.dir==='down'?'▼':'—';
+    const color=delta.dir==='up'?'var(--green)':delta.dir==='down'?'var(--red)':'var(--t2)';
+    const deltaTxt=delta.pct===null?(cur>0?'novo':'—'):Math.abs(delta.pct)+'%';
+    rows.push(`<div class="traf-row"><span class="traf-lbl">${lbl}</span><span class="traf-val">${fmt(cur)} <span style="color:${color};font-size:12px;margin-left:6px">${arrow} ${deltaTxt}</span></span></div>`);
+  };
+  _push('Leads',(km.leads&&km.leads.cur)||0,(km.leads&&km.leads.prev)||0,v=>v);
+  _push('Reuniões agendadas',(km.reunAgd&&km.reunAgd.cur)||0,(km.reunAgd&&km.reunAgd.prev)||0,v=>v);
+  _push('Reuniões realizadas',(km.reunReal&&km.reunReal.cur)||0,(km.reunReal&&km.reunReal.prev)||0,v=>v);
+  _push('Vendas',vendasCur.length,vendasPrev.length,v=>v);
+  _push('Faturamento',vendasCur.reduce((s,x)=>s+(+x.val||0),0),vendasPrev.reduce((s,x)=>s+(+x.val||0),0),v=>'R$ '+v.toLocaleString('pt-BR'));
+  el.innerHTML=rows.join('');
+}
+function _renderDailyChart(d){
+  const el=document.getElementById('kpi-daily-chart');if(!el)return;
+  const now=new Date();
+  const y=now.getFullYear(),m=now.getMonth();
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  const ymPrefix=`${y}-${String(m+1).padStart(2,'0')}`;
+  const vi=(d.vendasItems||[]).filter(x=>(x.date||'').startsWith(ymPrefix));
+  const byDay=Array(daysInMonth).fill(0);
+  vi.forEach(x=>{const day=+((x.date||'').split('-')[2])||0;if(day>=1&&day<=daysInMonth)byDay[day-1]+=(+x.val||0);});
+  const max=Math.max(...byDay,1);
+  if(!vi.length){el.innerHTML='<div class="empty">Nenhuma venda registrada este mês ainda.</div>';return;}
+  el.innerHTML=`<div style="display:flex;align-items:flex-end;gap:2px;height:120px">${byDay.map((v,i)=>`<div title="Dia ${i+1}: R$ ${v.toLocaleString('pt-BR')}" style="flex:1;background:var(--gold);opacity:${v?1:0.15};height:${Math.max(v/max*100,2)}%;border-radius:2px 2px 0 0"></div>`).join('')}</div><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t2);margin-top:4px"><span>Dia 1</span><span>Dia ${daysInMonth}</span></div>`;
 }
 function doneImpl(id){const d=ld();const i=d.implementations.find(x=>x.id===id);if(i){i.done=true;activ(d,'Entregável concluído: '+i.title,'var(--green)');}sv(d);renderAll();}
-function rGhlKpis(d){
+// Substitui o antigo card cru "GoHighLevel — dados em tempo real" por um
+// resumo de conversão em cada etapa do funil, usando os KPIs já calculados
+// (não depende mais de olhar números soltos do GHL).
+function rConversoes(d){
   const card=document.getElementById('ghl-kpis-card');
   const el=document.getElementById('ghl-kpis-content');
   if(!card||!el)return;
-  const fe=d.firmExtra||{};
-  const hasConfig=!!(fe.ghlToken&&fe.ghlLocationId);
-  if(!hasConfig&&!d.ghlKpis){card.style.display='none';return;}
-  card.style.display='';
-  const g=d.ghlKpis;
-  if(!g){el.innerHTML='<div class="empty">Clique em Sincronizar para buscar dados do GHL.</div>';return;}
-  const syncDate=new Date(g.syncedAt).toLocaleString('pt-BR');
-  const tags=Object.entries(g.tagBreakdown||{}).sort((a,b)=>b[1]-a[1]);
-  const tagHtml=tags.length?tags.map(([t,c])=>`<div class="traf-row"><span class="traf-lbl">${t}</span><span class="traf-val">${c} lead${c!==1?'s':''}</span></div>`).join(''):'<div class="empty" style="padding:8px 0">Nenhum lead ganho com tag registrada.</div>';
-  const showRate=g.reunAgd?Math.round(g.reunReal/g.reunAgd*100):0;
-  const convRate=g.reunReal?Math.round(g.vendas/g.reunReal*100):0;
-  el.innerHTML=`<div style="font-size:10px;color:var(--t2);margin-bottom:12px">Última sincronização: ${syncDate}</div><div class="kpi-g6" style="margin-bottom:14px"><div class="kpi-mc"><div class="kpi-lbl">Leads</div><div class="kpi-val" style="color:var(--blue)">${g.leads||0}</div><div class="kpi-sub kpi-nt">no período selecionado</div></div><div class="kpi-mc"><div class="kpi-lbl">Reuniões agendadas</div><div class="kpi-val" style="color:var(--gold)">${g.reunAgd}</div><div class="kpi-sub kpi-nt">${g.totalEvents} evento${g.totalEvents!==1?'s':''} no calendário</div></div><div class="kpi-mc"><div class="kpi-lbl">Reuniões realizadas</div><div class="kpi-val" style="color:var(--green)">${g.reunReal}</div><div class="kpi-sub kpi-nt">${showRate}% de show rate</div></div><div class="kpi-mc"><div class="kpi-lbl">Vendas ganhas</div><div class="kpi-val" style="color:var(--green)">${g.vendas}</div><div class="kpi-sub kpi-nt">${convRate}% conversão</div></div><div class="kpi-mc"><div class="kpi-lbl">Valor vendido</div><div class="kpi-val" style="color:var(--gold)">R$ ${(g.valorTotal||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${g.vendas} cliente${g.vendas!==1?'s':''} × MRR</div></div></div><div style="font-size:11px;font-weight:500;color:var(--t2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Produtos / Tags (leads ganhos)</div>${tagHtml}`;
+  const k=d.kpis||{};
+  const pct=(a,b)=>b?Math.round(a/b*100):0;
+  const rows=[
+    {l:'Cliques → Leads',v:pct(k.leads,k.cliques),sub:`${k.leads||0} lead${k.leads!==1?'s':''} de ${(k.cliques||0).toLocaleString('pt-BR')} cliques`},
+    {l:'Leads → Reuniões agendadas',v:pct(k.reunAgd,k.leads),sub:`${k.reunAgd||0} de ${k.leads||0} leads`},
+    {l:'Agendadas → Realizadas (show rate)',v:pct(k.reunReal,k.reunAgd),sub:`${k.reunReal||0} de ${k.reunAgd||0} agendadas`},
+    {l:'Realizadas → Vendas (fechamento)',v:pct(k.vendas,k.reunReal),sub:`${k.vendas||0} de ${k.reunReal||0} realizadas`},
+    {l:'Lead → Venda (conversão geral)',v:pct(k.vendas,k.leads),sub:`${k.vendas||0} de ${k.leads||0} leads`},
+  ];
+  el.innerHTML=rows.map(r=>{
+    const cl=r.v>=50?'var(--green)':r.v>=20?'var(--gold)':'var(--red)';
+    return `<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px"><span style="font-weight:500;color:var(--text)">${r.l}</span><span style="font-weight:700;color:${cl}">${r.v}%</span></div><div style="height:8px;background:var(--s3);border-radius:4px;overflow:hidden"><div style="height:100%;width:${Math.min(r.v,100)}%;background:${cl};border-radius:4px"></div></div><div style="font-size:11px;color:var(--t2);margin-top:3px">${r.sub}</div></div>`;
+  }).join('');
 }
 async function syncGHL(silent){
   const d=ld();const fe=d.firmExtra||{};
@@ -2007,11 +2079,20 @@ async function syncGHL(silent){
   const BASE='https://services.leadconnectorhq.com';
   const from=S.calFrom?new Date(S.calFrom+'T00:00:00').getTime():Date.now()-30*24*3600000;
   const to=S.calTo?new Date(S.calTo+'T23:59:59').getTime():Date.now();
+  // Janela fixa (início do mês passado -> agora), independente do período escolhido
+  // no dash, só pra alimentar o comparativo mensal e o gráfico diário.
+  const _now=new Date();
+  const _curYM=`${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2,'0')}`;
+  const _prevD=new Date(_now.getFullYear(),_now.getMonth()-1,1);
+  const _prevYM=`${_prevD.getFullYear()}-${String(_prevD.getMonth()+1).padStart(2,'0')}`;
+  const _moFrom=_prevD.getTime();const _moTo=Date.now();
+  const _normTag=t=>(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
   try{
-    const [evR,oppsR,allOppsR]=await Promise.all([
+    const [evR,oppsR,allOppsR,monthEvR]=await Promise.all([
       calendarId?fetch(`${BASE}/calendars/events?locationId=${locationId}&calendarId=${calendarId}&startTime=${from}&endTime=${to}`,{headers:h}).then(r=>r.json()):Promise.resolve({events:[]}),
       fetch(`${BASE}/opportunities/search?location_id=${locationId}&status=won&limit=100`,{headers:h}).then(r=>r.json()),
-      fetch(`${BASE}/opportunities/search?location_id=${locationId}&limit=100`,{headers:h}).then(r=>r.json())
+      fetch(`${BASE}/opportunities/search?location_id=${locationId}&limit=100`,{headers:h}).then(r=>r.json()),
+      calendarId?fetch(`${BASE}/calendars/events?locationId=${locationId}&calendarId=${calendarId}&startTime=${_moFrom}&endTime=${_moTo}`,{headers:h}).then(r=>r.json()):Promise.resolve({events:[]})
     ]);
     const events=evR.events||[];
     const _stAp=e=>(e.appointmentStatus||'').toLowerCase().trim();
@@ -2020,17 +2101,42 @@ async function syncGHL(silent){
     const wonOpps=oppsR.opportunities||[];
     const vendas=wonOpps.length;
     const valorTotal=wonOpps.reduce((s,o)=>s+(o.monetaryValue||3500),0);
-    const leads=(allOppsR.meta&&allOppsR.meta.total)||(allOppsR.opportunities||[]).length;
+    const allOppsList=allOppsR.opportunities||[];
+    const leads=(allOppsR.meta&&allOppsR.meta.total)||allOppsList.length;
     const tagCounts={};
     wonOpps.forEach(o=>(o.contact?.tags||[]).forEach(t=>{tagCounts[t]=(tagCounts[t]||0)+1;}));
     d.ghlKpis={syncedAt:new Date().toISOString(),reunAgd:agendadas,reunReal:realizadas,vendas,valorTotal,leads,tagBreakdown:tagCounts,totalEvents:events.length};
     if(!d.kpis)d.kpis={};
     d.kpis.reunAgd=agendadas;d.kpis.reunReal=realizadas;d.kpis.leads=leads;
+    // Leads por origem — mesma tag usada nas vendas (anúncio/indicação/externo).
+    const leadsByOrig={};
+    allOppsList.forEach(o=>{
+      const tagsNorm=((o.contact&&o.contact.tags)||[]).map(_normTag);
+      let orig='Outro';
+      if(tagsNorm.includes('anuncio'))orig='Anúncio';
+      else if(tagsNorm.includes('indicacao'))orig='Indicação';
+      else if(tagsNorm.includes('externo'))orig='Externo';
+      leadsByOrig[orig]=(leadsByOrig[orig]||0)+1;
+    });
+    d.kpis.leadsByOrig=leadsByOrig;
+    // Comparativo mensal: leads (por dateAdded) e reuniões (por startTime),
+    // sempre mês atual vs mês passado, buscado numa janela fixa acima.
+    const monthEvents=monthEvR.events||[];
+    const _evYM=e=>{const dt=new Date(e.startTime);return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`;};
+    const _aggEv=ym=>{const evs=monthEvents.filter(e=>_evYM(e)===ym);return{agendadas:evs.filter(e=>!['cancelled','no_show','noshow','invalid'].includes(_stAp(e))).length,realizadas:evs.filter(e=>['showed','attended','complete','completed'].includes(_stAp(e))).length};};
+    const _curEvAgg=_aggEv(_curYM);const _prevEvAgg=_aggEv(_prevYM);
+    const _leadYM=o=>(o.dateAdded||'').slice(0,7);
+    const _curLeads=allOppsList.filter(o=>_leadYM(o)===_curYM).length;
+    const _prevLeads=allOppsList.filter(o=>_leadYM(o)===_prevYM).length;
+    d.kpiMonthly={
+      leads:{cur:_curLeads,prev:_prevLeads},
+      reunAgd:{cur:_curEvAgg.agendadas,prev:_prevEvAgg.agendadas},
+      reunReal:{cur:_curEvAgg.realizadas,prev:_prevEvAgg.realizadas}
+    };
     // Toda venda ganha no GHL vira também um registro na Discriminação de vendas /
     // Vendas por origem (não só no card de KPIs do GHL) — origem detectada pela tag
     // do lead: "anúncio" = tráfego pago, "indicação" = indicação, "externo" = outro.
     d.vendasItems=d.vendasItems||[];
-    const _normTag=t=>(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
     wonOpps.forEach(o=>{
       const viId='vi_ghl_'+o.id;
       const tagsNorm=((o.contact&&o.contact.tags)||[]).map(_normTag);
@@ -3109,8 +3215,6 @@ function autoNotif(){
   if(lateChanged||d.notifs.length>before){sv(d);rTasks(d);}
   rNotif(d);rBadges(d);
 }
-function delKpiHistory(week){const d=ld();d.kpiHistory=(d.kpiHistory||[]).filter(h=>h.week!==week);sv(d);renderAll();}
-function saveKpiHistory(){const d=ld();const k=d.kpis;const week=Math.max(0,...(d.kpiHistory||[]).map(h=>h.week),0)+1;if(!(d.kpiHistory)) d.kpiHistory=[];d.kpiHistory.push({week,leads:k.leads,reunAgd:k.reunAgd,vendas:k.vendas,conv:k.conv});sv(d);renderAll();}
 
 function rBadges(d){
   const _fn2b=s=>(s||'').trim().split(' ')[0].toLowerCase();
