@@ -648,7 +648,10 @@ signInAnonymously(_auth).catch(e=>console.error('[FB Auth] signInAnonymously fal
         <!-- KPIS -->
         <div class="sec" id="s-kpis">
           <div class="fr" style="justify-content:space-between;gap:8px;">
-            <select class="fi" id="kpi-firm-sel" onchange="setKpiFirm(this.value)" style="display:none;width:auto;font-size:13px;padding:6px 10px"></select>
+            <div style="display:flex;gap:6px;align-items:center">
+              <select class="fi" id="kpi-firm-sel" onchange="setKpiFirm(this.value)" style="display:none;width:auto;font-size:13px;padding:6px 10px"></select>
+              <button class="ib admin-only" onclick="openM('flowsalesApi')" title="Configurar APIs da Flow Sales (métricas internas)" style="color:var(--t2)">⚙</button>
+            </div>
             <button class="ca" onclick="openM('kpi')">Atualizar métricas</button>
           </div>
           <div class="kpi-hero" id="kpi-hero"></div>
@@ -3872,6 +3875,28 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
     mwk:{title:'Nova meta da semana',body:`<div class="fg"><label>Meta</label><input class="fi" id="m-ttl" placeholder="O que precisa ser entregue essa semana?"></div>`,save:()=>addMeta('wk')},
     mmo:{title:'Nova meta do mês',body:`<div class="fg"><label>Meta</label><input class="fi" id="m-ttl" placeholder="Qual o objetivo do mês?"></div>`,save:()=>addMeta('mo')},
     note:{title:'Resumo executivo',body:`<div class="fg"><label>Resumo visível ao cliente</label>${_fmtToolbarHtml('m-nt')}${_rteHtml('m-nt',ld().note||'','min-height:140px')}</div>`,save:()=>{const d=ld();d.note=vHtml('m-nt');sv(d);renderAll();cModal(null,1);}},
+    flowsalesApi:{title:'APIs da Flow Sales (métricas internas)',
+      body:()=>{
+        const _fsd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');
+        const _fe=_fsd.firmExtra||{};
+        return `<div style="font-size:12px;color:var(--t2);margin-bottom:12px">Credenciais usadas pra puxar os KPIs da própria Flow Sales — só valem quando "Nossos (Flow Sales)" estiver selecionado em KPIs, não afetam os escritórios clientes.</div><div class="fg"><label>GHL API Token (Private Integration)</label><input class="fi" id="fsapi-ghl" placeholder="Cole o token do GoHighLevel" value="${_fe.ghlToken||''}"></div><div class="fg"><label>GHL Location ID</label><input class="fi" id="fsapi-ghl-loc" placeholder="Location ID da subconta" value="${_fe.ghlLocationId||''}"></div><div class="fg"><label>GHL Calendar ID (opcional)</label><input class="fi" id="fsapi-ghl-cal" placeholder="Para contar reuniões agendadas" value="${_fe.ghlCalendarId||''}"></div><div class="fg"><label>Meta BM Token</label><input class="fi" id="fsapi-meta" placeholder="Token da Business Manager" value="${_fe.metaToken||''}"></div><div class="fg"><label>Meta Ad Account ID</label><input class="fi" id="fsapi-meta-acc" placeholder="act_XXXXXXXXXX" value="${_fe.metaAccId||''}"></div>`;
+      },
+      save:()=>{
+        const _fsd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');
+        _fsd.firmExtra=_fsd.firmExtra||{};
+        _fsd.firmExtra.ghlToken=v('fsapi-ghl');
+        _fsd.firmExtra.ghlLocationId=v('fsapi-ghl-loc');
+        _fsd.firmExtra.ghlCalendarId=v('fsapi-ghl-cal');
+        _fsd.firmExtra.metaToken=v('fsapi-meta');
+        _fsd.firmExtra.metaAccId=v('fsapi-meta-acc');
+        _fsd.__ts=Date.now();
+        localStorage.setItem('fs_flowsales',JSON.stringify(_fsd));
+        _fbSave('flowsales',_fsd);
+        _showToast('APIs da Flow Sales atualizadas ✅','var(--green)');
+        cModal(null,1);
+        renderAll();
+      }
+    },
     partner:{title:'Novo sócio / integrante',
       body:`<div class="fg"><label>Nome completo</label><input class="fi" id="p-nm" placeholder="Dr. João Silva"></div><div class="fg"><label>Cargo</label><input class="fi" id="p-rl" placeholder="Sócio, Advogado..."></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>E-mail</label><input class="fi" id="p-em" type="email"></div><div class="fg"><label>Telefone</label><input class="fi" id="p-ph" placeholder="(00) 00000-0000"></div></div><div class="fg"><label>OAB</label><input class="fi" id="p-oab" placeholder="SP-123456"></div><div class="fg"><label>Endereço</label><input class="fi" id="p-addr" placeholder="Rua, número, bairro, cidade/UF"></div>`,
       save:()=>{const d=ld();d.partners=d.partners||[];d.partners.push({id:'p'+Date.now(),name:v('p-nm'),role:v('p-rl'),email:v('p-em'),phone:v('p-ph'),oab:v('p-oab'),address:v('p-addr'),photo:''});sv(d);renderAll();cModal(null,1);}
