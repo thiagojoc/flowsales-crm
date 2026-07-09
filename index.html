@@ -164,8 +164,12 @@ input[type="date"].fi::-webkit-calendar-picker-indicator:hover{opacity:0.85;}
 .ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
 .ct{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700;}
 .rte-field{white-space:pre-wrap;}
-.rte-field ul{margin:4px 0 4px 18px;padding:0;}
 .rte-field:empty:before{content:'Escreva aqui...';opacity:.4;}
+/* Reset global zera margin/padding de tudo, inclusive <ul> — sem isso a lista
+   de marcadores (negrito/itálico/lista dos campos de descrição) aparece sem
+   recuo/desalinhada tanto editando quanto na visualização final. */
+ul{margin:4px 0 4px 18px;padding:0;}
+li{margin:2px 0;}
 .ct-glow{position:relative;z-index:0;}
 .ct-glow::before{content:'';position:absolute;left:-14px;right:-14px;top:-9px;bottom:-9px;background:radial-gradient(ellipse at center,var(--gbr) 0%,transparent 72%);filter:blur(7px);z-index:-1;border-radius:50%;pointer-events:none;}
 .entrega-card summary::-webkit-details-marker{display:none;}
@@ -2499,7 +2503,7 @@ function rTasks(d){
   (()=>{const _fn0b=s=>(s||'').trim().split(' ')[0].toLowerCase();const _myB=_fn0b(S.user&&S.user.name||'');const _allT=[...d.tasks,..._fsTasks.filter(ft=>!d.tasks.find(t=>t.id===ft.id))];const _delCnt=_allT.filter(t=>t.assign&&_fn0b(t.assign)!==_myB).length;const _db=document.getElementById('fo-delegated');if(_db)_db.textContent='Delegadas'+(_delCnt>0?' ('+_delCnt+')':'');})();
   const el=document.getElementById('tlist');
   if(!tasks.length){el.innerHTML='<div class="empty">Nenhuma task.</div>';return;}
-  el.innerHTML=tasks.map(t=>`<div class="trow"><input type="checkbox" class="tck-cb" ${S.selTasks.has(t.id)?'checked':''} onchange="toggleSel('${t.id}',this)"><div class="tck${t.status==='done'?' on':''}" onclick="tgTask('${t.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tb2"><div class="tt${t.status==='done'?' dn':''}">${t.urgent?'<span style="color:var(--red);font-size:13px;font-weight:700;margin-right:5px;letter-spacing:.05em">URGENTE</span>':''}${t.title}</div>${t.desc?`<div style="font-size:12px;color:var(--t2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:500px">${t.desc.length>100?t.desc.slice(0,100)+'\u2026':t.desc}</div>`:''}<div class="ti"><span>Atribuída a: ${t.assign||t.resp}</span>${t.created?`<span style="color:var(--t3)">|</span><span title="Criada em">📅 Criada em: ${fd(t.created)}</span>`+(t.createdBy?`<span style="color:var(--t3)">|</span><span>👤 Criada por: ${t.createdBy}${t._sourceFirmName?' ('+t._sourceFirmName+')':''}</span>`:''):''}${t.due?`<span style="color:var(--t3)">|</span><span title="Prazo" style="color:${t.status!=='done'&&t.due<_localDate()?'var(--red)':'inherit'}">⏰ Prazo: ${fd(t.due)}</span>`:''}${slbl[t.status]||''}${t.pri&&t.pri!=='med'?prlbl[t.pri]||'':''}</div></div><div class="tacts"><button class="ib" onclick="openTaskThread('${t.id}')" style="color:var(--blue);font-size:12px;font-weight:500;padding:2px 7px;border:0.5px solid var(--blue);border-radius:4px">Visualizar${(()=>{const _uc=t.replies?(t.replies.filter(r=>!r.done).length):0;return _uc?` <span style="font-size:11px;font-weight:700;background:var(--blue);color:#fff;border-radius:8px;padding:0 4px;margin-left:2px">${_uc}</span>`:''})()}</button><button class="ib edit" onclick="edTask('${t.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="ib del" onclick="delTask('${t.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div></div>`).join('');
+  el.innerHTML=tasks.map(t=>`<div class="trow"><input type="checkbox" class="tck-cb" ${S.selTasks.has(t.id)?'checked':''} onchange="toggleSel('${t.id}',this)"><div class="tck${t.status==='done'?' on':''}" onclick="tgTask('${t.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tb2"><div class="tt${t.status==='done'?' dn':''}">${t.urgent?'<span style="color:var(--red);font-size:13px;font-weight:700;margin-right:5px;letter-spacing:.05em">URGENTE</span>':''}${t.title}</div>${t.desc?`<div style="font-size:12px;color:var(--t2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:500px">${(()=>{const _pt=_stripHtml(t.desc);return _pt.length>100?_pt.slice(0,100)+'\u2026':_pt;})()}</div>`:''}<div class="ti"><span>Atribuída a: ${t.assign||t.resp}</span>${t.created?`<span style="color:var(--t3)">|</span><span title="Criada em">📅 Criada em: ${fd(t.created)}</span>`+(t.createdBy?`<span style="color:var(--t3)">|</span><span>👤 Criada por: ${t.createdBy}${t._sourceFirmName?' ('+t._sourceFirmName+')':''}</span>`:''):''}${t.due?`<span style="color:var(--t3)">|</span><span title="Prazo" style="color:${t.status!=='done'&&t.due<_localDate()?'var(--red)':'inherit'}">⏰ Prazo: ${fd(t.due)}</span>`:''}${slbl[t.status]||''}${t.pri&&t.pri!=='med'?prlbl[t.pri]||'':''}</div></div><div class="tacts"><button class="ib" onclick="openTaskThread('${t.id}')" style="color:var(--blue);font-size:12px;font-weight:500;padding:2px 7px;border:0.5px solid var(--blue);border-radius:4px">Visualizar/Responder${(()=>{const _uc=t.replies?(t.replies.filter(r=>!r.done).length):0;return _uc?` <span style="font-size:11px;font-weight:700;background:var(--blue);color:#fff;border-radius:8px;padding:0 4px;margin-left:2px">${_uc}</span>`:''})()}</button><button class="ib edit" onclick="edTask('${t.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="ib del" onclick="delTask('${t.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div></div>`).join('');
 }
 function fown(f){if(!S.hasOwnProperty('ownf'))S.ownf='all';S.ownf=f;if(f==='all'){S.tf='all';['pend','done','late'].forEach(x=>{const b=document.getElementById('ft-'+x);if(b){b.style.borderColor='';b.style.color='';}});}['all','mine','delegated'].forEach(x=>{const b=document.getElementById('fo-'+x);if(b){b.style.borderColor='';b.style.color='';}});const a=document.getElementById('fo-'+f);if(a){a.style.borderColor='var(--gbr)';a.style.color='var(--gold)';}rTasks(ld());}
 function ftask(f){S.tf=f;['all','pend','done','late'].forEach(x=>{const b=document.getElementById('ft-'+x);if(b){b.style.borderColor='';b.style.color='';}});const a=document.getElementById('ft-'+f);if(a){a.style.borderColor='var(--gbr)';a.style.color='var(--gold)';}rTasks(ld());}
@@ -4124,6 +4128,18 @@ function openTaskThread(id){
     // Task might be a cross-firm task stored in fs_flowsales (admin-created)
     try{const _fsd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');t=(_fsd.tasks||[]).find(x=>x.id===id);}catch(e){}
   }
+  // Visão agregada do admin (painel flowsales) mostra tasks criadas direto no
+  // painel de um escritório específico — essas só existem no documento
+  // daquele escritório, nunca em d.tasks (flowsales) nem em fs_flowsales.
+  if(!t&&S.role==='admin'&&S.eid==='flowsales'){
+    for(const f of FIRMS){
+      try{
+        const fd=JSON.parse(localStorage.getItem('fs_'+f.id)||'{}');
+        const found=(fd.tasks||[]).find(x=>x.id===id);
+        if(found){t=found;break;}
+      }catch(e){}
+    }
+  }
   if(!t)return;
   openM('taskThread',t);
 }
@@ -4556,6 +4572,9 @@ function activ(d,txt,col){d.activity=d.activity||[];d.activity.unshift({txt,col,
 function fd(s){if(!s)return '';const [y,m,d]=s.split('-');if(!y||!m||!d)return s;return `${d}/${m}/${y}`;}
 // ── FORMATAÇÃO LEVE (negrito/itálico/lista) EM CAMPOS DE DESCRIÇÃO ─────
 function _escHtml(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+// Tira as tags HTML pra um preview curto em texto puro (evita cortar no meio
+// de uma tag quando o campo tem negrito/italico/lista e a previa e truncada).
+function _stripHtml(html){const tmp=document.createElement('div');tmp.innerHTML=html||'';return(tmp.textContent||'').replace(/\s+/g,' ').trim();}
 // Converte **negrito**, *itálico* e linhas "- item" pra HTML, sempre escapando
 // antes (texto digitado nunca vira HTML de verdade, só os marcadores).
 function _mdLite(text){
