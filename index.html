@@ -2238,7 +2238,7 @@ function _renderMonthComparison(d){
   const curYM=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   const prevD=new Date(now.getFullYear(),now.getMonth()-1,1);
   const prevYM=`${prevD.getFullYear()}-${String(prevD.getMonth()+1).padStart(2,'0')}`;
-  const vi=d.vendasItems||[];
+  const vi=(d.vendasItems||[]).filter(_vendaMatchesActiveOrig);
   const vendasCur=vi.filter(x=>_ym(x.date)===curYM);
   const vendasPrev=vi.filter(x=>_ym(x.date)===prevYM);
   const km=d.kpiMonthly||{};
@@ -2263,7 +2263,7 @@ function _renderDailyChart(d){
   const y=now.getFullYear(),m=now.getMonth();
   const daysInMonth=new Date(y,m+1,0).getDate();
   const ymPrefix=`${y}-${String(m+1).padStart(2,'0')}`;
-  const vi=(d.vendasItems||[]).filter(x=>(x.date||'').startsWith(ymPrefix));
+  const vi=(d.vendasItems||[]).filter(x=>(x.date||'').startsWith(ymPrefix)).filter(_vendaMatchesActiveOrig);
   const byDay=Array(daysInMonth).fill(0);
   vi.forEach(x=>{const day=+((x.date||'').split('-')[2])||0;if(day>=1&&day<=daysInMonth)byDay[day-1]+=(+x.val||0);});
   const max=Math.max(...byDay,1);
