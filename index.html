@@ -2170,7 +2170,17 @@ function rKpis(d){
   document.getElementById('kpi-funnel').innerHTML=steps.map((s,i)=>(i<steps.length-1?`<div class="fn-step"><div class="fn-n">${s.n}</div><div class="fn-l">${s.l}</div>${s.p?`<div class="fn-p">${s.p}</div>`:''}</div><div class="fn-arr">›</div>`:`<div class="fn-step"><div class="fn-n">${s.n}</div><div class="fn-l">${s.l}</div>${s.p?`<div class="fn-p">${s.p}</div>`:''}</div>`)).join('');
   // impl/wip sections removed — now em Entregas tab
   const _leadsTraf=(k.leadsByOrig&&k.leadsByOrig['Anúncio'])||0;
-  document.getElementById('kpi-traf').innerHTML=`<div class="traf-row"><span class="traf-lbl">Investimento em tráfego</span><span class="traf-val">R$ ${k.invest.toLocaleString('pt-BR')}</span></div><div class="traf-row"><span class="traf-lbl">Impressões totais</span><span class="traf-val">${k.impressoes.toLocaleString('pt-BR')}</span></div><div class="traf-row"><span class="traf-lbl">Cliques</span><span class="traf-val">${k.cliques}</span></div><div class="traf-row"><span class="traf-lbl">CTR</span><span class="traf-val">${ctr}%</span></div><div class="traf-row"><span class="traf-lbl">Leads gerados (tráfego pago)</span><span class="traf-val">${_leadsTraf}</span></div><div class="traf-row"><span class="traf-lbl">Custo por lead</span><span class="traf-val">R$ ${k.cpl}</span></div>`;
+  // Custo por lead e ROI daqui são calculados só sobre o que realmente veio do
+  // tráfego pago (não misturado com indicação/externo) — sem isso, o ROI fica
+  // sem sentido quando o investimento do período é baixo/zero mas há vendas de
+  // outras origens, e o custo por lead antigo (k.cpl) ficava travado num valor
+  // velho sempre que a Meta não retornava leads próprios no período.
+  const _vendasTraf=(d.vendasItems||[]).filter(vi=>_isTrafOrig(vi.orig));
+  const _fatTraf=_calcFaturamento(_vendasTraf);
+  const _cplTraf=_leadsTraf?Math.round(k.invest/_leadsTraf):0;
+  const _roiTraf=k.invest?((_fatTraf/k.invest).toFixed(1)+'x'):'--';
+  const _roiTrafColor=!k.invest?'var(--t2)':_fatTraf>=k.invest?'var(--green)':'var(--red)';
+  document.getElementById('kpi-traf').innerHTML=`<div class="traf-row"><span class="traf-lbl">Investimento em tráfego</span><span class="traf-val">R$ ${k.invest.toLocaleString('pt-BR')}</span></div><div class="traf-row"><span class="traf-lbl">Impressões totais</span><span class="traf-val">${k.impressoes.toLocaleString('pt-BR')}</span></div><div class="traf-row"><span class="traf-lbl">Cliques</span><span class="traf-val">${k.cliques}</span></div><div class="traf-row"><span class="traf-lbl">CTR</span><span class="traf-val">${ctr}%</span></div><div class="traf-row"><span class="traf-lbl">Leads gerados (tráfego pago)</span><span class="traf-val">${_leadsTraf}</span></div><div class="traf-row"><span class="traf-lbl">Custo por lead (tráfego pago)</span><span class="traf-val">R$ ${_cplTraf}</span></div><div class="traf-row"><span class="traf-lbl">Faturamento (vendas de tráfego pago)</span><span class="traf-val">R$ ${_fatTraf.toLocaleString('pt-BR')}</span></div><div class="traf-row"><span class="traf-lbl">ROI do tráfego pago</span><span class="traf-val" style="color:${_roiTrafColor}">${_roiTraf}</span></div>`;
   _renderLeadsOrigem(k.leadsByOrig);
   _renderMonthComparison(d);
   _renderDailyChart(d);
@@ -2746,6 +2756,10 @@ function _updateParcelaPreview(){
 // Faturamento (receita reconhecida): venda à vista conta o valor total na hora;
 // venda parcelada só conta cada parcela quando ela vence (evita inflar o mês
 // da venda com o valor do contrato inteiro).
+// Rótulos de origem de tráfego pago aceitos — cobre tanto o valor usado pelo
+// sync automático do GHL ("Anúncio") quanto os valores do seletor manual de
+// venda ("Meta Ads"/"Google Ads"), que usa uma lista de opções diferente.
+function _isTrafOrig(o){return o==='Anúncio'||o==='Meta Ads'||o==='Google Ads';}
 function _calcFaturamento(vendasItems){
   const today=_localDate();
   return (vendasItems||[]).reduce((s,vi)=>{
