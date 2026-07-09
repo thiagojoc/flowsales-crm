@@ -2873,7 +2873,13 @@ function _kOrigView(d){
   let leads=0,reunAgd=0,reunReal=0;
   act.forEach(f=>{const bo=(k.byOrig&&k.byOrig[f])||{leads:0,reunAgd:0,reunReal:0};leads+=bo.leads;reunAgd+=bo.reunAgd;reunReal+=bo.reunReal;});
   const vendasF=(d.vendasItems||[]).filter(_vendaMatchesActiveOrig);
-  return {...k,leads,reunAgd,reunReal,vendas:vendasF.length,rev:_calcFaturamento(vendasF)};
+  const view={...k,leads,reunAgd,reunReal,vendas:vendasF.length,rev:_calcFaturamento(vendasF)};
+  // Investimento/impressões/cliques (dados da Meta) só fazem sentido quando o
+  // funil inclui "Anúncio" — indicação/externo não custaram nada em tráfego
+  // pago, então misturar o investimento da Meta com esses leads inflava o
+  // ROI/CAC/ROAS/custo-por-lead de um jeito sem sentido.
+  if(!act.includes('anuncio')){view.invest=0;view.impressoes=0;view.cliques=0;}
+  return view;
 }
 function _calcFaturamento(vendasItems){
   const today=_localDate();
