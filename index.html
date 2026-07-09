@@ -71,6 +71,14 @@ input[type="date"].fi::-webkit-calendar-picker-indicator:hover{opacity:0.85;}
 .sb-badge{display:inline-block;margin-top:6px;font-size:14px;font-weight:600;padding:2px 8px;border-radius:20px;background:rgba(29,158,117,.14);color:var(--green);border:0.5px solid rgba(29,158,117,.28);}
 .firm-dropdown{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--s2);border:0.5px solid var(--bdr2);border-radius:9px;z-index:50;overflow:hidden;}
 .firm-dropdown.on{display:block;}
+.camp-dd-wrap{position:relative}
+.camp-dd-btn{width:100%;text-align:left;cursor:pointer}
+.camp-dropdown{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--s2);border:0.5px solid var(--bdr2);border-radius:9px;z-index:50;max-height:240px;overflow-y:auto;padding:6px;box-shadow:0 8px 24px rgba(0,0,0,0.35)}
+.camp-dropdown.on{display:block}
+.camp-opt{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--text)}
+.camp-opt:hover{background:var(--gb)}
+.camp-opt input{cursor:pointer}
+.camp-dd-apply{width:100%;margin-top:6px;padding:7px;background:var(--gold);color:#000;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer}
 .firm-opt{padding:9px 12px;font-size:13px;cursor:pointer;transition:background .1s;color:var(--t2);}
 .firm-opt:hover{background:var(--gb);color:var(--text);}
 .firm-opt.active{color:var(--gold);font-weight:600;background:var(--gb);}
@@ -2350,15 +2358,37 @@ function rMetaKpis(d){
   card.style.display='';
   const m=d.metaKpis;
   const campaigns=d.metaCampaigns||[];
-  const curCamp=S.metaCampaignId||'all';
-  const campSel=campaigns.length?`<div class="fg" style="margin-bottom:12px"><label>Campanha</label><select class="fi" id="meta-camp-sel" onchange="setMetaCampaign(this.value)"><option value="all"${curCamp==='all'?' selected':''}>Todas as campanhas</option>${campaigns.map(c=>`<option value="${c.id}"${curCamp===c.id?' selected':''}>${c.name}${c.status&&c.status!=='ACTIVE'?' ('+c.status+')':''}</option>`).join('')}</select></div>`:'';
+  const selIds=S.metaCampaignIds||[];
+  const summaryText=!selIds.length?'Todas as campanhas':selIds.length===1?((campaigns.find(c=>c.id===selIds[0])||{}).name||'1 campanha selecionada'):selIds.length+' campanhas selecionadas';
+  const campSel=campaigns.length?`<div class="fg" style="margin-bottom:12px"><label>Campanha</label><div class="camp-dd-wrap"><button type="button" class="fi camp-dd-btn" onclick="toggleCampDropdown(event)">${summaryText} ▾</button><div class="camp-dropdown" id="camp-dropdown"><label class="camp-opt"><input type="checkbox" id="camp-all-cb" ${!selIds.length?'checked':''} onchange="toggleAllCampaigns(this.checked)"/> Todas as campanhas</label>${campaigns.map(c=>`<label class="camp-opt"><input type="checkbox" class="camp-cb" value="${c.id}" ${selIds.includes(c.id)?'checked':''} onchange="toggleCampaignSel('${c.id}',this.checked)"/> ${c.name}${c.status&&c.status!=='ACTIVE'?' ('+c.status+')':''}</label>`).join('')}<button type="button" class="camp-dd-apply" onclick="applyCampSel()">Aplicar</button></div></div></div>`:'';
   if(!m){el.innerHTML=campSel+'<div class="empty">Clique em Sincronizar para buscar dados da Meta.</div>';return;}
   const syncDate=new Date(m.syncedAt).toLocaleString('pt-BR');
   const ctr=m.impressions?((m.clicks/m.impressions)*100).toFixed(2):'0.00';
   const cpl=m.leads?Math.round(m.spend/m.leads):0;
-  el.innerHTML=campSel+`<div style="font-size:10px;color:var(--t2);margin-bottom:12px">Última sincronização: ${syncDate}${m.campaignId?' · campanha selecionada':' · todas as campanhas'}</div><div class="kpi-g6" style="margin-bottom:14px"><div class="kpi-mc"><div class="kpi-lbl">Investimento</div><div class="kpi-val" style="color:var(--gold)">R$ ${(m.spend||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">no período selecionado</div></div><div class="kpi-mc"><div class="kpi-lbl">Impressões</div><div class="kpi-val" style="color:var(--blue)">${(m.impressions||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${(m.reach||0).toLocaleString('pt-BR')} pessoas alcançadas</div></div><div class="kpi-mc"><div class="kpi-lbl">Cliques</div><div class="kpi-val" style="color:var(--green)">${(m.clicks||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${ctr}% CTR</div></div><div class="kpi-mc"><div class="kpi-lbl">Leads gerados</div><div class="kpi-val" style="color:var(--green)">${m.leads||0}</div><div class="kpi-sub kpi-nt">R$ ${cpl.toLocaleString('pt-BR')} custo por lead</div></div></div>`;
+  const campCount=(m.campaignIds||[]).length;
+  const campLbl=campCount===0?'todas as campanhas':campCount===1?'1 campanha selecionada':campCount+' campanhas selecionadas';
+  el.innerHTML=campSel+`<div style="font-size:10px;color:var(--t2);margin-bottom:12px">Última sincronização: ${syncDate} · ${campLbl}</div><div class="kpi-g6" style="margin-bottom:14px"><div class="kpi-mc"><div class="kpi-lbl">Investimento</div><div class="kpi-val" style="color:var(--gold)">R$ ${(m.spend||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">no período selecionado</div></div><div class="kpi-mc"><div class="kpi-lbl">Impressões</div><div class="kpi-val" style="color:var(--blue)">${(m.impressions||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${(m.reach||0).toLocaleString('pt-BR')} pessoas alcançadas</div></div><div class="kpi-mc"><div class="kpi-lbl">Cliques</div><div class="kpi-val" style="color:var(--green)">${(m.clicks||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${ctr}% CTR</div></div><div class="kpi-mc"><div class="kpi-lbl">Leads gerados</div><div class="kpi-val" style="color:var(--green)">${m.leads||0}</div><div class="kpi-sub kpi-nt">R$ ${cpl.toLocaleString('pt-BR')} custo por lead</div></div></div>`;
 }
-function setMetaCampaign(id){S.metaCampaignId=id;syncMeta();}
+function toggleCampDropdown(e){if(e)e.stopPropagation();const el=document.getElementById('camp-dropdown');if(el)el.classList.toggle('on');}
+function toggleAllCampaigns(checked){
+  if(!checked)return;
+  S.metaCampaignIds=[];
+  document.querySelectorAll('#camp-dropdown .camp-cb').forEach(cb=>{cb.checked=false;});
+}
+function toggleCampaignSel(id,checked){
+  if(!S.metaCampaignIds)S.metaCampaignIds=[];
+  if(checked){
+    if(!S.metaCampaignIds.includes(id))S.metaCampaignIds.push(id);
+    const allCb=document.getElementById('camp-all-cb');if(allCb)allCb.checked=false;
+  }else{
+    S.metaCampaignIds=S.metaCampaignIds.filter(x=>x!==id);
+    if(!S.metaCampaignIds.length){const allCb=document.getElementById('camp-all-cb');if(allCb)allCb.checked=true;}
+  }
+}
+function applyCampSel(){
+  const el=document.getElementById('camp-dropdown');if(el)el.classList.remove('on');
+  syncMeta();
+}
 async function syncMeta(silent){
   const d=_kpiData();const fe=d.firmExtra||{};
   const token=fe.metaToken;let accId=fe.metaAccId;
@@ -2369,9 +2399,9 @@ async function syncMeta(silent){
   const until=S.calTo||new Date().toISOString().split('T')[0];
   const fields='spend,impressions,clicks,reach,actions,cpc,cpm';
   const timeRange=encodeURIComponent(JSON.stringify({since,until}));
-  const campId=S.metaCampaignId&&S.metaCampaignId!=='all'?S.metaCampaignId:null;
-  const insightsTarget=campId||accId;
-  const url=`https://graph.facebook.com/v19.0/${insightsTarget}/insights?fields=${fields}&time_range=${timeRange}&access_token=${encodeURIComponent(token)}`;
+  const campIds=(S.metaCampaignIds||[]).filter(Boolean);
+  const filtering=campIds.length?encodeURIComponent(JSON.stringify([{field:'campaign.id',operator:'IN',value:campIds}])):'';
+  const url=`https://graph.facebook.com/v19.0/${accId}/insights?fields=${fields}&time_range=${timeRange}${filtering?'&filtering='+filtering:''}&access_token=${encodeURIComponent(token)}`;
   const campaignsUrl=`https://graph.facebook.com/v19.0/${accId}/campaigns?fields=name,status&limit=200&access_token=${encodeURIComponent(token)}`;
   try{
     const [r,cr]=await Promise.all([fetch(url),fetch(campaignsUrl)]);
@@ -2383,7 +2413,7 @@ async function syncMeta(silent){
     const actions=row.actions||[];
     const leadTypes=['lead','onsite_conversion.lead_grouped','leadgen_grouping','offsite_conversion.fb_pixel_lead'];
     const leads=actions.filter(a=>leadTypes.includes(a.action_type)).reduce((s,a)=>s+(+a.value||0),0);
-    d.metaKpis={syncedAt:new Date().toISOString(),spend:+row.spend||0,impressions:+row.impressions||0,clicks:+row.clicks||0,reach:+row.reach||0,leads,cpc:+row.cpc||0,cpm:+row.cpm||0,campaignId:campId||''};
+    d.metaKpis={syncedAt:new Date().toISOString(),spend:+row.spend||0,impressions:+row.impressions||0,clicks:+row.clicks||0,reach:+row.reach||0,leads,cpc:+row.cpc||0,cpm:+row.cpm||0,campaignIds:campIds};
     if(!d.kpis)d.kpis={};
     // Selecionar uma campanha também atualiza os KPIs gerais (funil, ROI, hero) —
     // é assim que dá pra ver o impacto daquela campanha especificamente no
@@ -4828,6 +4858,9 @@ window.addEventListener('DOMContentLoaded',()=>{
     const np=document.getElementById('np');
     const nb=document.querySelector('.notifbtn');
     if(np&&np.classList.contains('on')&&!np.contains(e.target)&&!nb?.contains(e.target))np.classList.remove('on');
+    // meta campaign multi-select dropdown
+    const cd=document.getElementById('camp-dropdown');
+    if(cd&&cd.classList.contains('on')&&!cd.parentElement?.contains(e.target))cd.classList.remove('on');
   });
 });
 </script>
