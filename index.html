@@ -662,6 +662,13 @@ signInAnonymously(_auth).catch(e=>console.error('[FB Auth] signInAnonymously fal
             </div>
             <button class="ca" onclick="openM('kpi')">Atualizar métricas</button>
           </div>
+          <div class="fr" style="gap:6px;margin-top:8px">
+            <span style="font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;margin-right:2px">Ver</span>
+            <button class="cal-btn" id="kpi-orig-geral-btn" onclick="setKpiOrigFilter('geral')">Geral</button>
+            <button class="cal-btn" id="kpi-orig-anuncio-btn" onclick="setKpiOrigFilter('anuncio')">Anúncio</button>
+            <button class="cal-btn" id="kpi-orig-indicacao-btn" onclick="setKpiOrigFilter('indicacao')">Indicação</button>
+            <button class="cal-btn" id="kpi-orig-externo-btn" onclick="setKpiOrigFilter('externo')">Externo</button>
+          </div>
           <div class="kpi-hero" id="kpi-hero"></div>
           <div class="kpi-g6" id="kpi-g6"></div>
           <div class="card"><div class="ch"><div class="ct ct-glow">Discriminação de vendas</div><div id="vendas-add-btn"></div></div><div id="kpi-vendas-breakdown"></div></div>
@@ -2100,7 +2107,10 @@ function _renderVendasOrigem(vendasItems){
   }).join('')}</div><div style="display:flex;gap:14px;margin-top:8px">${entries.map(([orig,g])=>`<div style="flex:1;min-width:0;text-align:center;font-size:11px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${orig}<br><span style="color:var(--text)">${g.count} venda${g.count!==1?'s':''}</span></div>`).join('')}</div>`;
 }
 function rKpis(d){
-  const k=d.kpis;
+  const kRaw=d.kpis;
+  const k=_kOrigView(d);
+  const _origF=S.kpiOrigFilter||'geral';
+  ['geral','anuncio','indicacao','externo'].forEach(f=>{const b=document.getElementById('kpi-orig-'+f+'-btn');if(b)b.classList.toggle('on',f===_origF);});
   const roi=k.invest?((k.rev/k.invest)).toFixed(1)+'x':'--';
   const mp=k.revG?Math.min(Math.round(k.rev/k.revG*100),100):0;
   const _receitaBruta=k.receitaBruta||0;
@@ -2173,19 +2183,22 @@ function rKpis(d){
   const steps=[{n:k.impressoes.toLocaleString('pt-BR'),l:'Impressões'},{n:k.cliques,l:'Cliques',p:`CTR ${ctr}%`},{n:k.leads,l:'Leads',p:`Conv. ${conv}%`},{n:k.reunAgd,l:'Reun. agendadas',p:k.leads?Math.round(k.reunAgd/k.leads*100)+'%':''},{n:k.vendas,l:'Vendas',p:k.reunReal?Math.round(k.vendas/k.reunReal*100)+'%':''}];
   document.getElementById('kpi-funnel').innerHTML=steps.map((s,i)=>(i<steps.length-1?`<div class="fn-step"><div class="fn-n">${s.n}</div><div class="fn-l">${s.l}</div>${s.p?`<div class="fn-p">${s.p}</div>`:''}</div><div class="fn-arr">›</div>`:`<div class="fn-step"><div class="fn-n">${s.n}</div><div class="fn-l">${s.l}</div>${s.p?`<div class="fn-p">${s.p}</div>`:''}</div>`)).join('');
   // impl/wip sections removed — now em Entregas tab
-  const _leadsTraf=(k.leadsByOrig&&k.leadsByOrig['Anúncio'])||0;
+  const _leadsTraf=(kRaw.leadsByOrig&&kRaw.leadsByOrig['Anúncio'])||0;
   // Custo por lead e ROI daqui são calculados só sobre o que realmente veio do
   // tráfego pago (não misturado com indicação/externo) — sem isso, o ROI fica
   // sem sentido quando o investimento do período é baixo/zero mas há vendas de
   // outras origens, e o custo por lead antigo (k.cpl) ficava travado num valor
   // velho sempre que a Meta não retornava leads próprios no período.
+  // Sempre usa kRaw/d.vendasItems (não o "k" filtrado pelo "Ver" em cima) —
+  // esse card é sobre o canal de tráfego pago especificamente, independente
+  // de qual origem estiver selecionada no filtro da aba.
   const _vendasTraf=(d.vendasItems||[]).filter(vi=>_isTrafOrig(vi.orig));
   const _fatTraf=_calcFaturamento(_vendasTraf);
-  const _cplTraf=_leadsTraf?Math.round(k.invest/_leadsTraf):0;
-  const _roiTraf=k.invest?((_fatTraf/k.invest).toFixed(1)+'x'):'--';
-  const _roiTrafColor=!k.invest?'var(--t2)':_fatTraf>=k.invest?'var(--green)':'var(--red)';
-  document.getElementById('kpi-traf').innerHTML=`<div class="traf-row"><span class="traf-lbl">Investimento em tráfego</span><span class="traf-val">R$ ${k.invest.toLocaleString('pt-BR')}</span></div><div class="traf-row"><span class="traf-lbl">Impressões totais</span><span class="traf-val">${k.impressoes.toLocaleString('pt-BR')}</span></div><div class="traf-row"><span class="traf-lbl">Cliques</span><span class="traf-val">${k.cliques}</span></div><div class="traf-row"><span class="traf-lbl">CTR</span><span class="traf-val">${ctr}%</span></div><div class="traf-row"><span class="traf-lbl">Leads gerados (tráfego pago)</span><span class="traf-val">${_leadsTraf}</span></div><div class="traf-row"><span class="traf-lbl">Custo por lead (tráfego pago)</span><span class="traf-val">R$ ${_cplTraf}</span></div><div class="traf-row"><span class="traf-lbl">Faturamento (vendas de tráfego pago)</span><span class="traf-val">R$ ${_fatTraf.toLocaleString('pt-BR')}</span></div><div class="traf-row"><span class="traf-lbl">ROI do tráfego pago</span><span class="traf-val" style="color:${_roiTrafColor}">${_roiTraf}</span></div>`;
-  _renderLeadsOrigem(k.leadsByOrig);
+  const _cplTraf=_leadsTraf?Math.round(kRaw.invest/_leadsTraf):0;
+  const _roiTraf=kRaw.invest?((_fatTraf/kRaw.invest).toFixed(1)+'x'):'--';
+  const _roiTrafColor=!kRaw.invest?'var(--t2)':_fatTraf>=kRaw.invest?'var(--green)':'var(--red)';
+  document.getElementById('kpi-traf').innerHTML=`<div class="traf-row"><span class="traf-lbl">Investimento em tráfego</span><span class="traf-val">R$ ${kRaw.invest.toLocaleString('pt-BR')}</span></div><div class="traf-row"><span class="traf-lbl">Impressões totais</span><span class="traf-val">${kRaw.impressoes.toLocaleString('pt-BR')}</span></div><div class="traf-row"><span class="traf-lbl">Cliques</span><span class="traf-val">${kRaw.cliques}</span></div><div class="traf-row"><span class="traf-lbl">CTR</span><span class="traf-val">${ctr}%</span></div><div class="traf-row"><span class="traf-lbl">Leads gerados (tráfego pago)</span><span class="traf-val">${_leadsTraf}</span></div><div class="traf-row"><span class="traf-lbl">Custo por lead (tráfego pago)</span><span class="traf-val">R$ ${_cplTraf}</span></div><div class="traf-row"><span class="traf-lbl">Faturamento (vendas de tráfego pago)</span><span class="traf-val">R$ ${_fatTraf.toLocaleString('pt-BR')}</span></div><div class="traf-row"><span class="traf-lbl">ROI do tráfego pago</span><span class="traf-val" style="color:${_roiTrafColor}">${_roiTraf}</span></div>`;
+  _renderLeadsOrigem(kRaw.leadsByOrig);
   _renderMonthComparison(d);
   _renderDailyChart(d);
 }
@@ -2256,7 +2269,7 @@ function rConversoes(d){
   const card=document.getElementById('ghl-kpis-card');
   const el=document.getElementById('ghl-kpis-content');
   if(!card||!el)return;
-  const k=d.kpis||{};
+  const k=_kOrigView(d);
   const pct=(a,b)=>b?Math.round(a/b*100):0;
   const rows=[
     {l:'Cliques → Leads',v:pct(k.leads,k.cliques),sub:`${k.leads||0} de ${(k.cliques||0).toLocaleString('pt-BR')} cliques`},
@@ -2319,6 +2332,21 @@ async function syncGHL(silent){
       leadsByOrig[orig]=(leadsByOrig[orig]||0)+1;
     });
     d.kpis.leadsByOrig=leadsByOrig;
+    // Detalhamento por origem (leads + reuniões) usado pelo filtro "Ver:
+    // Geral/Anúncio/Indicação/Externo" da aba KPIs — reuniões (eventos de
+    // calendário) não trazem a tag do contato direto, então cruzamos pelo
+    // contactId com o mapa de origem montado a partir das oportunidades.
+    const _origOf=tags=>{const tn=(tags||[]).map(_normTag);if(tn.includes('anuncio'))return'Anúncio';if(tn.includes('indicacao'))return'Indicação';if(tn.includes('externo'))return'Externo';return'Outro';};
+    const _contactOrig={};
+    allOppsList.forEach(o=>{const cid=o.contactId||(o.contact&&o.contact.id);if(cid)_contactOrig[cid]=_origOf(o.contact&&o.contact.tags);});
+    const byOrig={Anúncio:{leads:0,reunAgd:0,reunReal:0},Indicação:{leads:0,reunAgd:0,reunReal:0},Externo:{leads:0,reunAgd:0,reunReal:0},Outro:{leads:0,reunAgd:0,reunReal:0}};
+    allOppsList.forEach(o=>{const orig=_origOf(o.contact&&o.contact.tags);byOrig[orig].leads++;});
+    events.forEach(e=>{
+      const orig=_contactOrig[e.contactId]||'Outro';
+      if(!['cancelled','no_show','noshow','invalid'].includes(_stAp(e)))byOrig[orig].reunAgd++;
+      if(['showed','attended','complete','completed'].includes(_stAp(e)))byOrig[orig].reunReal++;
+    });
+    d.kpis.byOrig={anuncio:byOrig['Anúncio'],indicacao:byOrig['Indicação'],externo:byOrig['Externo'],outro:byOrig['Outro']};
     // Comparativo mensal: leads (por dateAdded) e reuniões (por startTime),
     // sempre mês atual vs mês passado, buscado numa janela fixa acima.
     const monthEvents=monthEvR.events||[];
@@ -2776,6 +2804,33 @@ function _updateParcelaPreview(){
 // sync automático do GHL ("Anúncio") quanto os valores do seletor manual de
 // venda ("Meta Ads"/"Google Ads"), que usa uma lista de opções diferente.
 function _isTrafOrig(o){return o==='Anúncio'||o==='Meta Ads'||o==='Google Ads';}
+// Filtro "Ver: Geral/Anúncio/Indicação/Externo" no topo da aba KPIs — cobre as
+// duas convenções de rótulo de origem usadas no app (sync automático do GHL vs
+// seletor manual de venda, que tem opções diferentes).
+function _origMatchesFilter(vOrig,filter){
+  if(filter==='anuncio')return _isTrafOrig(vOrig);
+  if(filter==='indicacao')return vOrig==='Indicação';
+  if(filter==='externo')return vOrig==='Externo'||vOrig==='WhatsApp'||vOrig==='Instagram'||vOrig==='Site'||vOrig==='Evento';
+  return true;
+}
+function setKpiOrigFilter(filter){
+  S.kpiOrigFilter=filter;
+  const kd=_kpiData();
+  rKpis(kd);rConversoes(kd);
+  ['geral','anuncio','indicacao','externo'].forEach(f=>{const b=document.getElementById('kpi-orig-'+f+'-btn');if(b)b.classList.toggle('on',f===filter);});
+}
+// Recalcula leads/reuniões/vendas/faturamento restritos à origem escolhida no
+// filtro "Ver" — leads e reuniões vêm do detalhamento por origem calculado no
+// sync do GHL (d.kpis.byOrig), vendas/faturamento são filtrados na hora a
+// partir de vendasItems (que já carregam a origem de cada venda individual).
+function _kOrigView(d){
+  const k=d.kpis||{};
+  const filter=S.kpiOrigFilter||'geral';
+  if(filter==='geral')return k;
+  const bo=(k.byOrig&&k.byOrig[filter])||{leads:0,reunAgd:0,reunReal:0};
+  const vendasF=(d.vendasItems||[]).filter(vi=>_origMatchesFilter(vi.orig,filter));
+  return {...k,leads:bo.leads,reunAgd:bo.reunAgd,reunReal:bo.reunReal,vendas:vendasF.length,rev:_calcFaturamento(vendasF)};
+}
 function _calcFaturamento(vendasItems){
   const today=_localDate();
   return (vendasItems||[]).reduce((s,vi)=>{
