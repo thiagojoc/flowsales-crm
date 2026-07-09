@@ -832,17 +832,21 @@ signInAnonymously(_auth).catch(e=>console.error('[FB Auth] signInAnonymously fal
         <!-- ESCRITÓRIOS (ADMIN) -->
         <!-- FINANCEIRO -->
         <div class="sec" id="s-fin">
+          <div style="display:flex;gap:6px;margin-bottom:12px">
+            <button class="cal-btn" id="fin-roi-geral-btn" onclick="setFinRoiMode('geral')">Geral</button>
+            <button class="cal-btn" id="fin-roi-trafego-btn" onclick="setFinRoiMode('trafego')">Tráfego pago</button>
+          </div>
           <div class="g2" style="grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px">
             <div class="card" style="background:var(--s2)">
-              <div style="font-size:12px;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Faturamento (vendas)</div>
+              <div id="fin-fat-lbl" style="font-size:12px;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Faturamento (vendas)</div>
               <div id="fin-fat" style="font-size:22px;font-weight:700;color:var(--green)">R$ 0,00</div>
             </div>
             <div class="card" style="background:var(--s2)">
-              <div style="font-size:12px;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Total de gastos</div>
+              <div id="fin-gastos-lbl" style="font-size:12px;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Total de gastos</div>
               <div id="fin-total-gastos" style="font-size:22px;font-weight:700;color:var(--red)">R$ 0,00</div>
             </div>
             <div class="card" style="background:var(--s2)">
-              <div style="font-size:12px;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">ROI (faturamento / gastos)</div>
+              <div id="fin-roi-lbl" style="font-size:12px;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">ROI (faturamento / gastos)</div>
               <div id="fin-roi" style="font-size:22px;font-weight:700;color:var(--green)">—</div>
             </div>
           </div>
@@ -2688,13 +2692,25 @@ function delMeet(id){if(!confirm('Excluir?'))return;const d=ld();const m=d.meeti
 
 // ── FILES ─────────────────────────────────────────────────────
 // ── FINANCEIRO ────────────────────────────────────────────────
+function setFinRoiMode(mode){S.finRoiMode=mode;rFinanceiro(ld());}
 function rFinanceiro(d){
   const gastos=d.gastos||[];
-  const totalGastos=gastos.reduce((s,g)=>s+(+g.val||0),0);
-  const fat=_calcFaturamento(d.vendasItems||[])||(+(d.kpis&&d.kpis.rev||0));
+  const mode=S.finRoiMode||'geral';
+  const isTraf=mode==='trafego';
+  const gastosFiltered=isTraf?gastos.filter(g=>g.cat==='trafego'):gastos;
+  const totalGastos=gastosFiltered.reduce((s,g)=>s+(+g.val||0),0);
+  const vendasFiltered=isTraf?(d.vendasItems||[]).filter(vi=>_isTrafOrig(vi.orig)):(d.vendasItems||[]);
+  const fat=isTraf?_calcFaturamento(vendasFiltered):(_calcFaturamento(vendasFiltered)||(+(d.kpis&&d.kpis.rev||0)));
   const roi=totalGastos>0?((fat/totalGastos)*100).toFixed(1)+'%':'—';
   const roiColor=totalGastos>0&&fat>totalGastos?'var(--green)':totalGastos>0?'var(--red)':'var(--t2)';
   const tg=document.getElementById('fin-total-gastos');const rEl=document.getElementById('fin-roi');const fatEl=document.getElementById('fin-fat');
+  const fatLbl=document.getElementById('fin-fat-lbl');const gastosLbl=document.getElementById('fin-gastos-lbl');const roiLbl=document.getElementById('fin-roi-lbl');
+  if(fatLbl)fatLbl.textContent=isTraf?'Faturamento (vendas de tráfego pago)':'Faturamento (vendas)';
+  if(gastosLbl)gastosLbl.textContent=isTraf?'Gastos com tráfego pago':'Total de gastos';
+  if(roiLbl)roiLbl.textContent=isTraf?'ROI (tráfego pago)':'ROI (faturamento / gastos)';
+  const gBtn=document.getElementById('fin-roi-geral-btn');const tBtn=document.getElementById('fin-roi-trafego-btn');
+  if(gBtn)gBtn.classList.toggle('on',!isTraf);
+  if(tBtn)tBtn.classList.toggle('on',isTraf);
   if(tg)tg.textContent='R$ '+totalGastos.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
   if(rEl){rEl.textContent=roi;rEl.style.color=roiColor;}
   if(fatEl)fatEl.textContent='R$ '+fat.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
