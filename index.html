@@ -3871,7 +3871,7 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
     mday:{title:'Nova meta do dia',body:`<div class="fg"><label>Meta</label><input class="fi" id="m-ttl" placeholder="O que precisa ser feito hoje?"></div>`,save:()=>addMeta('day')},
     mwk:{title:'Nova meta da semana',body:`<div class="fg"><label>Meta</label><input class="fi" id="m-ttl" placeholder="O que precisa ser entregue essa semana?"></div>`,save:()=>addMeta('wk')},
     mmo:{title:'Nova meta do mês',body:`<div class="fg"><label>Meta</label><input class="fi" id="m-ttl" placeholder="Qual o objetivo do mês?"></div>`,save:()=>addMeta('mo')},
-    note:{title:'Resumo executivo',body:`<div class="fg"><label>Resumo visível ao cliente</label><textarea id="m-nt" style="min-height:140px">${ld().note||''}</textarea></div>`,save:()=>{const d=ld();d.note=v('m-nt');sv(d);renderAll();cModal(null,1);}},
+    note:{title:'Resumo executivo',body:`<div class="fg"><label>Resumo visível ao cliente</label>${_fmtToolbarHtml('m-nt')}${_rteHtml('m-nt',ld().note||'','min-height:140px')}</div>`,save:()=>{const d=ld();d.note=vHtml('m-nt');sv(d);renderAll();cModal(null,1);}},
     partner:{title:'Novo sócio / integrante',
       body:`<div class="fg"><label>Nome completo</label><input class="fi" id="p-nm" placeholder="Dr. João Silva"></div><div class="fg"><label>Cargo</label><input class="fi" id="p-rl" placeholder="Sócio, Advogado..."></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="fg"><label>E-mail</label><input class="fi" id="p-em" type="email"></div><div class="fg"><label>Telefone</label><input class="fi" id="p-ph" placeholder="(00) 00000-0000"></div></div><div class="fg"><label>OAB</label><input class="fi" id="p-oab" placeholder="SP-123456"></div><div class="fg"><label>Endereço</label><input class="fi" id="p-addr" placeholder="Rua, número, bairro, cidade/UF"></div>`,
       save:()=>{const d=ld();d.partners=d.partners||[];d.partners.push({id:'p'+Date.now(),name:v('p-nm'),role:v('p-rl'),email:v('p-em'),phone:v('p-ph'),oab:v('p-oab'),address:v('p-addr'),photo:''});sv(d);renderAll();cModal(null,1);}
@@ -4044,20 +4044,32 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
         const _metaRow=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;align-items:center">${data&&data.status?(_slbl[data.status]||''):''}${data&&data.pri?(_plbl[data.pri]||''):''}${data&&data.due?`<span style="font-size:12px;color:var(--t2)">⏰ Prazo: ${fd(data.due)}</span>`:''}${data&&data.assign?`<span style="font-size:12px;color:var(--t2)">👤 ${data.assign}</span>`:''}</div>`;
         const _linkRow=data&&data.link?`<div style="margin-top:8px"><a href="${data.link}" target="_blank" rel="noopener" style="font-size:13px;color:var(--blue);display:inline-flex;align-items:center;gap:5px;text-decoration:none;font-weight:500">🔗 <span style="text-decoration:underline">${data.link.length>60?data.link.slice(0,60)+'...':data.link}</span></a></div>`:'';
         const _fileRow=(()=>{if(!data||!data.taskFile)return'';const _tf=data.taskFile;const _hasData=!!_tf.data;const _viewBtn=_hasData?`<a href="${_tf.data}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--s2);border:0.5px solid var(--gbr);border-radius:6px;font-size:12px;color:var(--text);text-decoration:none;font-weight:500">👁 Visualizar</a>`:`<button type="button" onclick="viewTaskFile('${data.id}')" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--s2);border:0.5px solid var(--gbr);border-radius:6px;font-size:12px;color:var(--text);font-weight:500;cursor:pointer">👁 Visualizar</button>`;const _dlBtn=_hasData?`<a href="${_tf.data}" download="${_tf.name||'arquivo'}" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--s2);border:0.5px solid var(--gbr);border-radius:6px;font-size:12px;color:var(--green);text-decoration:none;font-weight:500">⬇ Baixar</a>`:`<button type="button" onclick="downloadTaskFile('${data.id}','${(_tf.name||'arquivo').replace(/'/g,"")}')" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--s2);border:0.5px solid var(--gbr);border-radius:6px;font-size:12px;color:var(--green);font-weight:500;cursor:pointer">⬇ Baixar</button>`;return`<div style="margin-top:8px;padding:8px 10px;background:var(--gb);border:0.5px solid var(--gbr);border-radius:6px"><div style="font-size:12px;color:var(--t2);margin-bottom:6px;font-weight:600">📎 ${_tf.name||'Arquivo'}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${_viewBtn}${_dlBtn}</div></div>`;})();
-        return `<div style="padding:10px 12px;background:var(--gb);border-radius:8px;border:0.5px solid var(--gbr);margin-bottom:14px"><div style="font-size:14px;font-weight:700;color:var(--text)">${data?data.title:''}</div>${data&&data.desc?`<div style="font-size:12px;color:var(--t2);margin-top:4px">${data.desc}</div>`:''} ${_metaRow}${_linkRow}${_fileRow}</div><div style="max-height:200px;overflow-y:auto;margin-bottom:12px">${replHtml}</div><div class="fg"><label>Responder</label><textarea class="fi" id="reply-txt" placeholder="Escreva uma resposta ou comentário..." style="min-height:65px"></textarea></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px"><div class="fg" style="margin:0"><label style="font-size:12px">Anexar arquivo (opcional)</label><input type="file" id="reply-file-inp" class="fi" style="padding:5px;font-size:12px;cursor:pointer"></div><div class="fg" style="margin:0"><label style="font-size:12px">Link (opcional)</label><input class="fi" id="reply-link-inp" placeholder="https://..." style="font-size:13px"></div></div>`;
+        return `<div style="padding:10px 12px;background:var(--gb);border-radius:8px;border:0.5px solid var(--gbr);margin-bottom:14px"><div style="font-size:14px;font-weight:700;color:var(--text)">${data?data.title:''}</div>${data&&data.desc?`<div style="font-size:12px;color:var(--t2);margin-top:4px">${data.desc}</div>`:''} ${_metaRow}${_linkRow}${_fileRow}</div><div style="max-height:200px;overflow-y:auto;margin-bottom:12px">${replHtml}</div><div class="fg"><label>Responder</label>${_fmtToolbarHtml('reply-txt')}${_rteHtml('reply-txt','','min-height:65px')}</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px"><div class="fg" style="margin:0"><label style="font-size:12px">Anexar arquivo (opcional)</label><input type="file" id="reply-file-inp" class="fi" style="padding:5px;font-size:12px;cursor:pointer"></div><div class="fg" style="margin:0"><label style="font-size:12px">Link (opcional)</label><input class="fi" id="reply-link-inp" placeholder="https://..." style="font-size:13px"></div></div>`;
       },
       save:()=>{
-        const txt=(document.getElementById('reply-txt')||{}).value.trim();
+        const txt=vHtml('reply-txt');
+        const _rtEl=document.getElementById('reply-txt');const _rtText=(_rtEl?_rtEl.textContent:'').trim();
         const linkVal=(document.getElementById('reply-link-inp')||{}).value.trim();
         const fileInp=document.getElementById('reply-file-inp');
-        const hasContent=txt||linkVal||(fileInp&&fileInp.files&&fileInp.files.length);
+        const hasContent=_rtText||linkVal||(fileInp&&fileInp.files&&fileInp.files.length);
         if(!hasContent)return;
         const d=ld();
         let t=d.tasks.find(x=>x.id===data.id);
-        let _tInFS=false;
+        let _tInFS=false;let _tFirmId=null;
         if(!t){
           // Cross-firm task stored in fs_flowsales
           try{const _fsd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');const _ft=(_fsd.tasks||[]).find(x=>x.id===data.id);if(_ft){t=_ft;_tInFS=true;}}catch(e){}
+        }
+        // Visão agregada do admin: task criada direto no painel de um escritório
+        // específico — só existe no documento daquele escritório.
+        if(!t&&S.role==='admin'&&S.eid==='flowsales'){
+          for(const f of FIRMS){
+            try{
+              const fd=JSON.parse(localStorage.getItem('fs_'+f.id)||'{}');
+              const found=(fd.tasks||[]).find(x=>x.id===data.id);
+              if(found){t=found;_tFirmId=f.id;break;}
+            }catch(e){}
+          }
         }
         if(!t)return;
         t.replies=t.replies||[];
@@ -4069,7 +4081,7 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
           t.replies.push(_rep);
           activ(d,'Resposta em: '+t.title,'var(--blue)');
           // Notificar todos os envolvidos (criador, atribuído, responsável) exceto quem respondeu
-          const _notifSub=(txt||'Arquivo/link adicionado').slice(0,60)+' · '+t.title;
+          const _notifSub=(_rtText||'Arquivo/link adicionado').slice(0,60)+' · '+t.title;
           const _notifId='reply_'+t.id+'_'+Date.now();
           const _notifObj={id:_notifId,title:'💬 Resposta na demanda',sub:S.user.name+': '+_notifSub,read:false,taskId:t.id};
           const _involvedNames=new Set([t.createdBy,t.assign,t.resp].filter(Boolean));
@@ -4078,7 +4090,10 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
             d.notifs=d.notifs||[];
             d.notifs.unshift({..._notifObj,for:name});
           });
-          if(_tInFS){
+          if(_tFirmId){
+            // Task só existe no documento daquele escritório (achada varrendo todos)
+            try{const _fd3=JSON.parse(localStorage.getItem('fs_'+_tFirmId)||'{}');const _fi3=(_fd3.tasks||[]).findIndex(x=>x.id===t.id);if(_fi3>=0){_fd3.tasks[_fi3].replies=t.replies;}_fd3.__ts=Date.now();localStorage.setItem('fs_'+_tFirmId,JSON.stringify(_fd3));_fbSave(_tFirmId,_fd3);}catch(_e3){}
+          }else if(_tInFS){
             // Task lives in fs_flowsales, not in local d.tasks — save there
             try{const _fsd2=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');const _fi2=(_fsd2.tasks||[]).findIndex(x=>x.id===t.id);if(_fi2>=0){_fsd2.tasks[_fi2].replies=t.replies;}else{_fsd2.tasks=_fsd2.tasks||[];_fsd2.tasks.push(t);}_fsd2.__ts=Date.now();localStorage.setItem('fs_flowsales',JSON.stringify(_fsd2));_fbSave('flowsales',_fsd2);}catch(_fse){}
           }else{sv(d);}
@@ -4137,21 +4152,32 @@ function _editReplyInline(taskId,replyId,btn){
   const _r=t.replies&&(t.replies.find(r=>r.id===replyId)||(replyId.startsWith('ri')&&!isNaN(replyId.slice(2))?t.replies[+replyId.slice(2)]:(!isNaN(replyId)?t.replies[+replyId]:null)));
   if(!_r)return;
   if(btn)btn.style.display='none';
-  _div.innerHTML=`<textarea id="edit-ta-${replyId}" style="width:100%;min-height:60px;background:var(--s3);border:0.5px solid var(--gbr);border-radius:6px;padding:6px 8px;font-size:13px;color:var(--text);resize:vertical;box-sizing:border-box;font-family:inherit">${_r.text||''}</textarea><div style="display:flex;gap:6px;margin-top:6px"><button onclick="_saveReplyEdit('${taskId}','${replyId}',${_tInFS})" style="padding:4px 12px;background:var(--gold);border:none;border-radius:6px;color:#000;font-size:12px;font-weight:600;cursor:pointer">Salvar</button><button onclick="openTaskThread('${taskId}')" style="padding:4px 12px;background:var(--s2);border:0.5px solid var(--gbr);border-radius:6px;color:var(--t2);font-size:12px;cursor:pointer">Cancelar</button></div>`;
+  _div.innerHTML=`${_fmtToolbarHtml('edit-ta-'+replyId)}<div contenteditable="true" id="edit-ta-${replyId}" class="rte-field" style="width:100%;min-height:60px;background:var(--s3);border:0.5px solid var(--gbr);border-radius:6px;padding:6px 8px;font-size:13px;color:var(--text);box-sizing:border-box;font-family:inherit;overflow-y:auto">${_r.text||''}</div><div style="display:flex;gap:6px;margin-top:6px"><button onclick="_saveReplyEdit('${taskId}','${replyId}',${_tInFS})" style="padding:4px 12px;background:var(--gold);border:none;border-radius:6px;color:#000;font-size:12px;font-weight:600;cursor:pointer">Salvar</button><button onclick="openTaskThread('${taskId}')" style="padding:4px 12px;background:var(--s2);border:0.5px solid var(--gbr);border-radius:6px;color:var(--t2);font-size:12px;cursor:pointer">Cancelar</button></div>`;
   setTimeout(()=>{const ta=document.getElementById('edit-ta-'+replyId);if(ta){ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length);}},50);
 }
 function _saveReplyEdit(taskId,replyId,tInFS){
   const ta=document.getElementById('edit-ta-'+replyId);if(!ta)return;
-  const newText=ta.value.trim();
-  const d=ld();let t=d.tasks.find(x=>x.id===taskId);let _tInFS=!!tInFS;
+  const newText=vHtml('edit-ta-'+replyId);
+  const d=ld();let t=d.tasks.find(x=>x.id===taskId);let _tInFS=!!tInFS;let _tFirmId=null;
   if(!t){try{const _fsd=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');const _ft=(_fsd.tasks||[]).find(x=>x.id===taskId);if(_ft){t=_ft;_tInFS=true;}}catch(e){}}
+  if(!t&&S.role==='admin'&&S.eid==='flowsales'){
+    for(const f of FIRMS){
+      try{
+        const fd=JSON.parse(localStorage.getItem('fs_'+f.id)||'{}');
+        const found=(fd.tasks||[]).find(x=>x.id===taskId);
+        if(found){t=found;_tFirmId=f.id;break;}
+      }catch(e){}
+    }
+  }
   if(!t)return;
   const _ri=(t.replies||[]).findIndex(r=>r.id===replyId||(replyId.startsWith('ri')&&!isNaN(replyId.slice(2))&&(t.replies||[]).indexOf(r)===+replyId.slice(2))||(!isNaN(replyId)&&(t.replies||[]).indexOf(r)===+replyId));
   if(_ri===-1)return;
   const _r=t.replies[_ri];
   if(!_r)return;
   _r.text=newText;_r.edited=true;
-  if(_tInFS){
+  if(_tFirmId){
+    try{const _fd3=JSON.parse(localStorage.getItem('fs_'+_tFirmId)||'{}');const _fi3=(_fd3.tasks||[]).findIndex(x=>x.id===taskId);if(_fi3>=0)_fd3.tasks[_fi3]=t;_fd3.__ts=Date.now();localStorage.setItem('fs_'+_tFirmId,JSON.stringify(_fd3));_fbSave(_tFirmId,_fd3);}catch(e){}
+  }else if(_tInFS){
     try{const _fsd2=JSON.parse(localStorage.getItem('fs_flowsales')||'{}');const _fi=(_fsd2.tasks||[]).findIndex(x=>x.id===taskId);if(_fi>=0)_fsd2.tasks[_fi]=t;localStorage.setItem('fs_flowsales',JSON.stringify(_fsd2));_fbSave('flowsales',_fsd2);}catch(e){}
     sv(d);
   }else{sv(d);}
