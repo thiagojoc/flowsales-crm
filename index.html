@@ -705,6 +705,7 @@ signInAnonymously(_auth).catch(e=>console.error('[FB Auth] signInAnonymously fal
             <button class="ca" id="ft-done" onclick="ftask('done')">Concluídas</button>
             <button class="ca" id="ft-late" onclick="ftask('late')">Atrasadas</button>
             <button class="ca" id="ft-all" onclick="ftask('all')" style="display:none"></button>
+            <select class="fi" id="tasks-firm-filter" onchange="filterTasksFirm(this.value)" style="display:none;width:auto;font-size:13px;padding:4px 8px"></select>
             <button class="bulk-del" id="bulk-del" onclick="bulkDelete()">Excluir selecionadas (<span id="sel-count">0</span>)</button>
             <button class="ca mla" onclick="openM('task')">+ Nova demanda</button>
           </div>
@@ -2444,11 +2445,30 @@ function delMeta(p,id){const d=ld();d.metas[p]=(d.metas[p]||[]).filter(x=>x.id!=
 
 // ── TASKS ─────────────────────────────────────────────────────
 const slbl={done:'<span class="b bg">Concluída</span>',pending:'<span class="b bgo">Pendente</span>',late:'<span class="b br">Atrasada</span>'};const prlbl={high:'<span class="b br" style="font-size:12px">▲ Alta</span>',med:'<span class="b bgo" style="font-size:12px">● Média</span>',low:'<span class="b bgr" style="font-size:12px">▼ Baixa</span>'};
+function _taskFirmId(t){
+  if(t._sourceFirm)return t._sourceFirm;
+  if(t.resp){
+    const byId=FIRMS.find(f=>f.id===t.resp);if(byId)return byId.id;
+    const byName=FIRMS.find(f=>f.name===t.resp);if(byName)return byName.id;
+  }
+  return null;
+}
+function filterTasksFirm(v){S.tasksFirmFilter=v;rTasks(ld());}
 function rTasks(d){
   // Default filter: client AND admin-in-firm-context see only their own tasks
   if(!S.hasOwnProperty('ownf')){
     if(S.role==='client')S.ownf='mine';
     else if(S.role==='admin'&&S.eid!=='flowsales')S.ownf='mine';
+  }
+  const _isAdminFSTasks=S.role==='admin'&&S.eid==='flowsales';
+  const _tfEl=document.getElementById('tasks-firm-filter');
+  if(_tfEl){
+    _tfEl.style.display=_isAdminFSTasks?'':'none';
+    if(_isAdminFSTasks&&!_tfEl._built){
+      _tfEl._built=true;
+      _tfEl.innerHTML='<option value="all">Todos os escritórios</option>'+FIRMS.map(f=>`<option value="${f.id}">${f.name}</option>`).join('');
+      _tfEl.value=S.tasksFirmFilter||'all';
+    }
   }
   // Include FlowSales tasks assigned to this firm
   const _firmNm=(FIRMS.find(f=>f.id===S.eid)||{}).name||'';
@@ -2493,9 +2513,11 @@ function rTasks(d){
     const _isSelfTask=_assignFn&&_createdFn&&_assignFn===_createdFn;
     return !(_isSelfTask&&_assignFn!==_myFN);
   });
+  if(_isAdminFSTasks&&S.tasksFirmFilter&&S.tasksFirmFilter!=='all'){tasks=tasks.filter(t=>_taskFirmId(t)===S.tasksFirmFilter);}
   if(S.ownf==='mine'){tasks=tasks.filter(t=>!t.assign||_fn0rt(t.assign)===_myFN);}
   else if(S.ownf==='delegated'){tasks=tasks.filter(t=>t.assign&&_fn0rt(t.assign)!==_myFN);}
-  if(S.tf!=='all')tasks=tasks.filter(t=>t.status===S.tf);
+  if(S.tf==='pending')tasks=tasks.filter(t=>t.status==='pending'||t.status==='late');
+  else if(S.tf!=='all')tasks=tasks.filter(t=>t.status===S.tf);
   if(S.wkf!=='all')tasks=tasks.filter(t=>String(t.week)===String(S.wkf));
   if(S.datef)tasks=tasks.filter(t=>t.due===S.datef);
   if(S.calFrom)tasks=tasks.filter(t=>!t.due||inRange(t.due));
