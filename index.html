@@ -78,7 +78,6 @@ input[type="date"].fi::-webkit-calendar-picker-indicator:hover{opacity:0.85;}
 .camp-opt{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--text)}
 .camp-opt:hover{background:var(--gb)}
 .camp-opt input{cursor:pointer}
-.camp-dd-apply{width:100%;margin-top:6px;padding:7px;background:var(--gold);color:#000;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer}
 .firm-opt{padding:9px 12px;font-size:13px;cursor:pointer;transition:background .1s;color:var(--t2);}
 .firm-opt:hover{background:var(--gb);color:var(--text);}
 .firm-opt.active{color:var(--gold);font-weight:600;background:var(--gb);}
@@ -2360,7 +2359,7 @@ function rMetaKpis(d){
   const campaigns=d.metaCampaigns||[];
   const selIds=S.metaCampaignIds||[];
   const summaryText=!selIds.length?'Todas as campanhas':selIds.length===1?((campaigns.find(c=>c.id===selIds[0])||{}).name||'1 campanha selecionada'):selIds.length+' campanhas selecionadas';
-  const campSel=campaigns.length?`<div class="fg" style="margin-bottom:12px"><label>Campanha</label><div class="camp-dd-wrap"><button type="button" class="fi camp-dd-btn" onclick="toggleCampDropdown(event)">${summaryText} ▾</button><div class="camp-dropdown" id="camp-dropdown"><label class="camp-opt"><input type="checkbox" id="camp-all-cb" ${!selIds.length?'checked':''} onchange="toggleAllCampaigns(this.checked)"/> Todas as campanhas</label>${campaigns.map(c=>`<label class="camp-opt"><input type="checkbox" class="camp-cb" value="${c.id}" ${selIds.includes(c.id)?'checked':''} onchange="toggleCampaignSel('${c.id}',this.checked)"/> ${c.name}${c.status&&c.status!=='ACTIVE'?' ('+c.status+')':''}</label>`).join('')}<button type="button" class="camp-dd-apply" onclick="applyCampSel()">Aplicar</button></div></div></div>`:'';
+  const campSel=campaigns.length?`<div class="fg" style="margin-bottom:12px"><label>Campanha</label><div class="camp-dd-wrap"><button type="button" class="fi camp-dd-btn" onclick="toggleCampDropdown(event)">${summaryText} ▾</button><div class="camp-dropdown" id="camp-dropdown"><label class="camp-opt"><input type="checkbox" id="camp-all-cb" ${!selIds.length?'checked':''} onchange="toggleAllCampaigns(this.checked)"/> Todas as campanhas</label>${campaigns.map(c=>`<label class="camp-opt"><input type="checkbox" class="camp-cb" value="${c.id}" ${selIds.includes(c.id)?'checked':''} onchange="toggleCampaignSel('${c.id}',this.checked)"/> ${c.name}${c.status&&c.status!=='ACTIVE'?' ('+c.status+')':''}</label>`).join('')}</div></div></div>`:'';
   if(!m){el.innerHTML=campSel+'<div class="empty">Clique em Sincronizar para buscar dados da Meta.</div>';return;}
   const syncDate=new Date(m.syncedAt).toLocaleString('pt-BR');
   const ctr=m.impressions?((m.clicks/m.impressions)*100).toFixed(2):'0.00';
@@ -2370,10 +2369,15 @@ function rMetaKpis(d){
   el.innerHTML=campSel+`<div style="font-size:10px;color:var(--t2);margin-bottom:12px">Última sincronização: ${syncDate} · ${campLbl}</div><div class="kpi-g6" style="margin-bottom:14px"><div class="kpi-mc"><div class="kpi-lbl">Investimento</div><div class="kpi-val" style="color:var(--gold)">R$ ${(m.spend||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">no período selecionado</div></div><div class="kpi-mc"><div class="kpi-lbl">Impressões</div><div class="kpi-val" style="color:var(--blue)">${(m.impressions||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${(m.reach||0).toLocaleString('pt-BR')} pessoas alcançadas</div></div><div class="kpi-mc"><div class="kpi-lbl">Cliques</div><div class="kpi-val" style="color:var(--green)">${(m.clicks||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${ctr}% CTR</div></div><div class="kpi-mc"><div class="kpi-lbl">Leads gerados</div><div class="kpi-val" style="color:var(--green)">${m.leads||0}</div><div class="kpi-sub kpi-nt">R$ ${cpl.toLocaleString('pt-BR')} custo por lead</div></div></div>`;
 }
 function toggleCampDropdown(e){if(e)e.stopPropagation();const el=document.getElementById('camp-dropdown');if(el)el.classList.toggle('on');}
+function _scheduleCampSync(){
+  clearTimeout(window._campSyncTimer);
+  window._campSyncTimer=setTimeout(()=>{syncMeta();},700);
+}
 function toggleAllCampaigns(checked){
   if(!checked)return;
   S.metaCampaignIds=[];
   document.querySelectorAll('#camp-dropdown .camp-cb').forEach(cb=>{cb.checked=false;});
+  _scheduleCampSync();
 }
 function toggleCampaignSel(id,checked){
   if(!S.metaCampaignIds)S.metaCampaignIds=[];
@@ -2384,10 +2388,7 @@ function toggleCampaignSel(id,checked){
     S.metaCampaignIds=S.metaCampaignIds.filter(x=>x!==id);
     if(!S.metaCampaignIds.length){const allCb=document.getElementById('camp-all-cb');if(allCb)allCb.checked=true;}
   }
-}
-function applyCampSel(){
-  const el=document.getElementById('camp-dropdown');if(el)el.classList.remove('on');
-  syncMeta();
+  _scheduleCampSync();
 }
 async function syncMeta(silent){
   const d=_kpiData();const fe=d.firmExtra||{};
