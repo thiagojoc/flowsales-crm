@@ -3919,8 +3919,9 @@ function openM(type,data){
         // Para clientes: listar o próprio usuário + sócios do escritório
         const _buildClientAsg=()=>{
           const f=FIRMS.find(x=>x.id===S.eid)||{};
+          const _nrm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
           const seen=new Set();const names=[];
-          const _add=n=>{const t=(n||'').trim();const tl=t.toLowerCase();const tf=tl.split(' ')[0];if(t&&!seen.has(tl)&&!names.some(x=>x.toLowerCase().split(' ')[0]===tf)){seen.add(tl);names.push(t);}};
+          const _add=n=>{const t=(n||'').trim();const tl=_nrm(t);const tf=tl.split(' ')[0];if(t&&!seen.has(tl)&&!names.some(x=>_nrm(x).split(' ')[0]===tf)){seen.add(tl);names.push(t);}};
           // FlowSales team sempre disponível para clientes atribuírem
           _add('Thiago');_add('Carlos');
           // pessoas do escritório
@@ -3936,8 +3937,9 @@ function openM(type,data){
           if(S.eid==='flowsales')return['Thiago','Carlos'].map(a=>`<option${data&&data.assign===a?' selected':''}>${a}</option>`).join('');
           const f=FIRMS.find(x=>x.id===S.eid)||{};
           const _d=ld();
+          const _nrm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
           const seen=new Set();const allNames=[];
-          const _add=n=>{const t=(n||'').trim();const tl=t.toLowerCase();const tf=tl.split(' ')[0];if(t&&!seen.has(tl)&&!allNames.some(x=>x.toLowerCase().split(' ')[0]===tf)){seen.add(tl);allNames.push(t);}};
+          const _add=n=>{const t=(n||'').trim();const tl=_nrm(t);const tf=tl.split(' ')[0];if(t&&!seen.has(tl)&&!allNames.some(x=>_nrm(x).split(' ')[0]===tf)){seen.add(tl);allNames.push(t);}};
           _add('Thiago');_add('Carlos');
           (_d.partners||[]).forEach(p=>_add(p.name));
           (_fbDynUsers||[]).filter(u=>u.eid===S.eid&&u.role==='client'&&u.name).forEach(u=>_add(u.name));
@@ -4732,7 +4734,7 @@ const _firmPeopleCache={};
 async function _getFirmPeople(firmId){
   if(_firmPeopleCache[firmId]&&FIRMS.some(x=>x.id===firmId))return _firmPeopleCache[firmId];
   const fw=FIRMS.find(x=>x.id===firmId)||{};
-  const norm=s=>(s||'').trim().toLowerCase();
+  const norm=s=>(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
   const fn=s=>norm(s).split(' ')[0];const names=[];const has=n=>names.some(x=>norm(x)===norm(n)||fn(x)===fn(n));
   // 1. Sempre buscar do Firebase para garantir dado atualizado
   let fd=null;
@@ -4768,7 +4770,7 @@ async function _updateFsAssign(){
     names=[...flowPeople];
     for(const fw of FIRMS){
       const pp=await _getFirmPeople(fw.id);
-      const norm=s=>(s||'').trim().toLowerCase();
+      const norm=s=>(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
       pp.forEach(n=>{if(!names.some(x=>norm(x)===norm(n)))names.push(n);});
     }
   } else {
@@ -4804,7 +4806,7 @@ async function _updateTaskAsg(){
   } else if(rsp==='Ambos'||rsp==='ambos'){
     names=[...flowPeople];
     const _fd=ld();const _fw=FIRMS.find(x=>x.id===S.eid)||{};
-    const _nm=s=>(s||'').trim().toLowerCase();
+    const _nm=s=>(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
     const _has=n=>names.some(x=>_nm(x)===_nm(n));
     (_fd.partners||[]).forEach(p=>{if(p.name&&!_has(p.name))names.push(p.name);});
     (_fbDynUsers||[]).filter(u=>u.eid===S.eid&&u.role==='client'&&u.name&&!_has(u.name)).forEach(u=>names.push(u.name));
