@@ -693,7 +693,7 @@ signInAnonymously(_auth).catch(e=>console.error('[FB Auth] signInAnonymously fal
             <div id="kpi-mo-comp"></div>
           </div>
           <div class="card">
-            <div class="ch"><div class="ct ct-glow">Faturamento por dia (mês atual)</div></div>
+            <div class="ch"><div class="ct ct-glow">Faturamento por dia</div></div>
             <div id="kpi-daily-chart"></div>
           </div>
           <div class="card" id="ghl-kpis-card">
@@ -2092,24 +2092,52 @@ const _origColors={
   'Anúncio':'#2a78d6','Externo':'#6a6a6a'
 };
 const _origColorDefault='#8a8a8a';
+// Dias do período selecionado no dash (S.calFrom/S.calTo) — usado pelos
+// gráficos "por dia" (Faturamento, Vendas por origem, Leads por origem) pra
+// que troquem de janela junto com o período, em vez de ficarem travados no
+// mês corrente do calendário.
+function _periodDays(){
+  const now=new Date();
+  const from=S.calFrom?new Date(S.calFrom+'T12:00:00'):new Date(now.getFullYear(),now.getMonth(),1,12);
+  const to=S.calTo?new Date(S.calTo+'T12:00:00'):now;
+  const days=[];
+  const cur=new Date(from);
+  while(cur<=to){days.push(new Date(cur));cur.setDate(cur.getDate()+1);}
+  return days;
+}
+function _dayKey(dt){return dt.toISOString().split('T')[0];}
 function _renderVendasOrigem(vendasItems){
   const el=document.getElementById('kpi-vendas-origem');
   if(!el)return;
   if(!vendasItems.length){el.innerHTML='<div class="empty">Nenhum registro ainda.</div>';return;}
-  const groups={};
+  const days=_periodDays();
+  const byDayOrig={};const origSet=new Set();
   vendasItems.forEach(vi=>{
-    const key=vi.orig||'Não informada';
-    if(!groups[key])groups[key]={count:0,total:0};
-    groups[key].count++;
-    groups[key].total+=(+vi.val||0);
+    const key=vi.date;const orig=vi.orig||'Não informada';
+    origSet.add(orig);
+    if(!byDayOrig[key])byDayOrig[key]={};
+    byDayOrig[key][orig]=(byDayOrig[key][orig]||0)+(+vi.val||0);
   });
-  const entries=Object.entries(groups).sort((a,b)=>b[1].total-a[1].total);
-  const maxTotal=Math.max(...entries.map(([,g])=>g.total),1);
-  el.innerHTML=`<div style="display:flex;align-items:flex-end;gap:14px;height:150px;padding-top:22px">${entries.map(([orig,g])=>{
-    const color=_origColors[orig]||_origColorDefault;
-    const pct=Math.max(Math.round(g.total/maxTotal*100),3);
-    return `<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%"><div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:4px;white-space:nowrap">R$ ${g.total.toLocaleString('pt-BR',{maximumFractionDigits:0})}</div><div title="${orig}: ${g.count} venda${g.count!==1?'s':''} · R$ ${g.total.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}" style="width:100%;max-width:48px;background:${color};border-radius:5px 5px 0 0;height:${pct}%"></div></div>`;
-  }).join('')}</div><div style="display:flex;gap:14px;margin-top:8px">${entries.map(([orig,g])=>`<div style="flex:1;min-width:0;text-align:center;font-size:11px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${orig}<br><span style="color:var(--text)">${g.count} venda${g.count!==1?'s':''}</span></div>`).join('')}</div>`;
+  const origins=[...origSet].sort();
+  const dayTotals=days.map(dt=>{
+    const o=byDayOrig[_dayKey(dt)]||{};
+    return origins.reduce((s,or)=>s+(o[or]||0),0);
+  });
+  const max=Math.max(...dayTotals,1);
+  const bars=days.map((dt,i)=>{
+    const o=byDayOrig[_dayKey(dt)]||{};
+    const total=dayTotals[i];
+    const barH=total?Math.max(Math.round(total/max*100),3):0;
+    const segs=origins.filter(or=>o[or]).map(or=>{
+      const h=total?Math.round(o[or]/total*100):0;
+      const color=_origColors[or]||_origColorDefault;
+      return `<div title="${or}: R$ ${o[or].toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}" style="width:100%;height:${h}%;background:${color}"></div>`;
+    }).join('');
+    return `<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%"><div style="width:100%;max-width:16px;height:${barH}%;display:flex;flex-direction:column-reverse;border-radius:2px 2px 0 0;overflow:hidden">${segs}</div></div>`;
+  }).join('');
+  const dayLabels=days.map(dt=>`<div style="flex:1;text-align:center;font-size:8px;color:var(--t2)">${dt.getDate()}</div>`).join('');
+  const legend=origins.map(or=>`<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--t2)"><span style="width:9px;height:9px;border-radius:2px;background:${_origColors[or]||_origColorDefault};display:inline-block"></span>${or}</span>`).join('');
+  el.innerHTML=`<div style="display:flex;align-items:flex-end;gap:2px;height:130px;margin-bottom:6px">${bars}</div><div style="display:flex;gap:2px;margin-bottom:10px">${dayLabels}</div><div style="display:flex;gap:12px;flex-wrap:wrap">${legend}</div>`;
 }
 function rKpis(d){
   const kRaw=d.kpis;
@@ -2207,22 +2235,56 @@ function rKpis(d){
   document.getElementById('kpi-traf').innerHTML=`<div class="traf-row"><span class="traf-lbl">Investimento em tráfego</span><span class="traf-val">R$ ${kRaw.invest.toLocaleString('pt-BR')}</span></div><div class="traf-row"><span class="traf-lbl">Impressões totais</span><span class="traf-val">${kRaw.impressoes.toLocaleString('pt-BR')}</span></div><div class="traf-row"><span class="traf-lbl">Cliques</span><span class="traf-val">${kRaw.cliques}</span></div><div class="traf-row"><span class="traf-lbl">CTR</span><span class="traf-val">${ctr}%</span></div><div class="traf-row"><span class="traf-lbl">Leads gerados (tráfego pago)</span><span class="traf-val">${_leadsTraf}</span></div><div class="traf-row"><span class="traf-lbl">Custo por lead (tráfego pago)</span><span class="traf-val">R$ ${_cplTraf}</span></div><div class="traf-row"><span class="traf-lbl">Faturamento (vendas de tráfego pago)</span><span class="traf-val">R$ ${_fatTraf.toLocaleString('pt-BR')}</span></div><div class="traf-row"><span class="traf-lbl">ROI do tráfego pago</span><span class="traf-val" style="color:${_roiTrafColor}">${_roiTraf}</span></div>`;
   const _act=_kpiOrigActive();
   const _leadsByOrigView=_act?Object.fromEntries(_act.map(f=>[_kpiOrigLabels[f],(kRaw.leadsByOrig&&kRaw.leadsByOrig[_kpiOrigLabels[f]])||0])):kRaw.leadsByOrig;
-  _renderLeadsOrigem(_leadsByOrigView);
+  const _allowedOrigLabels=_act?new Set(_act.map(f=>_kpiOrigLabels[f])):null;
+  const _leadsByDayOrigView=(()=>{
+    const src=kRaw.leadsByDayOrig||{};
+    if(!_allowedOrigLabels)return src;
+    const out={};
+    Object.keys(src).forEach(day=>{
+      const filtered={};
+      Object.keys(src[day]).forEach(orig=>{if(_allowedOrigLabels.has(orig))filtered[orig]=src[day][orig];});
+      out[day]=filtered;
+    });
+    return out;
+  })();
+  _renderLeadsOrigem(_leadsByOrigView,_leadsByDayOrigView);
   _renderMonthComparison(d);
   _renderDailyChart(d);
 }
 // Leads sincronizados do GHL, agrupados pela tag de origem do lead (mesma
 // convenção usada em vendas: anúncio/indicação/externo).
-function _renderLeadsOrigem(leadsByOrig){
+function _renderLeadsOrigem(leadsByOrig,leadsByDayOrig){
   const el=document.getElementById('kpi-leads-origem');if(!el)return;
-  const entries=Object.entries(leadsByOrig||{}).filter(([,c])=>c>0).sort((a,b)=>b[1]-a[1]);
+  const entries=Object.entries(leadsByOrig||{}).filter(([,c])=>c>0);
   if(!entries.length){el.innerHTML='<div class="empty">Nenhum lead sincronizado ainda.</div>';return;}
-  const max=Math.max(...entries.map(([,c])=>c),1);
-  el.innerHTML=`<div style="display:flex;align-items:flex-end;gap:14px;height:150px;padding-top:22px">${entries.map(([orig,c])=>{
-    const color=_origColors[orig]||_origColorDefault;
-    const pct=Math.max(Math.round(c/max*100),3);
-    return `<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%"><div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:4px">${c}</div><div title="${orig}: ${c} lead${c!==1?'s':''}" style="width:100%;max-width:48px;background:${color};border-radius:5px 5px 0 0;height:${pct}%"></div></div>`;
-  }).join('')}</div><div style="display:flex;gap:14px;margin-top:8px">${entries.map(([orig])=>`<div style="flex:1;min-width:0;text-align:center;font-size:11px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${orig}</div>`).join('')}</div>`;
+  const days=_periodDays();
+  const byDayOrig=leadsByDayOrig||{};
+  const origins=entries.map(([orig])=>orig).sort();
+  const dayTotals=days.map(dt=>{
+    const o=byDayOrig[_dayKey(dt)]||{};
+    return origins.reduce((s,or)=>s+(o[or]||0),0);
+  });
+  const max=Math.max(...dayTotals,1);
+  const bars=days.map((dt,i)=>{
+    const o=byDayOrig[_dayKey(dt)]||{};
+    const total=dayTotals[i];
+    const barH=total?Math.max(Math.round(total/max*100),3):0;
+    const segs=origins.filter(or=>o[or]).map(or=>{
+      const h=total?Math.round(o[or]/total*100):0;
+      const color=_origColors[or]||_origColorDefault;
+      return `<div title="${or}: ${o[or]} lead${o[or]!==1?'s':''}" style="width:100%;height:${h}%;background:${color}"></div>`;
+    }).join('');
+    return `<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%"><div style="width:100%;max-width:16px;height:${barH}%;display:flex;flex-direction:column-reverse;border-radius:2px 2px 0 0;overflow:hidden">${segs}</div></div>`;
+  }).join('');
+  const dayLabels=days.map(dt=>`<div style="flex:1;text-align:center;font-size:8px;color:var(--t2)">${dt.getDate()}</div>`).join('');
+  const legend=origins.map(or=>`<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--t2)"><span style="width:9px;height:9px;border-radius:2px;background:${_origColors[or]||_origColorDefault};display:inline-block"></span>${or}</span>`).join('');
+  if(!Object.keys(byDayOrig).length){
+    // Sincronizações antigas ainda não têm o detalhamento por dia — cai pra
+    // uma mensagem simples em vez de um gráfico vazio.
+    el.innerHTML='<div class="empty">Sincronize novamente pra ver a evolução diária.</div>';
+    return;
+  }
+  el.innerHTML=`<div style="display:flex;align-items:flex-end;gap:2px;height:130px;margin-bottom:6px">${bars}</div><div style="display:flex;gap:2px;margin-bottom:10px">${dayLabels}</div><div style="display:flex;gap:12px;flex-wrap:wrap">${legend}</div>`;
 }
 function _ym(dateStr){return (dateStr||'').slice(0,7);}
 function _monthDelta(cur,prev){
@@ -2259,16 +2321,15 @@ function _renderMonthComparison(d){
 }
 function _renderDailyChart(d){
   const el=document.getElementById('kpi-daily-chart');if(!el)return;
-  const now=new Date();
-  const y=now.getFullYear(),m=now.getMonth();
-  const daysInMonth=new Date(y,m+1,0).getDate();
-  const ymPrefix=`${y}-${String(m+1).padStart(2,'0')}`;
-  const vi=(d.vendasItems||[]).filter(x=>(x.date||'').startsWith(ymPrefix)).filter(_vendaMatchesActiveOrig);
-  const byDay=Array(daysInMonth).fill(0);
-  vi.forEach(x=>{const day=+((x.date||'').split('-')[2])||0;if(day>=1&&day<=daysInMonth)byDay[day-1]+=(+x.val||0);});
+  const days=_periodDays();
+  const vi=(d.vendasItems||[]).filter(_vendaMatchesActiveOrig);
+  const byDay=days.map(dt=>{
+    const key=_dayKey(dt);
+    return vi.filter(x=>x.date===key).reduce((s,x)=>s+(+x.val||0),0);
+  });
   const max=Math.max(...byDay,1);
-  if(!vi.length){el.innerHTML='<div class="empty">Nenhuma venda registrada este mês ainda.</div>';return;}
-  el.innerHTML=`<div style="display:flex;align-items:flex-end;gap:2px;height:120px">${byDay.map((v,i)=>`<div title="Dia ${i+1}: R$ ${v.toLocaleString('pt-BR')}" style="flex:1;background:var(--gold);opacity:${v?1:0.15};height:${Math.max(v/max*100,2)}%;border-radius:2px 2px 0 0"></div>`).join('')}</div><div style="display:flex;gap:2px;margin-top:4px">${byDay.map((v,i)=>`<div style="flex:1;text-align:center;font-size:9px;color:var(--t2)">${i+1}</div>`).join('')}</div>`;
+  if(!byDay.some(v=>v>0)){el.innerHTML='<div class="empty">Nenhuma venda registrada neste período ainda.</div>';return;}
+  el.innerHTML=`<div style="display:flex;align-items:flex-end;gap:2px;height:120px">${byDay.map((v,i)=>`<div title="${fd(_dayKey(days[i]))}: R$ ${v.toLocaleString('pt-BR')}" style="flex:1;background:var(--gold);opacity:${v?1:0.15};height:${Math.max(v/max*100,2)}%;border-radius:2px 2px 0 0"></div>`).join('')}</div><div style="display:flex;gap:2px;margin-top:4px">${days.map(dt=>`<div style="flex:1;text-align:center;font-size:9px;color:var(--t2)">${dt.getDate()}</div>`).join('')}</div>`;
 }
 function doneImpl(id){const d=ld();const i=d.implementations.find(x=>x.id===id);if(i){i.done=true;activ(d,'Entregável concluído: '+i.title,'var(--green)');}sv(d);renderAll();}
 // Substitui o antigo card cru "GoHighLevel — dados em tempo real" por um
@@ -2331,7 +2392,10 @@ async function syncGHL(silent){
     if(!d.kpis)d.kpis={};
     d.kpis.reunAgd=agendadas;d.kpis.reunReal=realizadas;d.kpis.leads=leads;
     // Leads por origem — mesma tag usada nas vendas (anúncio/indicação/externo).
+    // leadsByDayOrig guarda a mesma contagem quebrada por dia, pro gráfico
+    // "Leads por origem" poder mostrar a evolução dia a dia, não só o total.
     const leadsByOrig={};
+    const leadsByDayOrig={};
     allOppsList.forEach(o=>{
       const tagsNorm=((o.contact&&o.contact.tags)||[]).map(_normTag);
       let orig='Outro';
@@ -2339,8 +2403,14 @@ async function syncGHL(silent){
       else if(tagsNorm.includes('indicacao'))orig='Indicação';
       else if(tagsNorm.includes('externo'))orig='Externo';
       leadsByOrig[orig]=(leadsByOrig[orig]||0)+1;
+      const dayKey=(o.dateAdded||'').slice(0,10);
+      if(dayKey){
+        if(!leadsByDayOrig[dayKey])leadsByDayOrig[dayKey]={};
+        leadsByDayOrig[dayKey][orig]=(leadsByDayOrig[dayKey][orig]||0)+1;
+      }
     });
     d.kpis.leadsByOrig=leadsByOrig;
+    d.kpis.leadsByDayOrig=leadsByDayOrig;
     // Detalhamento por origem (leads + reuniões) usado pelo filtro "Ver:
     // Geral/Anúncio/Indicação/Externo" da aba KPIs — reuniões (eventos de
     // calendário) não trazem a tag do contato direto, então cruzamos pelo
