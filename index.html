@@ -2019,7 +2019,7 @@ function rOv(d){
     {l:'Leads gerados',v:safe(k.leads),g:safe(k.leadsG)||30,c:'var(--blue)',fmt:v=>v},
     {l:'Reuniões agendadas',v:safe(k.reunAgd),g:safe(k.reunAgdG)||12,c:'var(--gold)',fmt:v=>v},
     {l:'Vendas',v:safe(k.vendas),g:safe(k.vendasG)||5,c:'var(--green)',fmt:v=>v},
-    {l:'Faturamento',v:safe(k.rev),g:safe(k.revG)||15000,c:'var(--green)',fmt:v=>'R$'+(v/1000).toFixed(0)+'k'},
+    {l:'Faturamento',v:safe(k.rev),g:safe(k.revG)||15000,c:'var(--green)',fmt:v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})},
   ].map(i=>{const p=i.g?Math.min(Math.round(i.v/i.g*100),100):0;const gc=p>=100?'var(--green)':p>=60?'var(--gold)':'var(--t2)';return`<div class="kc"><div class="kl">${i.l}</div><div class="kv" style="color:${p>0?gc:'var(--t2)'}">${i.fmt(i.v)}</div><div class="kt"><div class="ktr"><div class="kf" style="width:${p}%;background:${i.c}"></div></div><div class="kbl"><span>${p}% da meta</span><span>${i.fmt(i.g)}</span></div></div></div>`;}).join('');
   const ua=document.getElementById('urg-area');
   const _usvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';const _fn0ov=s=>(s||'').trim().split(' ')[0].toLowerCase();
