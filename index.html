@@ -2506,7 +2506,6 @@ function rMetas(d){
     {key:'fat',label:'Faturamento',icon:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>',fmt:v=>'R$ '+v.toLocaleString('pt-BR'),unit:''}
   ];
   const wrap=document.getElementById('metas-din-wrap');if(!wrap)return;
-  const isAdm=S.role==='admin';
   wrap.innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">${defs.map(def=>{
     const m=md[def.key]||{monthly:0,current:0};
     const monthly=m.monthly||0;const cur=m.current||0;
@@ -2515,7 +2514,7 @@ function rMetas(d){
     const pct=monthly?Math.min(Math.round(cur/monthly*100),100):0;
     const cl=pct>=100?'var(--green)':pct>=60?'var(--gold)':'var(--red)';
     const clDim=pct===0?'var(--t2)':cl;
-    return `<div class="card"><div class="ch"><div class="ct" style="display:flex;align-items:center;gap:6px">${def.icon}${def.label}</div>${isAdm?`<button class="ca" onclick="openM('metaDin',{key:'${def.key}',monthly:${monthly},current:${cur}})" style="font-size:12px;padding:2px 8px">Editar</button>`:''}</div>
+    return `<div class="card"><div class="ch"><div class="ct" style="display:flex;align-items:center;gap:6px">${def.icon}${def.label}</div><button class="ca" onclick="openM('metaDin',{key:'${def.key}',monthly:${monthly},current:${cur}})" style="font-size:12px;padding:2px 8px">Editar</button></div>
       <div style="margin:10px 0 6px;font-size:22px;font-weight:700;color:${monthly?'var(--text)':'var(--t2)'}">${def.fmt(cur)}</div>
       <div style="font-size:13px;color:var(--t2);margin-bottom:10px">de ${def.fmt(monthly)} mensais</div>
       <div style="height:4px;background:var(--s3);border-radius:2px;margin-bottom:8px"><div style="height:100%;width:${pct}%;background:${clDim};border-radius:2px;transition:width .5s"></div></div>
