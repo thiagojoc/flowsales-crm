@@ -701,7 +701,7 @@ signInAnonymously(_auth).catch(e=>console.error('[FB Auth] signInAnonymously fal
             <div id="ghl-kpis-content"><div class="empty">Sem dados suficientes ainda.</div></div>
           </div>
           <div class="card" id="meta-kpis-card" style="display:none">
-            <div class="ch"><div class="ct ct-glow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>Meta Ads dados em tempo real</div><button class="ca" id="meta-sync-btn" onclick="syncMeta()">Sincronizar</button></div>
+            <div class="ch"><div class="ct ct-glow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>Dados em tempo real - Meta ads</div><button class="ca" id="meta-sync-btn" onclick="syncMeta()">Sincronizar</button></div>
             <div id="meta-kpis-content"><div class="empty">Clique em Sincronizar para buscar dados da Meta.</div></div>
           </div>
         </div>
@@ -2353,6 +2353,26 @@ function rConversoes(d){
     return `<div class="kpi-mc"><div class="kpi-lbl">${r.l}</div><div class="kpi-val" style="color:${cl}">${r.v}%</div><div class="kpi-sub kpi-nt">${r.sub}</div><div class="kpi-bar"><div class="kpi-fill" style="width:${Math.min(r.v,100)}%;background:${cl}"></div></div></div>`;
   }).join('')}</div>`;
 }
+// /opportunities/search do GHL só devolve até "limit" registros por página (100).
+// Contas com muito histórico (ex: leads/vendas antigas cadastradas em lote) passam
+// disso fácil, e as mais recentes ficavam de fora silenciosamente. Aqui pagina
+// usando o cursor startAfter/startAfterId que a API devolve em "meta" até
+// cobrir o total real.
+async function _fetchAllOpps(url,headers){
+  let all=[];let next=url;let guard=0;
+  while(next&&guard<50){
+    guard++;
+    const r=await fetch(next,{headers}).then(x=>x.json());
+    const opps=r.opportunities||[];
+    all=all.concat(opps);
+    const total=(r.meta&&r.meta.total)||0;
+    if(!opps.length||all.length>=total)break;
+    const sa=r.meta&&r.meta.startAfter;const said=r.meta&&r.meta.startAfterId;
+    if(!sa||!said)break;
+    next=url+`&startAfter=${sa}&startAfterId=${said}`;
+  }
+  return all;
+}
 async function syncGHL(silent){
   const d=_kpiData();const fe=d.firmExtra||{};
   const token=fe.ghlToken;const locationId=fe.ghlLocationId;const calendarId=fe.ghlCalendarId;
@@ -2371,21 +2391,19 @@ async function syncGHL(silent){
   const _moFrom=_prevD.getTime();const _moTo=Date.now();
   const _normTag=t=>(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
   try{
-    const [evR,oppsR,allOppsR,monthEvR]=await Promise.all([
+    const [evR,wonOpps,allOppsList,monthEvR]=await Promise.all([
       calendarId?fetch(`${BASE}/calendars/events?locationId=${locationId}&calendarId=${calendarId}&startTime=${from}&endTime=${to}`,{headers:h}).then(r=>r.json()):Promise.resolve({events:[]}),
-      fetch(`${BASE}/opportunities/search?location_id=${locationId}&status=won&limit=100`,{headers:h}).then(r=>r.json()),
-      fetch(`${BASE}/opportunities/search?location_id=${locationId}&limit=100`,{headers:h}).then(r=>r.json()),
+      _fetchAllOpps(`${BASE}/opportunities/search?location_id=${locationId}&status=won&limit=100`,h),
+      _fetchAllOpps(`${BASE}/opportunities/search?location_id=${locationId}&limit=100`,h),
       calendarId?fetch(`${BASE}/calendars/events?locationId=${locationId}&calendarId=${calendarId}&startTime=${_moFrom}&endTime=${_moTo}`,{headers:h}).then(r=>r.json()):Promise.resolve({events:[]})
     ]);
     const events=evR.events||[];
     const _stAp=e=>(e.appointmentStatus||'').toLowerCase().trim();
     const agendadas=events.filter(e=>!['cancelled','no_show','noshow','invalid'].includes(_stAp(e))).length;
     const realizadas=events.filter(e=>['showed','attended','complete','completed'].includes(_stAp(e))).length;
-    const wonOpps=oppsR.opportunities||[];
     const vendas=wonOpps.length;
     const valorTotal=wonOpps.reduce((s,o)=>s+(o.monetaryValue||3500),0);
-    const allOppsList=allOppsR.opportunities||[];
-    const leads=(allOppsR.meta&&allOppsR.meta.total)||allOppsList.length;
+    const leads=allOppsList.length;
     const tagCounts={};
     wonOpps.forEach(o=>(o.contact?.tags||[]).forEach(t=>{tagCounts[t]=(tagCounts[t]||0)+1;}));
     d.ghlKpis={syncedAt:new Date().toISOString(),reunAgd:agendadas,reunReal:realizadas,vendas,valorTotal,leads,tagBreakdown:tagCounts,totalEvents:events.length};
@@ -2484,10 +2502,15 @@ function rMetaKpis(d){
   if(!m){el.innerHTML=campSel+'<div class="empty">Clique em Sincronizar para buscar dados da Meta.</div>';return;}
   const syncDate=new Date(m.syncedAt).toLocaleString('pt-BR');
   const ctr=m.impressions?((m.clicks/m.impressions)*100).toFixed(2):'0.00';
-  const cpl=m.leads?Math.round(m.spend/m.leads):0;
+  // m.leads vem das "actions" da própria Meta (lead forms/pixel) — pra conta que só
+  // roda anúncio de Clique-para-WhatsApp isso não existe na API da Meta e fica
+  // sempre 0. Usamos o número real de leads com tag "anúncio" que já vem do GHL
+  // (mesma fonte usada em todo o resto do app) em vez do campo quebrado da Meta.
+  const adLeads=(d.kpis&&d.kpis.byOrig&&d.kpis.byOrig.anuncio&&d.kpis.byOrig.anuncio.leads)||0;
+  const cpl=adLeads?Math.round(m.spend/adLeads):0;
   const campCount=(m.campaignIds||[]).length;
   const campLbl=campCount===0?'todas as campanhas':campCount===1?'1 campanha selecionada':campCount+' campanhas selecionadas';
-  el.innerHTML=campSel+`<div style="font-size:10px;color:var(--t2);margin-bottom:12px">Última sincronização: ${syncDate} · ${campLbl}</div><div class="kpi-g6" style="margin-bottom:14px"><div class="kpi-mc"><div class="kpi-lbl">Investimento</div><div class="kpi-val" style="color:var(--gold)">R$ ${(m.spend||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">no período selecionado</div></div><div class="kpi-mc"><div class="kpi-lbl">Impressões</div><div class="kpi-val" style="color:var(--blue)">${(m.impressions||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${(m.reach||0).toLocaleString('pt-BR')} pessoas alcançadas</div></div><div class="kpi-mc"><div class="kpi-lbl">Cliques</div><div class="kpi-val" style="color:var(--green)">${(m.clicks||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${ctr}% CTR</div></div><div class="kpi-mc"><div class="kpi-lbl">Leads gerados</div><div class="kpi-val" style="color:var(--green)">${m.leads||0}</div><div class="kpi-sub kpi-nt">R$ ${cpl.toLocaleString('pt-BR')} custo por lead</div></div></div>`;
+  el.innerHTML=campSel+`<div style="font-size:10px;color:var(--t2);margin-bottom:12px">Última sincronização: ${syncDate} · ${campLbl}</div><div class="kpi-g6" style="margin-bottom:14px"><div class="kpi-mc"><div class="kpi-lbl">Investimento</div><div class="kpi-val" style="color:var(--gold)">R$ ${(m.spend||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">no período selecionado</div></div><div class="kpi-mc"><div class="kpi-lbl">Impressões</div><div class="kpi-val" style="color:var(--blue)">${(m.impressions||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${(m.reach||0).toLocaleString('pt-BR')} pessoas alcançadas</div></div><div class="kpi-mc"><div class="kpi-lbl">Cliques</div><div class="kpi-val" style="color:var(--green)">${(m.clicks||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${ctr}% CTR</div></div><div class="kpi-mc"><div class="kpi-lbl">Leads gerados</div><div class="kpi-val" style="color:var(--green)">${adLeads}</div><div class="kpi-sub kpi-nt">R$ ${cpl.toLocaleString('pt-BR')} custo por lead</div></div></div>`;
 }
 function toggleCampDropdown(e){if(e)e.stopPropagation();const el=document.getElementById('camp-dropdown');if(el)el.classList.toggle('on');}
 function _scheduleCampSync(){
