@@ -957,8 +957,10 @@ signInAnonymously(_auth).catch(e=>console.error('[FB Auth] signInAnonymously fal
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
       <div class="fg"><label>Origem do cliente</label><select class="fi" id="ev-orig"><option value="">Não informada</option><option>Meta Ads</option><option>Google Ads</option><option>Indicação</option><option>WhatsApp</option><option>Instagram</option><option>Site</option><option>Evento</option><option>Outro</option></select></div>
-      <div class="fg" style="margin-bottom:16px"><label>Quem vendeu</label><input class="fi" id="ev-seller" placeholder="Nome do responsável"></div>
+      <div class="fg"><label>Quem vendeu</label><input class="fi" id="ev-seller" placeholder="Nome do responsável"></div>
     </div>
+    <div class="fg" style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="tck-cb" id="ev-parc-on" onchange="document.getElementById('ev-parc-fields').style.display=this.checked?'grid':'none';_updateParcelaPreview('ev')"><label style="text-transform:none;letter-spacing:0;font-size:12px;color:var(--text)">Pagamento parcelado</label></div>
+    <div id="ev-parc-fields" style="display:none;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px"><div class="fg"><label>Número de parcelas</label><input class="fi" id="ev-parc-num" type="number" min="2" value="2" oninput="_updateParcelaPreview('ev')"></div><div class="fg"><label>Valor de cada parcela</label><div id="ev-parc-preview" style="font-size:13px;color:var(--t2);padding:9px 0">—</div></div></div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="bgh" onclick="closeEdVenda()">Cancelar</button>
       <button class="bpr" onclick="saveEdVenda()">Salvar</button>
@@ -2189,7 +2191,8 @@ function rKpis(d){
               +_field('Telefone',vi.phone||'')
               +_field('Proprietário',vi.seller||'');
             if(!_fields)return'';
-            return '<div style="margin-top:2px"><div style="font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">Dados do lead</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:6px 12px">'+_fields+'</div>'+(vi.parcelado&&vi.numParcelas>1?'<div style="margin-top:6px;font-size:12px;color:var(--gold);font-weight:600">'+vi.numParcelas+'x parcelado</div>':'')+'</div>';
+            var _parcLbl=vi.parcelado?(vi.numParcelas>1?vi.numParcelas+'x parcelado':'Recebimento previsto: '+((vi.parcelas&&vi.parcelas[0]&&vi.parcelas[0].date)?vi.parcelas[0].date.split('-').reverse().join('/'):'')):'';
+            return '<div style="margin-top:2px"><div style="font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">Dados do lead</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:6px 12px">'+_fields+'</div>'+(_parcLbl?'<div style="margin-top:6px;font-size:12px;color:var(--gold);font-weight:600">'+_parcLbl+'</div>':'')+'</div>';
           })()
           +(vi.fileName?'<div style="margin-top:5px;display:flex;align-items:center;gap:6px;font-size:12px"><span style="color:var(--blue)">📎 '+vi.fileName+'</span><button type="button" onclick="viewVendaFile(\''+vi.id+'\')" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:12px;text-decoration:underline;padding:0">Ver</button><button type="button" onclick="downloadVendaFile(\''+vi.id+'\',\''+(vi.fileName||'').replace(/\'/g,'')+'\')" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:12px;text-decoration:underline;padding:0">Baixar</button></div>':'')
           +'</div>'
@@ -2391,12 +2394,27 @@ async function syncGHL(silent){
   const _moFrom=_prevD.getTime();const _moTo=Date.now();
   const _normTag=t=>(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
   try{
-    const [evR,wonOpps,allOppsList,monthEvR]=await Promise.all([
+    const [evR,wonOpps,allOppsList,monthEvR,cfR]=await Promise.all([
       calendarId?fetch(`${BASE}/calendars/events?locationId=${locationId}&calendarId=${calendarId}&startTime=${from}&endTime=${to}`,{headers:h}).then(r=>r.json()):Promise.resolve({events:[]}),
       _fetchAllOpps(`${BASE}/opportunities/search?location_id=${locationId}&status=won&limit=100`,h),
       _fetchAllOpps(`${BASE}/opportunities/search?location_id=${locationId}&limit=100`,h),
-      calendarId?fetch(`${BASE}/calendars/events?locationId=${locationId}&calendarId=${calendarId}&startTime=${_moFrom}&endTime=${_moTo}`,{headers:h}).then(r=>r.json()):Promise.resolve({events:[]})
+      calendarId?fetch(`${BASE}/calendars/events?locationId=${locationId}&calendarId=${calendarId}&startTime=${_moFrom}&endTime=${_moTo}`,{headers:h}).then(r=>r.json()):Promise.resolve({events:[]}),
+      fetch(`${BASE}/locations/${locationId}/customFields`,{headers:h}).then(r=>r.json()).catch(()=>({}))
     ]);
+    // Campos personalizados "Nº de parcelas" e "Data 1º pagamento" cadastrados no
+    // GHL — casados pelo nome (sem acento/maiúscula) pra não depender de guardar
+    // IDs fixos aqui. Usados abaixo pra gerar as parcelas de cada venda ganha
+    // automaticamente, sem precisar digitar de novo dentro do CRM.
+    const _normFld=s=>(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    const _cfList=cfR.customFields||cfR.fields||[];
+    const _numParcFieldId=(_cfList.find(f=>_normFld(f.name).includes('parcela'))||{}).id;
+    const _dataPagtoFieldId=(_cfList.find(f=>_normFld(f.name).includes('pagamento'))||{}).id;
+    const _cfVal=(o,fieldId)=>{
+      if(!fieldId||!Array.isArray(o.customFields))return null;
+      const cf=o.customFields.find(c=>c.id===fieldId);if(!cf)return null;
+      if(Array.isArray(cf.fieldValueArray)&&cf.fieldValueArray.length)return cf.fieldValueArray[0];
+      return cf.fieldValueString??cf.fieldValue??cf.value??cf.fieldValueNumber??null;
+    };
     const events=evR.events||[];
     const _stAp=e=>(e.appointmentStatus||'').toLowerCase().trim();
     const agendadas=events.filter(e=>!['cancelled','no_show','noshow','invalid'].includes(_stAp(e))).length;
@@ -2470,10 +2488,26 @@ async function syncGHL(silent){
       if(tagsNorm.includes('anuncio'))orig='Anúncio';
       else if(tagsNorm.includes('indicacao'))orig='Indicação';
       else if(tagsNorm.includes('externo'))orig='Externo';
-      const item={id:viId,ghlOppId:o.id,tipo:o.name||'Venda GHL',cli:(o.contact&&o.contact.name)||o.name||'Lead GHL',email:(o.contact&&o.contact.email)||'',phone:(o.contact&&o.contact.phone)||'',orig,seller:'',date:(o.lastStatusChangeAt||o.updatedAt||o.dateAdded||new Date().toISOString()).split('T')[0],val:+o.monetaryValue||0,qty:1,fileData:null,fileName:'',parcelado:false,numParcelas:1,parcelas:null,_fromGHL:true};
+      const date=(o.lastStatusChangeAt||o.updatedAt||o.dateAdded||new Date().toISOString()).split('T')[0];
+      const val=+o.monetaryValue||0;
+      const numParc=Math.max(1,parseInt(_cfVal(o,_numParcFieldId))||1);
+      const dataPagto=(_cfVal(o,_dataPagtoFieldId)||'')+'';
+      const dataPagtoOk=dataPagto?dataPagto.slice(0,10):null;
+      const parcelado=numParc>1||!!dataPagtoOk;
+      const parcelas=parcelado?_gerarParcelas(val,numParc,dataPagtoOk||date):null;
+      const item={id:viId,ghlOppId:o.id,tipo:o.name||'Venda GHL',cli:(o.contact&&o.contact.name)||o.name||'Lead GHL',email:(o.contact&&o.contact.email)||'',phone:(o.contact&&o.contact.phone)||'',orig,seller:'',date,val,qty:1,fileData:null,fileName:'',parcelado,numParcelas:numParc,parcelas,_fromGHL:true,_parcelSource:'ghl'};
       const idx=d.vendasItems.findIndex(vi=>vi.id===viId);
-      if(idx>=0)d.vendasItems[idx]=Object.assign({},d.vendasItems[idx],item);
-      else d.vendasItems.push(item);
+      if(idx>=0){
+        const existing=d.vendasItems[idx];
+        if(existing._parcelSource==='manual'){
+          // Parcelamento foi ajustado à mão no CRM — não deixa o sync sobrescrever,
+          // só atualiza os outros campos (valor, cliente, etc).
+          const {parcelado:_p,numParcelas:_n,parcelas:_pc,_parcelSource:_ps,...rest}=item;
+          d.vendasItems[idx]=Object.assign({},existing,rest);
+        }else{
+          d.vendasItems[idx]=Object.assign({},existing,item);
+        }
+      }else d.vendasItems.push(item);
     });
     // Se um lead deixou de estar "Won" no GHL (voltou pra aberto/perdido), a
     // venda que tinha sido criada automaticamente a partir dele some daqui também.
@@ -2889,12 +2923,13 @@ function _gerarParcelas(valTotal,numParcelas,dateStr){
   }
   return parcelas;
 }
-function _updateParcelaPreview(){
-  const el=document.getElementById('vi-parc-preview');if(!el)return;
-  const on=document.getElementById('vi-parc-on');if(!on||!on.checked)return;
-  const _rv=(document.getElementById('vi-val').value||'').replace(/[^\d,\.]/g,'').replace(/\./g,'').replace(',','.');
+function _updateParcelaPreview(pfx){
+  pfx=pfx||'vi';
+  const el=document.getElementById(pfx+'-parc-preview');if(!el)return;
+  const on=document.getElementById(pfx+'-parc-on');if(!on||!on.checked)return;
+  const _rv=(document.getElementById(pfx+'-val').value||'').replace(/[^\d,\.]/g,'').replace(/\./g,'').replace(',','.');
   const val=parseFloat(_rv)||0;
-  const num=Math.max(2,+document.getElementById('vi-parc-num').value||2);
+  const num=Math.max(2,+document.getElementById(pfx+'-parc-num').value||2);
   const parcela=val/num;
   el.textContent=num+'x de R$ '+parcela.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 }
@@ -3050,6 +3085,10 @@ function edVenda(id){
   document.getElementById('ev-phone').value=vi.phone||'';
   document.getElementById('ev-orig').value=vi.orig||'';
   document.getElementById('ev-seller').value=vi.seller||'';
+  const parcOn=document.getElementById('ev-parc-on');parcOn.checked=!!vi.parcelado;
+  document.getElementById('ev-parc-fields').style.display=vi.parcelado?'grid':'none';
+  document.getElementById('ev-parc-num').value=vi.numParcelas||2;
+  _updateParcelaPreview('ev');
   const ov=document.getElementById('ed-venda-ov');ov.style.display='flex';
 }
 function closeEdVenda(){document.getElementById('ed-venda-ov').style.display='none';_edVendaId=null;}
@@ -3070,10 +3109,12 @@ function saveEdVenda(){
   const val=parseFloat(_rv)||0;
   const date=document.getElementById('ev-date').value;
   if(!tipo||!cli)return _showToast('Preencha serviço e nome do cliente','var(--red)');
-  // Se for parcelado e o valor total mudou, regera as parcelas proporcionalmente
-  if(vi.parcelado&&Array.isArray(vi.parcelas)&&vi.val!==val){
-    vi.parcelas=_gerarParcelas(val,vi.numParcelas||vi.parcelas.length,(vi.parcelas[0]&&vi.parcelas[0].date)||date);
-  }
+  const parcelado=document.getElementById('ev-parc-on')&&document.getElementById('ev-parc-on').checked;
+  const numParcelas=parcelado?Math.max(2,+document.getElementById('ev-parc-num').value||2):1;
+  const primeiraData=(vi.parcelas&&vi.parcelas[0]&&vi.parcelas[0].date)||date;
+  vi.parcelas=parcelado?_gerarParcelas(val,numParcelas,primeiraData):null;
+  vi.parcelado=parcelado;vi.numParcelas=numParcelas;
+  if(vi._fromGHL)vi._parcelSource='manual';
   vi.tipo=tipo;vi.cli=cli;vi.val=val;vi.date=date;
   vi.email=document.getElementById('ev-email').value.trim();
   vi.phone=document.getElementById('ev-phone').value.trim();
