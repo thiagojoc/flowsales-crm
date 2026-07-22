@@ -66,6 +66,14 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Material do workshop (thiagojoc/workshopfs): documento único com as
+    // edições ao vivo do texto, sem login (Alinne/Kênia/Carlos abrem o link
+    // direto). É conteúdo de copy/material interno, não dado sensível de
+    // cliente, então liberar leitura/escrita sem autenticação é aceitável.
+    match /workshopfs/{docId} {
+      allow read, write: if true;
+    }
+
     // Qualquer outra coisa fora do previsto acima: negado por padrão.
     match /{document=**} {
       allow read, write: if false;
