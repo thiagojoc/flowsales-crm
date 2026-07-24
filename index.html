@@ -934,7 +934,8 @@ signInAnonymously(_auth).catch(e=>console.error('[FB Auth] signInAnonymously fal
     <div class="fg"><label>Valor (R$)</label><input class="fi" id="eg-val" type="text" inputmode="numeric" placeholder="R$ 0,00" oninput="fmtFinVal(this)"></div>
     <div class="fg"><label>Data</label><input class="fi" id="eg-date" type="date"></div>
     <div class="fg"><label>Categoria</label><select class="fi" id="eg-cat"><option value="trafego">Tráfego pago</option><option value="ferramenta">Ferramenta / Software</option><option value="servico">Serviço terceirizado</option><option value="infra">Infraestrutura</option><option value="outro">Outros</option></select></div>
-    <div class="fg" style="margin-bottom:16px"><label>Descrição (opcional)</label><input class="fi" id="eg-desc" placeholder="Detalhes..."></div>
+    <div class="fg"><label>Descrição (opcional)</label><input class="fi" id="eg-desc" placeholder="Detalhes..."></div>
+    <div class="fg" style="margin-bottom:16px"><label>Arquivo anexado</label><div id="eg-file-current" style="font-size:12px;color:var(--t2);margin-bottom:6px">Nenhum arquivo anexado</div><input type="file" class="fi" id="eg-file" accept="image/*,.pdf,.doc,.docx,.zip" style="padding:6px;cursor:pointer"></div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="bgh" onclick="closeEdGasto()">Cancelar</button>
       <button class="bpr" onclick="saveEdGasto()">Salvar</button>
@@ -961,6 +962,7 @@ signInAnonymously(_auth).catch(e=>console.error('[FB Auth] signInAnonymously fal
     </div>
     <div class="fg" style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="tck-cb" id="ev-parc-on" onchange="document.getElementById('ev-parc-fields').style.display=this.checked?'grid':'none';_updateParcelaPreview('ev')"><label style="text-transform:none;letter-spacing:0;font-size:12px;color:var(--text)">Pagamento parcelado</label></div>
     <div id="ev-parc-fields" style="display:none;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px"><div class="fg"><label>Número de parcelas</label><input class="fi" id="ev-parc-num" type="number" min="2" value="2" oninput="_updateParcelaPreview('ev')"></div><div class="fg"><label>Valor de cada parcela</label><div id="ev-parc-preview" style="font-size:13px;color:var(--t2);padding:9px 0">—</div></div></div>
+    <div class="fg" style="margin-bottom:16px"><label>Arquivo anexado (comprovante/contrato)</label><div id="ev-file-current" style="font-size:12px;color:var(--t2);margin-bottom:6px">Nenhum arquivo anexado</div><input type="file" class="fi" id="ev-file" accept="image/*,.pdf,.doc,.docx,.zip" style="padding:6px;cursor:pointer"></div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="bgh" onclick="closeEdVenda()">Cancelar</button>
       <button class="bpr" onclick="saveEdVenda()">Salvar</button>
@@ -3057,6 +3059,11 @@ function edGasto(id){
   document.getElementById('eg-date').value=g.date||'';
   document.getElementById('eg-cat').value=g.cat||'outro';
   document.getElementById('eg-desc').value=g.desc||'';
+  const egFileEl=document.getElementById('eg-file');if(egFileEl)egFileEl.value='';
+  const egCur=document.getElementById('eg-file-current');
+  if(egCur){
+    egCur.innerHTML=g.fileName?('📎 '+g.fileName+' &nbsp; <a href="javascript:void(0)" onclick="viewGastoFile(\''+id+'\')">Ver</a> &nbsp; <a href="javascript:void(0)" onclick="downloadGastoFile(\''+id+'\',\''+(g.fileName||'').replace(/'/g,"\\'")+'\')">Baixar</a>'):'Nenhum arquivo anexado';
+  }
   const ov=document.getElementById('ed-gasto-ov');ov.style.display='flex';
 }
 function closeEdGasto(){document.getElementById('ed-gasto-ov').style.display='none';_edGastoId=null;}
@@ -3070,8 +3077,16 @@ function saveEdGasto(){
   const cat=document.getElementById('eg-cat').value;
   const desc=document.getElementById('eg-desc').value.trim();
   if(!ttl||!val||!date)return _showToast('Preencha título, valor e data','var(--red)');
-  g.ttl=ttl;g.val=val;g.date=date;g.cat=cat;g.desc=desc;
-  sv(d);rFinanceiro(d);closeEdGasto();_showToast('Gasto atualizado ✅','var(--green)');
+  const finish=()=>{
+    g.ttl=ttl;g.val=val;g.date=date;g.cat=cat;g.desc=desc;
+    sv(d);rFinanceiro(d);closeEdGasto();_showToast('Gasto atualizado ✅','var(--green)');
+  };
+  const egFileEl=document.getElementById('eg-file');
+  if(egFileEl&&egFileEl.files&&egFileEl.files[0]){
+    const reader=new FileReader();
+    reader.onload=ev=>{g.fileData=ev.target.result;g.fileName=egFileEl.files[0].name;finish();};
+    reader.readAsDataURL(egFileEl.files[0]);
+  } else finish();
 }
 function delGasto(id){if(!confirm('Excluir gasto?'))return;const d=ld();d.gastos=(d.gastos||[]).filter(x=>x.id!==id);sv(d);rFinanceiro(d);}
 let _edVendaId=null;
@@ -3091,6 +3106,11 @@ function edVenda(id){
   document.getElementById('ev-parc-fields').style.display=vi.parcelado?'grid':'none';
   document.getElementById('ev-parc-num').value=vi.numParcelas||2;
   _updateParcelaPreview('ev');
+  const evFileEl=document.getElementById('ev-file');if(evFileEl)evFileEl.value='';
+  const evCur=document.getElementById('ev-file-current');
+  if(evCur){
+    evCur.innerHTML=vi.fileName?('📎 '+vi.fileName+' &nbsp; <a href="javascript:void(0)" onclick="viewVendaFile(\''+id+'\')">Ver</a> &nbsp; <a href="javascript:void(0)" onclick="downloadVendaFile(\''+id+'\',\''+(vi.fileName||'').replace(/'/g,"\\'")+'\')">Baixar</a>'):'Nenhum arquivo anexado';
+  }
   const ov=document.getElementById('ed-venda-ov');ov.style.display='flex';
 }
 function closeEdVenda(){document.getElementById('ed-venda-ov').style.display='none';_edVendaId=null;}
@@ -3123,7 +3143,13 @@ function saveEdVenda(){
   vi.orig=document.getElementById('ev-orig').value;
   vi.seller=document.getElementById('ev-seller').value.trim();
   d.kpis=d.kpis||{};d.kpis.rev=_calcFaturamento(d.vendasItems);d.kpis.receitaBruta=_calcReceitaBruta(d.vendasItems);
-  sv(d);renderAll();closeEdVenda();_showToast('Venda atualizada ✅','var(--green)');
+  const finish=()=>{sv(d);renderAll();closeEdVenda();_showToast('Venda atualizada ✅','var(--green)');};
+  const evFileEl=document.getElementById('ev-file');
+  if(evFileEl&&evFileEl.files&&evFileEl.files[0]){
+    const reader=new FileReader();
+    reader.onload=ev=>{vi.fileData=ev.target.result;vi.fileName=evFileEl.files[0].name;finish();};
+    reader.readAsDataURL(evFileEl.files[0]);
+  } else finish();
 }
 
 function rFiles(d){
