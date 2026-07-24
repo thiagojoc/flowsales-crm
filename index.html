@@ -1994,7 +1994,9 @@ function rTimeline(d){
   // Entregas de valor aparecem à parte — não entram na divisão por semana,
   // só mostradas como o próprio registro (título, categoria, descrição).
   const _entregasHtml=(d.entregas||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(_entregaCardHtml).join('');
-  const welcomeEntry='<div class="card" style="margin-bottom:8px;border-left:3px solid var(--gold)"><div style="display:flex;align-items:center;gap:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><div><div style="font-size:13px;font-weight:600;color:var(--text)">Bem vindo(a) ao programa</div><div style="font-size:12px;color:var(--t2);margin-top:2px">Início da jornada. Você deu o primeiro passo para transformar o marketing e o comercial do seu escritório.</div></div></div></div>';
+  const _firm=FIRMS.find(f=>f.id===S.eid)||{};
+  const _welcomeDate=_firm.createdAt||_firm.start||'';
+  const welcomeEntry='<div class="card" style="margin-bottom:8px;border-left:3px solid var(--gold)"><div style="display:flex;align-items:center;gap:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><div><div style="display:flex;align-items:center;gap:8px"><div style="font-size:13px;font-weight:600;color:var(--text)">Bem vindo(a) ao programa</div>'+(_welcomeDate?'<span style="font-size:12px;color:var(--t2)">'+fd(_welcomeDate)+'</span>':'')+'</div><div style="font-size:12px;color:var(--t2);margin-top:2px">Início da jornada. Você deu o primeiro passo para transformar o marketing e o comercial do seu escritório.</div></div></div></div>';
   if(!weeks.length&&!_entregasHtml){wrap.innerHTML=welcomeEntry;return;}
   wrap.innerHTML=welcomeEntry+weeks.map(w=>{
     const wt=_allImpls.filter(t=>t.week===w);
@@ -4279,7 +4281,7 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
           partners.push({id:'p'+Date.now()+'_'+i,name:pn,role:row.querySelector('.afp-role')?.value||'',email:row.querySelector('.afp-email')?.value||'',phone:row.querySelector('.afp-phone')?.value||'',oab:row.querySelector('.afp-oab')?.value||'',photo:''});
         });
         const contact=partners.length?partners[0].name:nm;
-        const newFirm={id,name:nm,area:v('af-area')||'Advocacia',city:v('af-city'),week:1,total:26,contact,phone:v('af-phone'),email:v('af-email'),fee:+(v('af-fee')||3500),start:v('af-start'),address:v('af-addr'),website:'',oab:v('af-oab'),due:''};
+        const newFirm={id,name:nm,area:v('af-area')||'Advocacia',city:v('af-city'),week:1,total:26,contact,phone:v('af-phone'),email:v('af-email'),fee:+(v('af-fee')||3500),start:v('af-start'),address:v('af-addr'),website:'',oab:v('af-oab'),due:'',createdAt:new Date().toISOString().split('T')[0]};
         FIRMS.push(newFirm);
         _saveFirms();
         // Initialize with EMPTY data (no demo content)
