@@ -2540,11 +2540,12 @@ function rMetaKpis(d){
   if(!m){el.innerHTML=campSel+'<div class="empty">Clique em Sincronizar para buscar dados da Meta.</div>';return;}
   const syncDate=new Date(m.syncedAt).toLocaleString('pt-BR');
   const ctr=m.impressions?((m.clicks/m.impressions)*100).toFixed(2):'0.00';
-  // m.leads vem das "actions" da própria Meta (lead forms/pixel) — pra conta que só
-  // roda anúncio de Clique-para-WhatsApp isso não existe na API da Meta e fica
-  // sempre 0. Usamos o número real de leads com tag "anúncio" que já vem do GHL
-  // (mesma fonte usada em todo o resto do app) em vez do campo quebrado da Meta.
-  const adLeads=(d.kpis&&d.kpis.byOrig&&d.kpis.byOrig.anuncio&&d.kpis.byOrig.anuncio.leads)||0;
+  // m.leads vem das "actions" da própria Meta (lead forms/pixel e conversas de
+  // WhatsApp iniciadas via onsite_conversion.messaging_conversation_started_7d),
+  // por isso já reflete a campanha selecionada. Só cai pro total do GHL (que não
+  // é por campanha) quando "Todas as campanhas" está selecionado e a Meta não
+  // reportou nada (conta sem esse tipo de rastreamento configurado).
+  const adLeads=(m.leads>0)?m.leads:(selIds.length?0:((d.kpis&&d.kpis.byOrig&&d.kpis.byOrig.anuncio&&d.kpis.byOrig.anuncio.leads)||0));
   const cpl=adLeads?Math.round(m.spend/adLeads):0;
   const campCount=(m.campaignIds||[]).length;
   const campLbl=campCount===0?'todas as campanhas':campCount===1?'1 campanha selecionada':campCount+' campanhas selecionadas';
@@ -2594,7 +2595,7 @@ async function syncMeta(silent){
     if(!cj.error&&cj.data)d.metaCampaigns=cj.data.map(c=>({id:c.id,name:c.name,status:c.status}));
     const row=(j.data&&j.data[0])||{};
     const actions=row.actions||[];
-    const leadTypes=['lead','onsite_conversion.lead_grouped','leadgen_grouping','offsite_conversion.fb_pixel_lead'];
+    const leadTypes=['lead','onsite_conversion.lead_grouped','leadgen_grouping','offsite_conversion.fb_pixel_lead','onsite_conversion.messaging_conversation_started_7d'];
     const leads=actions.filter(a=>leadTypes.includes(a.action_type)).reduce((s,a)=>s+(+a.value||0),0);
     d.metaKpis={syncedAt:new Date().toISOString(),spend:+row.spend||0,impressions:+row.impressions||0,clicks:+row.clicks||0,reach:+row.reach||0,leads,cpc:+row.cpc||0,cpm:+row.cpm||0,campaignIds:campIds};
     if(!d.kpis)d.kpis={};
