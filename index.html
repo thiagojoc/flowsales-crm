@@ -2225,7 +2225,11 @@ function rKpis(d){
   const steps=[{n:k.impressoes.toLocaleString('pt-BR'),l:'Impressões'},{n:k.cliques,l:'Cliques',p:`CTR ${ctr}%`},{n:k.leads,l:'Leads',p:`Conv. ${conv}%`},{n:k.reunAgd,l:'Reun. agendadas',p:k.leads?Math.round(k.reunAgd/k.leads*100)+'%':''},{n:k.vendas,l:'Vendas',p:k.reunReal?Math.round(k.vendas/k.reunReal*100)+'%':''}];
   document.getElementById('kpi-funnel').innerHTML=steps.map((s,i)=>(i<steps.length-1?`<div class="fn-step"><div class="fn-n">${s.n}</div><div class="fn-l">${s.l}</div>${s.p?`<div class="fn-p">${s.p}</div>`:''}</div><div class="fn-arr">›</div>`:`<div class="fn-step"><div class="fn-n">${s.n}</div><div class="fn-l">${s.l}</div>${s.p?`<div class="fn-p">${s.p}</div>`:''}</div>`)).join('');
   // impl/wip sections removed — now em Entregas tab
-  const _leadsTraf=(kRaw.leadsByOrig&&kRaw.leadsByOrig['Anúncio'])||0;
+  // Mesma lógica do funil Anúncio: se a Meta já trouxe um número próprio (que
+  // respeita a campanha selecionada), usa ele aqui em vez do total fixo por
+  // tag do GHL, senão esse card fica preso no total geral mesmo filtrando
+  // campanha no card da Meta.
+  const _leadsTraf=(d.metaKpis&&d.metaKpis.leads>0)?d.metaKpis.leads:((kRaw.leadsByOrig&&kRaw.leadsByOrig['Anúncio'])||0);
   // Custo por lead e ROI daqui são calculados só sobre o que realmente veio do
   // tráfego pago (não misturado com indicação/externo) — sem isso, o ROI fica
   // sem sentido quando o investimento do período é baixo/zero mas há vendas de
