@@ -2616,10 +2616,13 @@ async function syncMeta(silent){
       d.kpis.invest=+row.spend||0;
       d.kpis.impressoes=+row.impressions||0;
       d.kpis.cliques=+row.clicks||0;
-      // "leads" é compartilhado com o sync do GHL (contagem de oportunidades) —
-      // só sobrescreve se a Meta realmente tiver algum lead próprio contado,
-      // pra não zerar o número que veio do GHL.
-      if(leads>0){d.kpis.leads=leads;d.kpis.cpl=Math.round((+row.spend||0)/leads);}
+      // d.kpis.leads é o total GERAL (todas as origens, vindo do GHL) e não pode
+      // ser sobrescrito aqui, senão o filtro "Geral" passa a mostrar o número
+      // da campanha selecionada em vez do total real. O número específico de
+      // tráfego pago já vive em d.metaKpis.leads, usado só pelos lugares que
+      // são sobre "Anúncio" especificamente (funil Anúncio, Métricas do
+      // Tráfego Pago, card da Meta).
+      if(leads>0){d.kpis.cpl=Math.round((+row.spend||0)/leads);}
     }
     _kpiSave(d);renderAll();
   }catch(e){if(!silent)alert('Erro ao sincronizar Meta Ads: '+e.message);}
