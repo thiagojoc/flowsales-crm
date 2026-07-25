@@ -2579,13 +2579,15 @@ async function syncMeta(silent){
   if(!token||!accId){if(!silent)alert('Configure o Token e o Ad Account ID da Meta em Editar dados do escritório.');return;}
   accId=accId.trim();if(!accId.startsWith('act_'))accId='act_'+accId;
   const btn=document.getElementById('meta-sync-btn');if(btn){btn.disabled=true;btn.textContent='Buscando...';}
-  const since=S.calFrom||new Date(Date.now()-30*24*3600000).toISOString().split('T')[0];
-  const until=S.calTo||new Date().toISOString().split('T')[0];
   const fields='spend,impressions,clicks,reach,actions,cpc,cpm';
-  const timeRange=encodeURIComponent(JSON.stringify({since,until}));
+  // Sem período escolhido no calendário do dash (rótulo "Todo o período"), busca
+  // o total da conta desde sempre (date_preset=maximum) em vez de inventar uma
+  // janela fixa de 30 dias, que deixava os números bem menores que o real e
+  // divergentes do que aparece na própria Meta Ads Manager.
+  const timeParam=(S.calFrom&&S.calTo)?('&time_range='+encodeURIComponent(JSON.stringify({since:S.calFrom,until:S.calTo}))):'&date_preset=maximum';
   const campIds=(S.metaCampaignIds||[]).filter(Boolean);
   const filtering=campIds.length?encodeURIComponent(JSON.stringify([{field:'campaign.id',operator:'IN',value:campIds}])):'';
-  const url=`https://graph.facebook.com/v19.0/${accId}/insights?fields=${fields}&time_range=${timeRange}${filtering?'&filtering='+filtering:''}&access_token=${encodeURIComponent(token)}`;
+  const url=`https://graph.facebook.com/v19.0/${accId}/insights?fields=${fields}${timeParam}${filtering?'&filtering='+filtering:''}&access_token=${encodeURIComponent(token)}`;
   const campaignsUrl=`https://graph.facebook.com/v19.0/${accId}/campaigns?fields=name,status&limit=200&access_token=${encodeURIComponent(token)}`;
   try{
     const [r,cr]=await Promise.all([fetch(url),fetch(campaignsUrl)]);
@@ -3003,7 +3005,15 @@ function _kOrigView(d){
   const act=_kpiOrigActive();
   if(!act)return k;
   let leads=0,reunAgd=0,reunReal=0;
-  act.forEach(f=>{const bo=(k.byOrig&&k.byOrig[f])||{leads:0,reunAgd:0,reunReal:0};leads+=bo.leads;reunAgd+=bo.reunAgd;reunReal+=bo.reunReal;});
+  act.forEach(f=>{
+    const bo=(k.byOrig&&k.byOrig[f])||{leads:0,reunAgd:0,reunReal:0};
+    // Quando o funil inclui Anúncio e a Meta já trouxe um número próprio (que
+    // respeita a campanha selecionada), usa esse valor aqui também, senão o
+    // filtro de campanha muda o card da Meta mas some quando o funil é
+    // aplicado, voltando pro total fixo do GHL.
+    const boLeads=(f==='anuncio'&&d.metaKpis&&d.metaKpis.leads>0)?d.metaKpis.leads:bo.leads;
+    leads+=boLeads;reunAgd+=bo.reunAgd;reunReal+=bo.reunReal;
+  });
   const vendasF=(d.vendasItems||[]).filter(_vendaMatchesActiveOrig);
   const view={...k,leads,reunAgd,reunReal,vendas:vendasF.length,rev:_calcFaturamento(vendasF)};
   // Investimento/impressões/cliques (dados da Meta) só fazem sentido quando o
