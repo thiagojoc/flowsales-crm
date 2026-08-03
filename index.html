@@ -562,6 +562,7 @@ signInAnonymously(_auth).catch(e=>console.error('[FB Auth] signInAnonymously fal
       <div class="sb-sec">Execução</div>
       <div class="ni client-nav" onclick="nav('tasks')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Demandas<span class="nb r" id="bdgt" style="display:none">0</span></div>
       <div class="ni client-nav" onclick="nav('meet')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Reuniões</div>
+      <div class="ni client-nav colab-ok" onclick="nav('trein')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 10L12 4 2 10l10 6 10-6z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg>Treinamentos</div>
       <div class="ni client-nav" onclick="nav('arq')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Arquivos</div>
       <div class="ni client-nav" id="ni-fin" onclick="nav('fin')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Financeiro</div>
       <div class="ni client-nav" id="ni-timeline" onclick="nav('timeline')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="17" y1="12" x2="3" y2="12"/><polyline points="11 18 17 12 11 6"/><line x1="3" y1="6" x2="3" y2="18"/></svg>Jornada</div>
@@ -744,6 +745,11 @@ signInAnonymously(_auth).catch(e=>console.error('[FB Auth] signInAnonymously fal
             <div id="mlist"></div>
             <div class="card" id="mdet" style="display:none"><div id="mdetc"></div></div>
           </div>
+        </div>
+
+        <!-- TREINAMENTOS -->
+        <div class="sec" id="s-trein">
+          <div id="trein-wrap"></div>
         </div>
 
         <!-- ARQUIVOS -->
@@ -998,7 +1004,12 @@ signInAnonymously(_auth).catch(e=>console.error('[FB Auth] signInAnonymously fal
             <div class="ch"><div class="ct">Sócios e equipe</div><button class="ca" id="partner-add-btn" onclick="openM('partner')">+ Sócio</button></div>
             <div class="prof-grid" id="partners-list"></div>
           </div>
-        
+          <div class="card">
+            <div class="ch"><div class="ct">Colaboradores (acesso só a Treinamentos)</div><button class="ca" onclick="openColabEditor(null)">+ Colaborador</button></div>
+            <div style="font-size:13px;color:var(--t2);margin-bottom:8px">Dê acesso a quem não é sócio pra assistir os treinamentos e fazer o quiz, sem ver o resto do painel.</div>
+            <div id="colab-list"></div>
+          </div>
+
         </div>
       </div>
 
@@ -1040,6 +1051,34 @@ signInAnonymously(_auth).catch(e=>console.error('[FB Auth] signInAnonymously fal
     <div class="moh"><div class="mot">Meu perfil</div><button class="moc" onclick="document.getElementById('prof-ov').classList.remove('on')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
     <div class="mob" id="prof-body"></div>
     <div class="mof"><button class="bgh" onclick="document.getElementById('prof-ov').classList.remove('on')">Fechar</button><button class="bpr" onclick="saveProfile()">Salvar</button></div>
+  </div>
+</div>
+<!-- COLABORADOR: NOVO ACESSO -->
+<div class="ov2" id="colab-edit-ov">
+  <div class="mo" style="width:380px;max-width:94vw">
+    <div class="moh"><div class="mot">Novo colaborador</div><button class="moc" onclick="document.getElementById('colab-edit-ov').classList.remove('on')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="mob">
+      <div class="fg"><label>Nome</label><input class="fi" id="colab-nm" placeholder="Ex: Maria (recepção)"></div>
+      <div class="fg"><label>Senha de acesso</label><input class="fi" id="colab-pass" autocomplete="new-password" placeholder="Mínimo de 6 caracteres"></div>
+      <div style="font-size:12px;color:var(--t2)">Essa pessoa só vai conseguir ver a aba Treinamentos, nada mais do painel.</div>
+    </div>
+    <div class="mof"><button class="bgh" onclick="document.getElementById('colab-edit-ov').classList.remove('on')">Cancelar</button><button class="bpr" onclick="saveColab()">Salvar</button></div>
+  </div>
+</div>
+<!-- TREINAMENTO: EDITAR/CRIAR -->
+<div class="ov2" id="train-edit-ov">
+  <div class="mo" style="width:620px;max-width:94vw">
+    <div class="moh"><div class="mot" id="train-edit-title">Novo treinamento</div><button class="moc" onclick="document.getElementById('train-edit-ov').classList.remove('on')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="mob" id="tr-edit-body"></div>
+    <div class="mof"><button class="bgh" onclick="document.getElementById('train-edit-ov').classList.remove('on')">Cancelar</button><button class="bpr" onclick="saveTrainingEditor()">Salvar</button></div>
+  </div>
+</div>
+<!-- TREINAMENTO: QUIZ -->
+<div class="ov2" id="quiz-ov">
+  <div class="mo" style="width:560px;max-width:94vw">
+    <div class="moh"><div class="mot" id="quiz-title">Quiz</div><button class="moc" onclick="document.getElementById('quiz-ov').classList.remove('on')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="mob" id="quiz-body"></div>
+    <div class="mof" id="quiz-foot"></div>
   </div>
 </div>
 <script>
@@ -1468,6 +1507,8 @@ function dflEmpty(){
     kpiHistory:[],
     vendasItems:[],
     gastos:[],
+    trainings:[],
+    trainingProgress:{},
   };
 }
 function ld() { const s=localStorage.getItem('fs_'+S.eid); return s?JSON.parse(s):dfl(); }
@@ -1647,7 +1688,7 @@ async function doLogin(){
   S.user=u;S.role=u.role;if(u.eid)S.eid=u.eid;
   localStorage.setItem('fs_sess',JSON.stringify({email:u.email,authEmail:em}));showApp();
 }
-function doLogout(){if(_fbUnsub){_fbUnsub();_fbUnsub=null;}localStorage.removeItem('fs_sess');document.getElementById('login').style.display='flex';document.getElementById('app').style.display='none';}
+function doLogout(){if(_fbUnsub){_fbUnsub();_fbUnsub=null;}localStorage.removeItem('fs_sess');S.trainSel=null;document.getElementById('login').style.display='flex';document.getElementById('app').style.display='none';}
 function forgotPass(){
   const old=document.getElementById('forgot-modal');if(old)old.remove();
   const m=document.createElement('div');
@@ -1709,13 +1750,20 @@ function showApp(){
   const _feUN2=(S.role==='client')?(()=>{try{return JSON.parse(localStorage.getItem('fs_'+S.eid)||'{}').firmExtra?.respName||'';}catch(e){return '';}})():'';
   const _fnFull=saved.name||u.name||_feUN2||'';
   const _unEl=document.getElementById('un');_unEl.textContent=_fnFull;_unEl.title=_fnFull;
-  document.getElementById('ur').textContent=S.role==='admin'?'Admin':'Parceiro';
+  document.getElementById('ur').textContent=S.role==='admin'?'Admin':(S.role==='colab'?'Colaborador':'Parceiro');
   if(S.role==='client'){document.querySelectorAll('.admin-only').forEach(el=>el.style.display='none');}
   else{document.querySelectorAll('.admin-only').forEach(el=>el.style.display='');}
+  if(S.role==='colab'){
+    document.querySelectorAll('.ni').forEach(el=>{if(!el.classList.contains('colab-ok'))el.style.display='none';});
+    document.querySelectorAll('.sb-sec').forEach(el=>el.style.display='none');
+    const _cb=document.getElementById('cal-toggle');if(_cb)_cb.style.display='none';
+    S.trainSel=null;
+  }
   cleanupPhantomDemand();
   _migrateRemoveDemo();
   _loadFirms();
   setupFirmSelect();loadFirm();renderAll();populateWkFilter();
+  if(S.role==='colab')nav('trein');
   _autoSyncIntegrations();
   // Pedir permissão de notificação desktop
   if('Notification' in window && Notification.permission==='default'){
@@ -1797,7 +1845,7 @@ function selectFirm(id){
 function loadFirm(){
   const isFS = S.eid==='flowsales';
   const niPerfil=document.getElementById('ni-perfil');
-  if(niPerfil) niPerfil.style.display=isFS?'none':'';
+  if(niPerfil) niPerfil.style.display=(isFS||S.role==='colab')?'none':'';
   // Update partner photo after firm data is loaded from Firebase
   if(S.role==='client'){
     try{
@@ -1840,7 +1888,7 @@ function loadFirm(){
 function populateWkFilter(){const sel=document.getElementById('wk-sel');if(!sel)return;const d=ld();const weeks=[...new Set(d.tasks.map(t=>t.week))].sort((a,b)=>a-b);sel.innerHTML='<option value="all">Todas</option>'+weeks.map(w=>`<option value="${w}">Semana ${w}</option>`).join('');}
 
 // ── NAV ───────────────────────────────────────────────────────
-const TITLES={ov:'Overview',kpis:'KPIs',metas:'Metas',tasks:'Demandas',meet:'Reuniões',arq:'Arquivos',fin:'Financeiro',chat:'Chat',dem:'Entregas',perfil:'Perfil do cliente',flow:'Painel Flow Sales',firms:'Escritórios',timeline:'Jornada'};
+const TITLES={ov:'Overview',kpis:'KPIs',metas:'Metas',tasks:'Demandas',meet:'Reuniões',arq:'Arquivos',fin:'Financeiro',chat:'Chat',dem:'Entregas',perfil:'Perfil do cliente',flow:'Painel Flow Sales',firms:'Escritórios',timeline:'Jornada',trein:'Treinamentos'};
 
 function nav(id){
   S.sec=id;
@@ -1929,7 +1977,7 @@ function _renderKpiFirmSelector(){
     sel.value=S.kpiViewEid||S.eid;
   }
 }
-function renderAll(){const d=ld();const _td=_localDate();d.tasks.forEach(t=>{if(t.status==='pending'&&t.due&&t.due<_td)t.status='late';});const _kd=_kpiData();rOv(d);_renderKpiFirmSelector();rKpis(_kd);rConversoes(_kd);rMetaKpis(_kd);rScore(_kd);rMetas(d);rTasks(d);rMeet(d);rFiles(d);rChat(d);rDem(d);rTimeline(d);rPerfil(d);rNotif(d);rBadges(d);rFlow();rFirms();rFinanceiro(d);}
+function renderAll(){const d=ld();const _td=_localDate();d.tasks.forEach(t=>{if(t.status==='pending'&&t.due&&t.due<_td)t.status='late';});const _kd=_kpiData();rOv(d);_renderKpiFirmSelector();rKpis(_kd);rConversoes(_kd);rMetaKpis(_kd);rScore(_kd);rMetas(d);rTasks(d);rMeet(d);rFiles(d);rChat(d);rDem(d);rTimeline(d);rPerfil(d);rNotif(d);rBadges(d);rFlow();rFirms();rFinanceiro(d);rTrein(d);}
 
 function _entregaCardHtml(e){
   const catClr={GHL:'var(--blue)',IA:'#a78bfa',Website:'var(--green)',Campanha:'var(--gold)',Reunião:'var(--t2)',Outro:'var(--t2)'};
@@ -2911,6 +2959,168 @@ function rFinanceiro(d){
     <button class="fdl" style="color:var(--t2);margin-right:2px" onclick="edGasto('${g.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="fdl" style="color:var(--red)" onclick="delGasto('${g.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
   </div>`).join('');
 }
+// ── TREINAMENTOS ─────────────────────────────────────────────────────────────
+var _trQuizDraft=[]; // perguntas em edicao no modal de criar/editar treinamento
+var _trQuizAnswers={}; // respostas marcadas durante a tentativa de quiz atual
+var _trQuizActiveId=null;
+function _trEmbedUrl(url){
+  if(!url)return '';
+  const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{6,})/);
+  if(yt)return 'https://www.youtube.com/embed/'+yt[1];
+  const gd=url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if(gd)return 'https://drive.google.com/file/d/'+gd[1]+'/preview';
+  return url;
+}
+function _trIsDirectVideo(url){return /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(url||'');}
+function rTrein(d){
+  const wrap=document.getElementById('trein-wrap');if(!wrap)return;
+  const trainings=(d.trainings||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const canManage=S.role!=='colab';
+  if(S.trainSel){
+    const t=trainings.find(x=>x.id===S.trainSel);
+    if(!t){S.trainSel=null;return rTrein(d);}
+    const progress=(d.trainingProgress&&d.trainingProgress[t.id])||[];
+    let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <button class="ca" onclick="selectTraining(null)">← Voltar</button>
+      ${canManage?`<div style="display:flex;gap:6px"><button class="ca" onclick="openTrainingEditor('${t.id}')">Editar</button><button class="ca" style="color:var(--red);border-color:rgba(192,57,43,.4)" onclick="deleteTraining('${t.id}')">Excluir</button></div>`:''}
+    </div>`;
+    html+=`<div class="card"><h2 style="font-size:18px;font-weight:700;margin-bottom:4px">🎓 ${t.title}</h2><div style="font-size:13px;color:var(--t2);margin-bottom:14px">${fd(t.date)}</div>`;
+    if(t.videoUrl){
+      html+=_trIsDirectVideo(t.videoUrl)
+        ?`<video src="${t.videoUrl}" controls style="width:100%;border-radius:10px;background:#000;margin-bottom:14px"></video>`
+        :`<div style="position:relative;width:100%;aspect-ratio:16/9;margin-bottom:14px"><iframe src="${_trEmbedUrl(t.videoUrl)}" style="position:absolute;inset:0;width:100%;height:100%;border:none;border-radius:10px" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>`;
+    }
+    if(t.material)html+=`<div class="note-view" style="margin-bottom:14px">${t.material}</div>`;
+    if(t.quiz&&t.quiz.length)html+=`<button class="bpr" onclick="openQuizModal('${t.id}')">📝 Fazer quiz (${t.quiz.length} pergunta${t.quiz.length>1?'s':''})</button>`;
+    html+=`</div>`;
+    if(canManage&&t.quiz&&t.quiz.length){
+      html+=`<div class="card" style="margin-top:12px"><div class="ch"><div class="ct">Quem já fez o quiz</div></div>`;
+      html+=progress.length?progress.map(p=>`<div class="traf-row"><span class="traf-lbl">${p.name}</span><span class="traf-val" style="color:${p.score===p.total?'var(--green)':'var(--t2)'}">${p.score}/${p.total} · ${fd(p.date)}</span></div>`).join(''):'<div class="empty">Ninguém fez o quiz ainda.</div>';
+      html+=`</div>`;
+    }
+    wrap.innerHTML=html;
+    return;
+  }
+  let html=canManage?`<div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="ca" onclick="openTrainingEditor(null)">+ Novo treinamento</button></div>`:'';
+  if(!trainings.length){
+    html+=`<div class="card" style="text-align:center;padding:32px 20px"><div style="font-size:36px;margin-bottom:10px">🎓</div><div class="empty">Nenhum treinamento disponível ainda.</div></div>`;
+  }else{
+    html+=trainings.map(t=>{
+      const done=((d.trainingProgress&&d.trainingProgress[t.id])||[]).some(p=>(S.user&&p.name===S.user.name));
+      return `<div class="card" style="cursor:pointer;margin-bottom:10px" onclick="selectTraining('${t.id}')">
+        <div class="ch" style="margin-bottom:4px"><div class="ct">🎓 ${t.title}</div>${t.quiz&&t.quiz.length?`<span class="chip ${done?'chip-g':'chip-y'}" style="font-size:11px">${done?'Quiz feito':'Quiz pendente'}</span>`:''}</div>
+        <div style="font-size:13px;color:var(--t2)">${fd(t.date)}</div>
+      </div>`;
+    }).join('');
+  }
+  wrap.innerHTML=html;
+}
+function selectTraining(id){S.trainSel=id;renderAll();}
+function _renderQuizDraftList(){
+  const el=document.getElementById('tr-quiz-list');if(!el)return;
+  el.innerHTML=_trQuizDraft.map((q,i)=>`<div class="card" style="margin-bottom:8px;padding:10px 12px">
+    <div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:6px"><input class="fi" style="flex:1" placeholder="Pergunta ${i+1}" value="${(q.q||'').replace(/"/g,'&quot;')}" oninput="_trQuizDraft[${i}].q=this.value"><button type="button" class="ib del" onclick="_removeQuizQ(${i})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div>
+    ${[0,1,2,3].map(oi=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><input type="radio" name="tr-correct-${i}" ${q.correct===oi?'checked':''} onchange="_trQuizDraft[${i}].correct=${oi}"><input class="fi" style="flex:1;font-size:13px" placeholder="Opção ${oi+1}" value="${(q.opts&&q.opts[oi]||'').replace(/"/g,'&quot;')}" oninput="_trQuizDraft[${i}].opts[${oi}]=this.value"></div>`).join('')}
+    <div style="font-size:11px;color:var(--t2)">Marque a opção correta</div>
+  </div>`).join('')||'<div class="empty" style="padding:12px 0">Nenhuma pergunta ainda.</div>';
+}
+function _addQuizQ(){_trQuizDraft.push({q:'',opts:['','','',''],correct:0});_renderQuizDraftList();}
+function _removeQuizQ(i){_trQuizDraft.splice(i,1);_renderQuizDraftList();}
+function openTrainingEditor(id){
+  const d=ld();
+  const t=id?(d.trainings||[]).find(x=>x.id===id):null;
+  document.getElementById('train-edit-title').textContent=t?'Editar treinamento':'Novo treinamento';
+  _trQuizDraft=t&&t.quiz?JSON.parse(JSON.stringify(t.quiz)):[];
+  document.getElementById('tr-edit-body').innerHTML=`
+    <div class="fg"><label>Título</label><input class="fi" id="tr-ttl" placeholder="Ex: Follow-up de leads que fecham mais vendas" value="${t?(t.title||'').replace(/"/g,'&quot;'):''}"></div>
+    <div class="fg"><label>Data do treinamento</label><input class="fi" id="tr-date" type="date" style="color-scheme:dark" value="${t?t.date||'':''}"></div>
+    <div class="fg"><label>Link do vídeo (YouTube, Google Drive ou link direto)</label><input class="fi" id="tr-video" placeholder="https://..." value="${t?(t.videoUrl||'').replace(/"/g,'&quot;'):''}"></div>
+    <div class="fg"><label>Material de estudo</label>${_fmtToolbarHtml('tr-material')}${_rteHtml('tr-material',t?t.material||'':'','min-height:120px')}</div>
+    <div class="fg">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><label style="margin:0">Quiz (opcional)</label><button type="button" class="ca" onclick="_addQuizQ()">+ Pergunta</button></div>
+      <div id="tr-quiz-list"></div>
+    </div>`;
+  _renderQuizDraftList();
+  window._trainEditId=id;
+  document.getElementById('train-edit-ov').classList.add('on');
+}
+function saveTrainingEditor(){
+  const ttl=v('tr-ttl').trim();
+  if(!ttl){_showToast('Dê um título pro treinamento','var(--red)');return;}
+  const quiz=_trQuizDraft.filter(q=>q.q.trim()&&q.opts.every(o=>o.trim()));
+  const d=ld();
+  d.trainings=d.trainings||[];
+  const id=window._trainEditId;
+  const obj={id:id||('tr'+Date.now()),title:ttl,date:v('tr-date')||_localDate(),videoUrl:v('tr-video').trim(),material:vHtml('tr-material'),quiz:quiz};
+  if(id){const i=d.trainings.findIndex(x=>x.id===id);if(i>=0)d.trainings[i]=obj;}else{d.trainings.push(obj);}
+  sv(d);
+  document.getElementById('train-edit-ov').classList.remove('on');
+  _showToast('Treinamento salvo ✅','var(--green)');
+  renderAll();
+}
+function deleteTraining(id){
+  if(!confirm('Excluir esse treinamento? Essa ação não pode ser desfeita.'))return;
+  const d=ld();
+  d.trainings=(d.trainings||[]).filter(x=>x.id!==id);
+  if(d.trainingProgress)delete d.trainingProgress[id];
+  sv(d);
+  S.trainSel=null;
+  _showToast('Treinamento excluído','var(--red)');
+  renderAll();
+}
+function openQuizModal(id){
+  const d=ld();
+  const t=(d.trainings||[]).find(x=>x.id===id);if(!t||!t.quiz||!t.quiz.length)return;
+  _trQuizActiveId=id;_trQuizAnswers={};
+  document.getElementById('quiz-title').textContent='📝 '+t.title;
+  document.getElementById('quiz-body').innerHTML=t.quiz.map((q,i)=>`<div class="fg"><label style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--text);margin-bottom:8px">${i+1}. ${q.q}</label>${q.opts.map((o,oi)=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0"><input type="radio" name="quiz-q-${i}" onchange="_trQuizAnswers[${i}]=${oi}"><span style="font-size:13px">${o}</span></div>`).join('')}</div>`).join('');
+  document.getElementById('quiz-foot').innerHTML=`<button class="bgh" onclick="document.getElementById('quiz-ov').classList.remove('on')">Cancelar</button><button class="bpr" onclick="submitQuiz()">Enviar respostas</button>`;
+  document.getElementById('quiz-ov').classList.add('on');
+}
+function submitQuiz(){
+  const d=ld();
+  const t=(d.trainings||[]).find(x=>x.id===_trQuizActiveId);if(!t)return;
+  if(Object.keys(_trQuizAnswers).length<t.quiz.length){_showToast('Responda todas as perguntas antes de enviar','var(--red)');return;}
+  let score=0;
+  t.quiz.forEach((q,i)=>{if(_trQuizAnswers[i]===q.correct)score++;});
+  d.trainingProgress=d.trainingProgress||{};
+  d.trainingProgress[t.id]=d.trainingProgress[t.id]||[];
+  const name=(S.user&&S.user.name)||'Anônimo';
+  const existing=d.trainingProgress[t.id].findIndex(p=>p.name===name);
+  const entry={name,score,total:t.quiz.length,date:_localDate()};
+  if(existing>=0)d.trainingProgress[t.id][existing]=entry;else d.trainingProgress[t.id].push(entry);
+  sv(d);
+  document.getElementById('quiz-body').innerHTML=`<div style="text-align:center;padding:20px 0"><div style="font-size:40px;margin-bottom:10px">${score===t.quiz.length?'🏆':'📝'}</div><div style="font-size:24px;font-weight:700;color:${score===t.quiz.length?'var(--green)':'var(--text)'}">${score}/${t.quiz.length}</div><div style="font-size:13px;color:var(--t2);margin-top:6px">${score===t.quiz.length?'Mandou muito bem!':'Resultado salvo.'}</div></div>`;
+  document.getElementById('quiz-foot').innerHTML=`<button class="bpr" style="width:100%" onclick="document.getElementById('quiz-ov').classList.remove('on');renderAll()">Fechar</button>`;
+}
+function openColabEditor(){
+  document.getElementById('colab-nm').value='';
+  document.getElementById('colab-pass').value='';
+  document.getElementById('colab-edit-ov').classList.add('on');
+}
+function saveColab(){
+  const nm=v('colab-nm').trim();
+  const pass=v('colab-pass').trim();
+  if(!nm){_showToast('Digite o nome do colaborador','var(--red)');return;}
+  if(pass.length<6){_showToast('A senha precisa ter pelo menos 6 caracteres','var(--red)');return;}
+  const email=(nm.split(' ')[0]||'colab').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'')+'.trein.'+S.eid+'@flowsales.local';
+  _fbDynUsers=_fbDynUsers||[];
+  const existing=_fbDynUsers.find(u=>u.email===email);
+  if(existing){existing.pass=pass;existing.name=nm;}
+  else{_fbDynUsers.push({email,pass,name:nm,role:'colab',eid:S.eid,init:nm.substring(0,2).toUpperCase()});}
+  localStorage.setItem('fs_dynusers',JSON.stringify(_fbDynUsers));
+  _waitFB().then(()=>{const ref=window._fbDoc(window._fbDB,'flowsales_crm','__config');window._fbSetDoc(ref,{users:_fbDynUsers,__ts:Date.now()},{merge:true}).catch(()=>{});}).catch(()=>{});
+  document.getElementById('colab-edit-ov').classList.remove('on');
+  _showToast('Acesso criado: '+email+' · senha: '+pass,'var(--green)');
+  renderAll();
+}
+function deleteColab(email){
+  if(!confirm('Remover o acesso desse colaborador?'))return;
+  _fbDynUsers=(_fbDynUsers||[]).filter(u=>u.email!==email);
+  localStorage.setItem('fs_dynusers',JSON.stringify(_fbDynUsers));
+  _waitFB().then(()=>{const ref=window._fbDoc(window._fbDB,'flowsales_crm','__config');window._fbSetDoc(ref,{users:_fbDynUsers,__ts:Date.now()},{merge:true}).catch(()=>{});}).catch(()=>{});
+  renderAll();
+}
 function finFileChosen(inp){
   const lbl=document.getElementById('fin-file-label');
   if(inp.files&&inp.files[0])lbl.textContent='📎 '+inp.files[0].name;
@@ -3890,6 +4100,9 @@ function rPerfil(d){
     :'';
   const _pl=document.getElementById('partners-list');if(_pl)_pl.innerHTML=partners.map(p=>`<div class="partner-card"><div class="partner-av" onclick="editPartnerPhoto('${p.id}')">${p.photo?`<img src="${p.photo}" alt="">`:(p.name||'?').charAt(0).toUpperCase()}</div><div class="partner-info"><div class="partner-name">${p.name}</div><div class="partner-role">${p.role}</div><div class="partner-detail"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>${p.email||'--'}</div><div class="partner-detail"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.31 19.79 19.79 0 0 1 1.61 4.68 2 2 0 0 1 3.6 2.5h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10a16 16 0 0 0 6.09 6.09l1.06-.87a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>${p.phone||'--'}</div><div class="partner-detail">OAB: ${p.oab||'--'}</div>${p.address?`<div class="partner-detail"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${p.address}</div>`:''}`+`${(p.areas||p.area)?'<div class="partner-detail">'+(p.areas||p.area)+'</div>':''}${(p.instagram||p.ig)?'<div class="partner-detail">@'+(p.instagram||p.ig).replace('@','')+'</div>':''}`+_pBtns(p)+'</div></div>').join('')||'<div class="empty">Adicione os sócios do escritório.</div>';
   if(S.role==='client'){const _pab=document.getElementById('partner-add-btn');if(_pab)_pab.style.display='none';}
+  const colabs=(_fbDynUsers||[]).filter(u=>u.eid===S.eid&&u.role==='colab');
+  const _cl=document.getElementById('colab-list');
+  if(_cl)_cl.innerHTML=colabs.map(u=>`<div class="traf-row"><span class="traf-lbl">${u.name}${u.pass?' <span style="color:var(--gold)">· senha: '+u.pass+'</span>':''}</span><span class="traf-val"><button class="ib del" onclick="deleteColab('${(u.email||'').replace(/'/g,"")}')" title="Remover acesso"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></span></div>`).join('')||'<div class="empty">Nenhum colaborador com acesso ainda.</div>';
   const furl=window.location.href.replace(/[^/]*\.html?.*/i,'form.html');
   const _fla=document.getElementById('form-link-area');if(_fla)_fla.innerHTML=`<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input class="fi" id="form-link-inp" value="${furl}" readonly style="font-size:13px;color:var(--t2);flex:1;min-width:0"><button class="ca" onclick="copyFormLink()">Copiar link</button><a href="${furl}" target="_blank" style="font-size:13px;color:var(--gold);padding:6px 10px;border-radius:6px;background:var(--gb);border:0.5px solid var(--gbr);text-decoration:none;white-space:nowrap">Abrir →</a></div>`;
 }
