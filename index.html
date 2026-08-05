@@ -46,6 +46,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 input[type="date"].fi{color:var(--text);}
 input[type="date"].fi::-webkit-calendar-picker-indicator{filter:brightness(0);opacity:0.55;cursor:pointer;}
 input[type="date"].fi::-webkit-calendar-picker-indicator:hover{opacity:0.85;}
+.pass-wrap{position:relative;}
+.pass-wrap input.fi{padding-right:42px;}
+.pass-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--t2);padding:4px;display:flex;align-items:center;}
+.pass-eye:hover{color:var(--gold);}
 .lbtn{width:100%;background:var(--gold);color:#000;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;margin-top:4px;letter-spacing:-0.01em;transition:opacity .15s;font-family:inherit;}
 .lbtn:hover{opacity:.88;}
 .lerr{font-size:12px;color:var(--red);margin-top:12px;text-align:center;min-height:18px;}
@@ -511,7 +515,7 @@ signInAnonymously(_auth).catch(e=>console.error('[FB Auth] signInAnonymously fal
     <div class="lsub">Acesse com suas credenciais</div>
     <div class="lform">
       <div class="fg"><label>E-mail</label><input class="fi" id="le" type="email" placeholder="seu@email.com" autocomplete="email"></div>
-      <div class="fg"><label>Senha</label><input class="fi" id="lp" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+      <div class="fg"><label>Senha</label><div class="pass-wrap"><input class="fi" id="lp" type="password" placeholder="••••••••" autocomplete="current-password"><button type="button" class="pass-eye" onclick="togglePassVisibility('lp',this)" title="Mostrar/ocultar senha"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
       <button class="lbtn" onclick="doLogin()">Entrar</button>
       <div class="lerr" id="lerr"></div>
       <div style="text-align:center;margin-top:10px"><button onclick="forgotPass()" style="background:none;border:none;color:rgba(255,255,255,0.55);font-size:12px;cursor:pointer;font-family:inherit;text-decoration:underline;letter-spacing:.02em">Esqueci minha senha</button></div>
@@ -1653,6 +1657,15 @@ function _resolveUserByEmail(em){
   const direct=USERS.find(x=>x.email===em);
   if(direct)return direct;
   return _fbDynUsers.find(x=>x.email===em)||null;
+}
+const EYE_ICON = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+const EYE_OFF_ICON = '<path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.77 21.77 0 0 1 5.06-6.06M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.77 21.77 0 0 1-3.22 4.53"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+function togglePassVisibility(inputId, btn){
+  const input=document.getElementById(inputId);
+  if(!input)return;
+  const isPass=input.type==='password';
+  input.type=isPass?'text':'password';
+  btn.querySelector('svg').innerHTML=isPass?EYE_OFF_ICON:EYE_ICON;
 }
 async function doLogin(){
   const em=document.getElementById('le').value.trim().toLowerCase();
@@ -4227,8 +4240,8 @@ function openProfile(){
     +'<div style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Alterar credenciais de acesso</div>'
     +'<div style="font-size:13px;color:var(--t2);margin-bottom:12px">Atual: <span style="color:var(--text)">'+currentEmail+'</span></div>'
     +'<div class="fg"><label>Novo e-mail</label><input class="fi" id="upf-email" type="email" placeholder="Deixe vazio para manter o atual"></div>'
-    +'<div class="fg"><label>Nova senha</label><input class="fi" id="upf-pass" type="password" autocomplete="new-password" placeholder="Deixe vazio para manter a atual"><div style="font-size:11px;color:var(--t2);margin-top:3px">Mínimo de 6 caracteres</div></div>'
-    +'<div class="fg"><label>Confirmar nova senha</label><input class="fi" id="upf-pass2" type="password" autocomplete="new-password" placeholder="Repita a nova senha"></div>'
+    +'<div class="fg"><label>Nova senha</label><div class="pass-wrap"><input class="fi" id="upf-pass" type="password" autocomplete="new-password" placeholder="Deixe vazio para manter a atual"><button type="button" class="pass-eye" onclick="togglePassVisibility(\'upf-pass\',this)" title="Mostrar/ocultar senha"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div><div style="font-size:11px;color:var(--t2);margin-top:3px">Mínimo de 6 caracteres</div></div>'
+    +'<div class="fg"><label>Confirmar nova senha</label><div class="pass-wrap"><input class="fi" id="upf-pass2" type="password" autocomplete="new-password" placeholder="Repita a nova senha"><button type="button" class="pass-eye" onclick="togglePassVisibility(\'upf-pass2\',this)" title="Mostrar/ocultar senha"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>'
     +'<div id="upf-cred-msg" style="font-size:13px;min-height:16px;margin-top:-4px"></div>'
     +'</div>';
   document.getElementById('prof-ov').classList.add('on');
