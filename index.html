@@ -3,17 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0c0c0b">
+<meta name="theme-color" content="#0a0b0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Flow Sales</title>
 <link rel="manifest" href="manifest.json">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 :root{
-  --bg:#0c0c0b;--s1:#16150f;--s2:#1e1c14;--s3:#252217;
-  --bdr:rgba(201,168,67,0.14);--bdr2:rgba(201,168,67,0.24);
-  --gold:#c9a843;--gb:rgba(201,168,67,0.10);--gbr:rgba(201,168,67,0.30);
-  --text:#f0e8d6;--t2:#c7bda6;--t3:#a89b81;
+  --bg:#0a0b0d;--s1:#14161a;--s2:#1c1f24;--s3:#22262c;
+  --bdr:rgba(217,169,77,0.14);--bdr2:rgba(217,169,77,0.26);
+  --gold:#d9a94d;--gb:rgba(217,169,77,0.10);--gbr:rgba(217,169,77,0.30);
+  --text:#f5f3ee;--t2:#aeb0b6;--t3:#7c7e85;
   --green:#3fae81;--red:#d9614a;--blue:#5b93c9;
   --font-display:ui-serif,"Iowan Old Style","Palatino Linotype",Georgia,"Times New Roman",serif;
   --font-mono:ui-monospace,"SF Mono","Cascadia Code","Roboto Mono",monospace;
@@ -25,11 +25,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 
 /* LOGIN */
 #login{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:200;overflow:hidden;
-  background:radial-gradient(ellipse 90% 70% at 15% 50%,rgba(201,168,67,.08) 0%,transparent 55%),
-             radial-gradient(ellipse 55% 90% at 82% 25%,rgba(201,168,67,.05) 0%,transparent 55%),
+  background:radial-gradient(ellipse 90% 70% at 15% 50%,rgba(217,169,77,.08) 0%,transparent 55%),
+             radial-gradient(ellipse 55% 90% at 82% 25%,rgba(217,169,77,.05) 0%,transparent 55%),
              linear-gradient(160deg,#0e0e0e 0%,#080808 100%);}
 #login-wm{position:absolute;right:-4%;bottom:-5%;width:58%;max-width:520px;opacity:.04;pointer-events:none;}
-.lcard{width:340px;background:rgba(17,17,17,.95);border:0.5px solid rgba(201,168,67,0.15);border-radius:14px;padding:40px 36px;position:relative;z-index:1;box-shadow:0 32px 80px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.04);backdrop-filter:blur(8px);}
+.lcard{width:340px;background:rgba(17,17,17,.95);border:0.5px solid rgba(217,169,77,0.15);border-radius:14px;padding:40px 36px;position:relative;z-index:1;box-shadow:0 32px 80px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.04);backdrop-filter:blur(8px);}
 .lmark{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
 .lmark-icon{width:36px;height:26px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .lmark-icon svg{width:36px;height:26px;}
@@ -46,18 +46,22 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 input[type="date"].fi{color:var(--text);}
 input[type="date"].fi::-webkit-calendar-picker-indicator{filter:brightness(0);opacity:0.55;cursor:pointer;}
 input[type="date"].fi::-webkit-calendar-picker-indicator:hover{opacity:0.85;}
+.pass-wrap{position:relative;}
+.pass-wrap input.fi{padding-right:42px;}
+.pass-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--t2);padding:4px;display:flex;align-items:center;}
+.pass-eye:hover{color:var(--gold);}
 .lbtn{width:100%;background:var(--gold);color:#000;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;margin-top:4px;letter-spacing:-0.01em;transition:opacity .15s;font-family:inherit;}
 .lbtn:hover{opacity:.88;}
 .lerr{font-size:12px;color:var(--red);margin-top:12px;text-align:center;min-height:18px;}
 
 /* APP SHELL */
 #app{position:fixed;inset:0;display:none;
-  background:radial-gradient(ellipse 60% 50% at 75% 80%,rgba(201,168,67,.03) 0%,transparent 60%),
+  background:radial-gradient(ellipse 60% 50% at 75% 80%,rgba(217,169,77,.03) 0%,transparent 60%),
              linear-gradient(180deg,#0c0c0c 0%,#090909 100%);}
 .shell{display:flex;height:100%;}
 
 /* SIDEBAR */
-.sb{width:var(--sw);min-width:var(--sw);background:linear-gradient(180deg,#131209 0%,#0e0d08 100%);border-right:1px solid rgba(201,168,67,0.32);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;}
+.sb{width:var(--sw);min-width:var(--sw);background:linear-gradient(180deg,#121418 0%,#0d0e11 100%);border-right:1px solid rgba(217,169,77,0.32);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;}
 .sb-top{padding:16px 14px 12px;border-bottom:0.5px solid var(--bdr);}
 .sb-logo{display:flex;align-items:center;gap:10px;cursor:default;width:100%;}
 .sb-logo-icon{width:30px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
@@ -96,8 +100,8 @@ input[type="date"].fi::-webkit-calendar-picker-indicator:hover{opacity:0.85;}
 .sb{position:relative;transition:width .2s,min-width .2s;}
 .sb.collapsed{width:0!important;min-width:0!important;overflow:hidden;}
 .sb-toggle-btn{background:none;border:none;cursor:pointer;color:var(--gold);padding:5px;border-radius:6px;display:flex;align-items:center;margin-left:auto;flex-shrink:0;transition:color .15s,background .15s;}
-.sb-toggle-btn:hover{color:var(--gold);background:rgba(201,168,67,.1);}
-.sb-expand-tab{display:none;position:fixed;top:50%;left:0;transform:translateY(-50%);width:28px;height:60px;background:var(--s1);border:0.5px solid rgba(201,168,67,.35);border-left:none;border-radius:0 9px 9px 0;cursor:pointer;color:var(--gold);align-items:center;justify-content:center;z-index:100;box-shadow:4px 0 14px rgba(0,0,0,.45);}
+.sb-toggle-btn:hover{color:var(--gold);background:rgba(217,169,77,.1);}
+.sb-expand-tab{display:none;position:fixed;top:50%;left:0;transform:translateY(-50%);width:28px;height:60px;background:var(--s1);border:0.5px solid rgba(217,169,77,.35);border-left:none;border-radius:0 9px 9px 0;cursor:pointer;color:var(--gold);align-items:center;justify-content:center;z-index:100;box-shadow:4px 0 14px rgba(0,0,0,.45);}
 .sb-expand-tab:hover{color:var(--gold);}
 .sb-expand-tab.on{display:flex;}
 .uav{width:30px;height:30px;border-radius:50%;background:var(--gb);border:0.5px solid var(--gbr);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--gold);flex-shrink:0;cursor:pointer;overflow:hidden;}
@@ -120,7 +124,7 @@ input[type="date"].fi::-webkit-calendar-picker-indicator:hover{opacity:0.85;}
 .notifbtn{position:relative;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:7px;cursor:pointer;border:0.5px solid var(--bdr);background:transparent;color:var(--t2);}
 .notifbtn:hover{border-color:var(--bdr2);color:var(--text);}
 .ndot{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;background:var(--red);border-radius:9px;border:1.5px solid var(--s1);font-size:10px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;}
-.sb-toggle-top{background:none;border:none;cursor:pointer;color:var(--gold);padding:6px;border-radius:7px;display:none;align-items:center;flex-shrink:0;transition:color .15s,background .15s;}.sb-toggle-top:hover{background:rgba(201,168,67,.1);}.hamb{display:none;background:none;border:none;cursor:pointer;color:var(--t2);padding:5px;}
+.sb-toggle-top{background:none;border:none;cursor:pointer;color:var(--gold);padding:6px;border-radius:7px;display:none;align-items:center;flex-shrink:0;transition:color .15s,background .15s;}.sb-toggle-top:hover{background:rgba(217,169,77,.1);}.hamb{display:none;background:none;border:none;cursor:pointer;color:var(--t2);padding:5px;}
 
 /* CALENDAR PANEL */
 .cal-panel{display:none;position:fixed;top:54px;left:var(--sw);right:0;background:var(--s1);border-bottom:0.5px solid var(--bdr);z-index:60;padding:14px 18px;}
@@ -231,7 +235,7 @@ li{margin:2px 0;}
 .impl-row:last-child{border:none;}
 .impl-ck{width:17px;height:17px;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .impl-ck.done{background:rgba(29,158,117,.15);border:0.5px solid rgba(29,158,117,.35);}
-.impl-ck.wip{background:rgba(201,168,67,.12);border:0.5px solid rgba(201,168,67,.3);}
+.impl-ck.wip{background:rgba(217,169,77,.12);border:0.5px solid rgba(217,169,77,.3);}
 .impl-txt{font-size:12px;flex:1;line-height:1.4;}
 .impl-txt.done{color:var(--green);}
 .impl-txt.wip{color:var(--text);}
@@ -244,7 +248,7 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="datetime-local
 
 
 /* sidebar nav */
-.sb .nav-item,.sb .ls,.sb .ls-lbl,.sb .ct,.sb .ch,.sb .card-ttl,.sb .sec-ttl,.sb .tb2,.sb .tt,.sb .ti,.sb .b,.sb .bpr,.sb .bgh,.sb .ca,.sb .ci{text-shadow:0 0 12px rgba(201,168,67,0.25),0 1px 2px rgba(0,0,0,0.6);}
+.sb .nav-item,.sb .ls,.sb .ls-lbl,.sb .ct,.sb .ch,.sb .card-ttl,.sb .sec-ttl,.sb .tb2,.sb .tt,.sb .ti,.sb .b,.sb .bpr,.sb .bgh,.sb .ca,.sb .ci{text-shadow:0 0 12px rgba(217,169,77,0.25),0 1px 2px rgba(0,0,0,0.6);}
 
 /* TASKS */
 .tbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
@@ -270,7 +274,7 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="datetime-local
 .b{display:inline-block;font-size:13px;font-weight:600;padding:2px 8px;border-radius:20px;}
 .br{background:rgba(192,57,43,.12);color:var(--red);border:0.5px solid rgba(192,57,43,.25);}
 .bg{background:rgba(29,158,117,.12);color:var(--green);border:0.5px solid rgba(29,158,117,.25);}
-.bgo{background:rgba(201,168,67,.12);color:var(--gold);border:0.5px solid rgba(201,168,67,.25);}
+.bgo{background:rgba(217,169,77,.12);color:var(--gold);border:0.5px solid rgba(217,169,77,.25);}
 .bgr{background:rgba(21,101,168,.12);color:var(--blue);border:0.5px solid rgba(21,101,168,.4);font-weight:600;}
 .week-filter-row{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-bottom:8px;}
 .wf-lbl{font-size:12px;color:var(--t2);}
@@ -490,28 +494,28 @@ signInAnonymously(_auth).catch(e=>console.error('[FB Auth] signInAnonymously fal
   <!-- Watermark funil + brand -->
   <div id="login-wm" style="position:absolute;right:0;bottom:0;width:55%;max-width:500px;opacity:.05;pointer-events:none;padding:0 2% 2% 0">
     <svg viewBox="0 0 300 220" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="0" y="0" width="300" height="55" rx="14" fill="#C9A843"/>
-      <rect x="0" y="82.5" width="200" height="55" rx="14" fill="#C9A843"/>
-      <rect x="0" y="165" width="110" height="55" rx="14" fill="#C9A843"/>
+      <rect x="0" y="0" width="300" height="55" rx="14" fill="#D9A94D"/>
+      <rect x="0" y="82.5" width="200" height="55" rx="14" fill="#D9A94D"/>
+      <rect x="0" y="165" width="110" height="55" rx="14" fill="#D9A94D"/>
     </svg>
   </div>
   <div id="login-wm2" style="position:absolute;left:3%;top:50%;transform:translateY(-50%);width:38%;max-width:340px;opacity:.025;pointer-events:none;">
     <svg viewBox="0 0 300 220" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="0" y="0" width="300" height="55" rx="14" fill="#C9A843"/>
-      <rect x="0" y="82.5" width="200" height="55" rx="14" fill="#C9A843"/>
-      <rect x="0" y="165" width="110" height="55" rx="14" fill="#C9A843"/>
+      <rect x="0" y="0" width="300" height="55" rx="14" fill="#D9A94D"/>
+      <rect x="0" y="82.5" width="200" height="55" rx="14" fill="#D9A94D"/>
+      <rect x="0" y="165" width="110" height="55" rx="14" fill="#D9A94D"/>
     </svg>
   </div>
   <div class="lcard">
     <div class="lmark">
-      <div class="lmark-icon"><svg viewBox="0 0 36 28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="36" height="8" rx="2.5" fill="#C9A843"/><rect x="0" y="10" width="24" height="8" rx="2.5" fill="#C9A843"/><rect x="0" y="20" width="13" height="8" rx="2.5" fill="#C9A843"/></svg></div>
-      <div class="lmark-text"><div class="lmark-text-top"><span style="color:#C9A843">FLOW</span><span style="color:#fff">SALES</span></div><div class="lmark-text-sub">MARKETING &amp; VENDAS</div></div>
+      <div class="lmark-icon"><svg viewBox="0 0 36 28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="36" height="8" rx="2.5" fill="#D9A94D"/><rect x="0" y="10" width="24" height="8" rx="2.5" fill="#D9A94D"/><rect x="0" y="20" width="13" height="8" rx="2.5" fill="#D9A94D"/></svg></div>
+      <div class="lmark-text"><div class="lmark-text-top"><span style="color:#D9A94D">FLOW</span><span style="color:#fff">SALES</span></div><div class="lmark-text-sub">MARKETING &amp; VENDAS</div></div>
     </div>
     <div class="lname">Portal de parceiros</div>
     <div class="lsub">Acesse com suas credenciais</div>
     <div class="lform">
       <div class="fg"><label>E-mail</label><input class="fi" id="le" type="email" placeholder="seu@email.com" autocomplete="email"></div>
-      <div class="fg"><label>Senha</label><input class="fi" id="lp" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+      <div class="fg"><label>Senha</label><div class="pass-wrap"><input class="fi" id="lp" type="password" placeholder="••••••••" autocomplete="current-password"><button type="button" class="pass-eye" onclick="togglePassVisibility('lp',this)" title="Mostrar/ocultar senha"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
       <button class="lbtn" onclick="doLogin()">Entrar</button>
       <div class="lerr" id="lerr"></div>
       <div style="text-align:center;margin-top:10px"><button onclick="forgotPass()" style="background:none;border:none;color:rgba(255,255,255,0.55);font-size:12px;cursor:pointer;font-family:inherit;text-decoration:underline;letter-spacing:.02em">Esqueci minha senha</button></div>
@@ -525,16 +529,16 @@ signInAnonymously(_auth).catch(e=>console.error('[FB Auth] signInAnonymously fal
   <!-- bg watermark -->
   <div style="position:fixed;bottom:-30px;right:-30px;pointer-events:none;z-index:0;opacity:.04;width:460px">
     <svg viewBox="0 0 300 220" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="0" y="0" width="300" height="62" rx="14" fill="#C9A843"/>
-      <rect x="0" y="82" width="200" height="62" rx="14" fill="#C9A843"/>
-      <rect x="0" y="164" width="110" height="62" rx="14" fill="#C9A843"/>
+      <rect x="0" y="0" width="300" height="62" rx="14" fill="#D9A94D"/>
+      <rect x="0" y="82" width="200" height="62" rx="14" fill="#D9A94D"/>
+      <rect x="0" y="164" width="110" height="62" rx="14" fill="#D9A94D"/>
     </svg>
   </div>
   <div style="position:fixed;top:100px;left:90px;pointer-events:none;z-index:0;opacity:.018;width:280px;transform:rotate(-15deg)">
     <svg viewBox="0 0 300 220" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="0" y="0" width="300" height="62" rx="14" fill="#C9A843"/>
-      <rect x="0" y="82" width="200" height="62" rx="14" fill="#C9A843"/>
-      <rect x="0" y="164" width="110" height="62" rx="14" fill="#C9A843"/>
+      <rect x="0" y="0" width="300" height="62" rx="14" fill="#D9A94D"/>
+      <rect x="0" y="82" width="200" height="62" rx="14" fill="#D9A94D"/>
+      <rect x="0" y="164" width="110" height="62" rx="14" fill="#D9A94D"/>
     </svg>
   </div>
   <div class="shell">
@@ -542,8 +546,8 @@ signInAnonymously(_auth).catch(e=>console.error('[FB Auth] signInAnonymously fal
     <div class="sb" id="sb">
       <div class="sb-top">
         <div class="sb-logo">
-          <div class="sb-logo-icon"><svg viewBox="0 0 32 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="32" height="7" rx="2" fill="#C9A843"/><rect x="0" y="8.5" width="22" height="7" rx="2" fill="#C9A843"/><rect x="0" y="17" width="12" height="7" rx="2" fill="#C9A843"/></svg></div>
-          <div class="sb-logo-text"><div class="sb-logo-text-top"><span style="color:#C9A843">FLOW</span><span style="color:#fff">SALES</span></div><div class="sb-logo-text-sub">MARKETING &amp; VENDAS</div></div>
+          <div class="sb-logo-icon"><svg viewBox="0 0 32 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="32" height="7" rx="2" fill="#D9A94D"/><rect x="0" y="8.5" width="22" height="7" rx="2" fill="#D9A94D"/><rect x="0" y="17" width="12" height="7" rx="2" fill="#D9A94D"/></svg></div>
+          <div class="sb-logo-text"><div class="sb-logo-text-top"><span style="color:#D9A94D">FLOW</span><span style="color:#fff">SALES</span></div><div class="sb-logo-text-sub">MARKETING &amp; VENDAS</div></div>
           <button class="sb-toggle-btn" id="sb-toggle" onclick="toggleSidebar()" title="Retrair"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg></button>
         </div>
       </div>
@@ -1073,14 +1077,6 @@ signInAnonymously(_auth).catch(e=>console.error('[FB Auth] signInAnonymously fal
     <div class="mof"><button class="bgh" onclick="document.getElementById('train-edit-ov').classList.remove('on')">Cancelar</button><button class="bpr" onclick="saveTrainingEditor()">Salvar</button></div>
   </div>
 </div>
-<!-- TREINAMENTO: QUIZ -->
-<div class="ov2" id="quiz-ov">
-  <div class="mo" style="width:560px;max-width:94vw">
-    <div class="moh"><div class="mot" id="quiz-title">Quiz</div><button class="moc" onclick="document.getElementById('quiz-ov').classList.remove('on')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
-    <div class="mob" id="quiz-body"></div>
-    <div class="mof" id="quiz-foot"></div>
-  </div>
-</div>
 <script>
 // ── FIREBASE ─────────────────────────────────────────────────
 function _showToast(msg, bg){
@@ -1211,6 +1207,24 @@ async function _mirrorMeetingToDoc(targetEid, meeting, notif){
     localStorage.setItem('fs_'+targetEid,JSON.stringify(tfd));
     await window._fbSetDoc(ref,{meetings:tfd.meetings,notifs:tfd.notifs,activity:tfd.activity},{merge:true});
   }catch(e){console.error('[mirror meeting]',e);}
+}
+// Mesma lógica, pra treinamento: usada quando o admin cria/edita um treinamento
+// de dentro do painel 'flowsales' escolhendo um escritório específico — precisa
+// aparecer em Treinamentos no painel daquele escritório também.
+async function _mirrorTrainingToDoc(targetEid, training){
+  try{
+    await _waitFB();
+    const ref=window._fbDoc(window._fbDB,'flowsales_crm',targetEid);
+    let tfd={};
+    try{const snap=await window._fbGetDoc(ref);if(snap&&snap.exists())tfd=snap.data();}catch(e){}
+    if(!tfd||!Object.keys(tfd).length){try{tfd=JSON.parse(localStorage.getItem('fs_'+targetEid)||'{}');}catch(e){tfd={};}}
+    tfd.trainings=tfd.trainings||[];
+    const idx=tfd.trainings.findIndex(x=>x.id===training.id);
+    if(idx>=0)tfd.trainings[idx]=training;else tfd.trainings.unshift(training);
+    activ(tfd,'🎓 Novo treinamento: '+training.title,'var(--gold)');
+    localStorage.setItem('fs_'+targetEid,JSON.stringify(tfd));
+    await window._fbSetDoc(ref,{trainings:tfd.trainings,activity:tfd.activity},{merge:true});
+  }catch(e){console.error('[mirror training]',e);}
 }
 
 // Compara o documento antigo com o novo e dispara notificação de computador
@@ -1644,6 +1658,15 @@ function _resolveUserByEmail(em){
   if(direct)return direct;
   return _fbDynUsers.find(x=>x.email===em)||null;
 }
+const EYE_ICON = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+const EYE_OFF_ICON = '<path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.77 21.77 0 0 1 5.06-6.06M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.77 21.77 0 0 1-3.22 4.53"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+function togglePassVisibility(inputId, btn){
+  const input=document.getElementById(inputId);
+  if(!input)return;
+  const isPass=input.type==='password';
+  input.type=isPass?'text':'password';
+  btn.querySelector('svg').innerHTML=isPass?EYE_OFF_ICON:EYE_ICON;
+}
 async function doLogin(){
   const em=document.getElementById('le').value.trim().toLowerCase();
   const pw=document.getElementById('lp').value;
@@ -1694,10 +1717,10 @@ function forgotPass(){
   const m=document.createElement('div');
   m.id='forgot-modal';
   m.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:20px';
-  m.innerHTML=`<div style="background:#2A2420;border:0.5px solid rgba(201,168,67,0.3);border-radius:14px;padding:28px 24px;max-width:360px;width:100%;text-align:center">
+  m.innerHTML=`<div style="background:#1E2024;border:0.5px solid rgba(217,169,77,0.3);border-radius:14px;padding:28px 24px;max-width:360px;width:100%;text-align:center">
     <div style="font-size:28px;margin-bottom:12px">🔐</div>
     <div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:8px">Redefinir senha</div>
-    <div style="font-size:13px;color:rgba(255,255,255,0.65);line-height:1.6;margin-bottom:20px">Entre em contato com o administrador:<br><strong style="color:#C9A843">Thiago Caetano</strong><br>E-mail: comercialflowsales@gmail.com</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.65);line-height:1.6;margin-bottom:20px">Entre em contato com o administrador:<br><strong style="color:#D9A94D">Thiago Caetano</strong><br>E-mail: comercialflowsales@gmail.com</div>
     <a href="https://wa.me/5512991636548?text=Olá%2C%20preciso%20redefinir%20minha%20senha%20no%20portal%20FlowSales" target="_blank" style="display:block;background:#25D366;color:#fff;border-radius:8px;padding:10px;font-size:13px;font-weight:600;text-decoration:none;margin-bottom:10px">💬 Falar no WhatsApp</a>
     <button onclick="document.getElementById('forgot-modal').remove()" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);border:none;border-radius:8px;padding:9px;width:100%;font-size:13px;cursor:pointer;font-family:inherit">Fechar</button>
   </div>`;
@@ -2915,6 +2938,19 @@ async function _delMeetingFromDoc(eid,id){
     await window._fbSetDoc(ref,{meetings:fdoc.meetings},{merge:true});
   }catch(e){console.error('[del meeting mirror]',e);}
 }
+async function _delTrainingFromDoc(eid,id){
+  try{
+    await _waitFB();
+    const ref=window._fbDoc(window._fbDB,'flowsales_crm',eid);
+    let fdoc=null;
+    try{const snap=await window._fbGetDoc(ref);if(snap&&snap.exists())fdoc=snap.data();}catch(e){}
+    if(!fdoc){try{fdoc=JSON.parse(localStorage.getItem('fs_'+eid)||'{}');}catch(e){fdoc={};}}
+    if(!(fdoc.trainings||[]).some(t=>t.id===id))return;
+    fdoc.trainings=(fdoc.trainings||[]).filter(t=>t.id!==id);
+    localStorage.setItem('fs_'+eid,JSON.stringify(fdoc));
+    await window._fbSetDoc(ref,{trainings:fdoc.trainings},{merge:true});
+  }catch(e){console.error('[del training mirror]',e);}
+}
 function delMeet(id){if(!confirm('Excluir?'))return;const d=ld();const m=d.meetings.find(x=>x.id===id);d.meetings=d.meetings.filter(x=>x.id!==id);if(m&&m.firmId&&FIRMS.find(f=>f.id===m.firmId))_delMeetingFromDoc(m.firmId,id);sv(d);renderAll();document.getElementById('mdet').style.display='none';}
 
 // ── FILES ─────────────────────────────────────────────────────
@@ -2960,9 +2996,6 @@ function rFinanceiro(d){
   </div>`).join('');
 }
 // ── TREINAMENTOS ─────────────────────────────────────────────────────────────
-var _trQuizDraft=[]; // perguntas em edicao no modal de criar/editar treinamento
-var _trQuizAnswers={}; // respostas marcadas durante a tentativa de quiz atual
-var _trQuizActiveId=null;
 function _trEmbedUrl(url){
   if(!url)return '';
   const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{6,})/);
@@ -2976,28 +3009,25 @@ function rTrein(d){
   const wrap=document.getElementById('trein-wrap');if(!wrap)return;
   const trainings=(d.trainings||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   const canManage=S.role!=='colab';
+  const isAdminFS=S.role==='admin'&&S.eid==='flowsales';
+  const _firmTag=t=>isAdminFS&&t.firmId?` · <span style="color:var(--gold);font-weight:600">${(FIRMS.find(f=>f.id===t.firmId)||{}).name||t.firmId}</span>`:'';
   if(S.trainSel){
     const t=trainings.find(x=>x.id===S.trainSel);
     if(!t){S.trainSel=null;return rTrein(d);}
-    const progress=(d.trainingProgress&&d.trainingProgress[t.id])||[];
     let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <button class="ca" onclick="selectTraining(null)">← Voltar</button>
       ${canManage?`<div style="display:flex;gap:6px"><button class="ca" onclick="openTrainingEditor('${t.id}')">Editar</button><button class="ca" style="color:var(--red);border-color:rgba(192,57,43,.4)" onclick="deleteTraining('${t.id}')">Excluir</button></div>`:''}
     </div>`;
-    html+=`<div class="card"><h2 style="font-size:18px;font-weight:700;margin-bottom:4px">🎓 ${t.title}</h2><div style="font-size:13px;color:var(--t2);margin-bottom:14px">${fd(t.date)}</div>`;
+    html+=`<div class="card"><h2 style="font-size:18px;font-weight:700;margin-bottom:4px">🎓 ${t.title}</h2>`;
+    if(t.videoUrl)html+=`<a href="${t.videoUrl}" target="_blank" rel="noopener" style="display:inline-block;font-size:13px;color:var(--gold);text-decoration:none;margin-bottom:6px">🔗 Abrir link do treinamento</a>`;
+    html+=`<div style="font-size:13px;color:var(--t2);margin-bottom:14px">${fd(t.date)}${_firmTag(t)}</div>`;
     if(t.videoUrl){
       html+=_trIsDirectVideo(t.videoUrl)
         ?`<video src="${t.videoUrl}" controls style="width:100%;border-radius:10px;background:#000;margin-bottom:14px"></video>`
         :`<div style="position:relative;width:100%;aspect-ratio:16/9;margin-bottom:14px"><iframe src="${_trEmbedUrl(t.videoUrl)}" style="position:absolute;inset:0;width:100%;height:100%;border:none;border-radius:10px" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>`;
     }
-    if(t.material)html+=`<div class="note-view" style="margin-bottom:14px">${t.material}</div>`;
-    if(t.quiz&&t.quiz.length)html+=`<button class="bpr" onclick="openQuizModal('${t.id}')">📝 Fazer quiz (${t.quiz.length} pergunta${t.quiz.length>1?'s':''})</button>`;
+    if(t.material)html+=`<div class="note-view">${t.material}</div>`;
     html+=`</div>`;
-    if(canManage&&t.quiz&&t.quiz.length){
-      html+=`<div class="card" style="margin-top:12px"><div class="ch"><div class="ct">Quem já fez o quiz</div></div>`;
-      html+=progress.length?progress.map(p=>`<div class="traf-row"><span class="traf-lbl">${p.name}</span><span class="traf-val" style="color:${p.score===p.total?'var(--green)':'var(--t2)'}">${p.score}/${p.total} · ${fd(p.date)}</span></div>`).join(''):'<div class="empty">Ninguém fez o quiz ainda.</div>';
-      html+=`</div>`;
-    }
     wrap.innerHTML=html;
     return;
   }
@@ -3005,55 +3035,44 @@ function rTrein(d){
   if(!trainings.length){
     html+=`<div class="card" style="text-align:center;padding:32px 20px"><div style="font-size:36px;margin-bottom:10px">🎓</div><div class="empty">Nenhum treinamento disponível ainda.</div></div>`;
   }else{
-    html+=trainings.map(t=>{
-      const done=((d.trainingProgress&&d.trainingProgress[t.id])||[]).some(p=>(S.user&&p.name===S.user.name));
-      return `<div class="card" style="cursor:pointer;margin-bottom:10px" onclick="selectTraining('${t.id}')">
-        <div class="ch" style="margin-bottom:4px"><div class="ct">🎓 ${t.title}</div>${t.quiz&&t.quiz.length?`<span class="chip ${done?'chip-g':'chip-y'}" style="font-size:11px">${done?'Quiz feito':'Quiz pendente'}</span>`:''}</div>
-        <div style="font-size:13px;color:var(--t2)">${fd(t.date)}</div>
-      </div>`;
-    }).join('');
+    html+=trainings.map(t=>`<div class="card" style="cursor:pointer;margin-bottom:10px" onclick="selectTraining('${t.id}')">
+        <div class="ch" style="margin-bottom:4px">
+          <div class="ct">🎓 ${t.title}</div>
+          ${canManage?`<div style="display:flex;gap:4px;flex-shrink:0" onclick="event.stopPropagation()"><button class="ib edit" onclick="openTrainingEditor('${t.id}')" title="Editar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="ib del" onclick="deleteTraining('${t.id}')" title="Excluir"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div>`:''}
+        </div>
+        ${t.videoUrl?`<a href="${t.videoUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:block;font-size:12px;color:var(--gold);text-decoration:none;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">🔗 ${t.videoUrl}</a>`:''}
+        <div style="font-size:13px;color:var(--t2)">${fd(t.date)}${_firmTag(t)}</div>
+      </div>`).join('');
   }
   wrap.innerHTML=html;
 }
 function selectTraining(id){S.trainSel=id;renderAll();}
-function _renderQuizDraftList(){
-  const el=document.getElementById('tr-quiz-list');if(!el)return;
-  el.innerHTML=_trQuizDraft.map((q,i)=>`<div class="card" style="margin-bottom:8px;padding:10px 12px">
-    <div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:6px"><input class="fi" style="flex:1" placeholder="Pergunta ${i+1}" value="${(q.q||'').replace(/"/g,'&quot;')}" oninput="_trQuizDraft[${i}].q=this.value"><button type="button" class="ib del" onclick="_removeQuizQ(${i})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div>
-    ${[0,1,2,3].map(oi=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><input type="radio" name="tr-correct-${i}" ${q.correct===oi?'checked':''} onchange="_trQuizDraft[${i}].correct=${oi}"><input class="fi" style="flex:1;font-size:13px" placeholder="Opção ${oi+1}" value="${(q.opts&&q.opts[oi]||'').replace(/"/g,'&quot;')}" oninput="_trQuizDraft[${i}].opts[${oi}]=this.value"></div>`).join('')}
-    <div style="font-size:11px;color:var(--t2)">Marque a opção correta</div>
-  </div>`).join('')||'<div class="empty" style="padding:12px 0">Nenhuma pergunta ainda.</div>';
-}
-function _addQuizQ(){_trQuizDraft.push({q:'',opts:['','','',''],correct:0});_renderQuizDraftList();}
-function _removeQuizQ(i){_trQuizDraft.splice(i,1);_renderQuizDraftList();}
 function openTrainingEditor(id){
   const d=ld();
   const t=id?(d.trainings||[]).find(x=>x.id===id):null;
   document.getElementById('train-edit-title').textContent=t?'Editar treinamento':'Novo treinamento';
-  _trQuizDraft=t&&t.quiz?JSON.parse(JSON.stringify(t.quiz)):[];
-  document.getElementById('tr-edit-body').innerHTML=`
+  const isAdminFS=S.role==='admin'&&S.eid==='flowsales';
+  const firmSelHtml=isAdminFS?`<div class="fg"><label>Escritório</label><select class="fi" id="tr-firm"><option value=""${!t||!t.firmId?' selected':''}>Interno (Flow Sales)</option>${FIRMS.map(f=>`<option value="${f.id}"${t&&t.firmId===f.id?' selected':''}>${f.name}</option>`).join('')}</select></div>`:'';
+  document.getElementById('tr-edit-body').innerHTML=firmSelHtml+`
     <div class="fg"><label>Título</label><input class="fi" id="tr-ttl" placeholder="Ex: Follow-up de leads que fecham mais vendas" value="${t?(t.title||'').replace(/"/g,'&quot;'):''}"></div>
     <div class="fg"><label>Data do treinamento</label><input class="fi" id="tr-date" type="date" style="color-scheme:dark" value="${t?t.date||'':''}"></div>
-    <div class="fg"><label>Link do vídeo (YouTube, Google Drive ou link direto)</label><input class="fi" id="tr-video" placeholder="https://..." value="${t?(t.videoUrl||'').replace(/"/g,'&quot;'):''}"></div>
-    <div class="fg"><label>Material de estudo</label>${_fmtToolbarHtml('tr-material')}${_rteHtml('tr-material',t?t.material||'':'','min-height:120px')}</div>
-    <div class="fg">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><label style="margin:0">Quiz (opcional)</label><button type="button" class="ca" onclick="_addQuizQ()">+ Pergunta</button></div>
-      <div id="tr-quiz-list"></div>
-    </div>`;
-  _renderQuizDraftList();
+    <div class="fg"><label>Link do treinamento</label><input class="fi" id="tr-video" placeholder="https://..." value="${t?(t.videoUrl||'').replace(/"/g,'&quot;'):''}"></div>
+    <div class="fg"><label>Material de estudo</label>${_fmtToolbarHtml('tr-material')}${_rteHtml('tr-material',t?t.material||'':'','min-height:120px')}</div>`;
   window._trainEditId=id;
   document.getElementById('train-edit-ov').classList.add('on');
 }
 function saveTrainingEditor(){
   const ttl=v('tr-ttl').trim();
   if(!ttl){_showToast('Dê um título pro treinamento','var(--red)');return;}
-  const quiz=_trQuizDraft.filter(q=>q.q.trim()&&q.opts.every(o=>o.trim()));
   const d=ld();
   d.trainings=d.trainings||[];
   const id=window._trainEditId;
-  const obj={id:id||('tr'+Date.now()),title:ttl,date:v('tr-date')||_localDate(),videoUrl:v('tr-video').trim(),material:vHtml('tr-material'),quiz:quiz};
+  const firmEl=document.getElementById('tr-firm');
+  const firmId=firmEl?firmEl.value:'';
+  const obj={id:id||('tr'+Date.now()),title:ttl,date:v('tr-date')||_localDate(),videoUrl:v('tr-video').trim(),material:vHtml('tr-material'),firmId:firmId||''};
   if(id){const i=d.trainings.findIndex(x=>x.id===id);if(i>=0)d.trainings[i]=obj;}else{d.trainings.push(obj);}
   sv(d);
+  if(firmId&&FIRMS.find(f=>f.id===firmId))_mirrorTrainingToDoc(firmId,obj);
   document.getElementById('train-edit-ov').classList.remove('on');
   _showToast('Treinamento salvo ✅','var(--green)');
   renderAll();
@@ -3061,37 +3080,14 @@ function saveTrainingEditor(){
 function deleteTraining(id){
   if(!confirm('Excluir esse treinamento? Essa ação não pode ser desfeita.'))return;
   const d=ld();
+  const t=(d.trainings||[]).find(x=>x.id===id);
   d.trainings=(d.trainings||[]).filter(x=>x.id!==id);
   if(d.trainingProgress)delete d.trainingProgress[id];
   sv(d);
+  if(t&&t.firmId&&FIRMS.find(f=>f.id===t.firmId))_delTrainingFromDoc(t.firmId,id);
   S.trainSel=null;
   _showToast('Treinamento excluído','var(--red)');
   renderAll();
-}
-function openQuizModal(id){
-  const d=ld();
-  const t=(d.trainings||[]).find(x=>x.id===id);if(!t||!t.quiz||!t.quiz.length)return;
-  _trQuizActiveId=id;_trQuizAnswers={};
-  document.getElementById('quiz-title').textContent='📝 '+t.title;
-  document.getElementById('quiz-body').innerHTML=t.quiz.map((q,i)=>`<div class="fg"><label style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--text);margin-bottom:8px">${i+1}. ${q.q}</label>${q.opts.map((o,oi)=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0"><input type="radio" name="quiz-q-${i}" onchange="_trQuizAnswers[${i}]=${oi}"><span style="font-size:13px">${o}</span></div>`).join('')}</div>`).join('');
-  document.getElementById('quiz-foot').innerHTML=`<button class="bgh" onclick="document.getElementById('quiz-ov').classList.remove('on')">Cancelar</button><button class="bpr" onclick="submitQuiz()">Enviar respostas</button>`;
-  document.getElementById('quiz-ov').classList.add('on');
-}
-function submitQuiz(){
-  const d=ld();
-  const t=(d.trainings||[]).find(x=>x.id===_trQuizActiveId);if(!t)return;
-  if(Object.keys(_trQuizAnswers).length<t.quiz.length){_showToast('Responda todas as perguntas antes de enviar','var(--red)');return;}
-  let score=0;
-  t.quiz.forEach((q,i)=>{if(_trQuizAnswers[i]===q.correct)score++;});
-  d.trainingProgress=d.trainingProgress||{};
-  d.trainingProgress[t.id]=d.trainingProgress[t.id]||[];
-  const name=(S.user&&S.user.name)||'Anônimo';
-  const existing=d.trainingProgress[t.id].findIndex(p=>p.name===name);
-  const entry={name,score,total:t.quiz.length,date:_localDate()};
-  if(existing>=0)d.trainingProgress[t.id][existing]=entry;else d.trainingProgress[t.id].push(entry);
-  sv(d);
-  document.getElementById('quiz-body').innerHTML=`<div style="text-align:center;padding:20px 0"><div style="font-size:40px;margin-bottom:10px">${score===t.quiz.length?'🏆':'📝'}</div><div style="font-size:24px;font-weight:700;color:${score===t.quiz.length?'var(--green)':'var(--text)'}">${score}/${t.quiz.length}</div><div style="font-size:13px;color:var(--t2);margin-top:6px">${score===t.quiz.length?'Mandou muito bem!':'Resultado salvo.'}</div></div>`;
-  document.getElementById('quiz-foot').innerHTML=`<button class="bpr" style="width:100%" onclick="document.getElementById('quiz-ov').classList.remove('on');renderAll()">Fechar</button>`;
 }
 function openColabEditor(){
   document.getElementById('colab-nm').value='';
@@ -4090,7 +4086,7 @@ function rPerfil(d){
   }
   const _pDD=_dueDay(f);
   const _pDS=_dueStatus(f);
-  const _pDueBadge=_pDS?' <span style="margin-left:6px;font-size:12px;color:'+(_pDS.overdue?'#fff':_pDS.color)+';background:'+(_pDS.overdue?_pDS.color:'rgba(201,168,67,.15)')+';border:'+(_pDS.overdue?'none':'0.5px solid '+_pDS.color)+';border-radius:3px;padding:1px 5px">'+_pDS.label+'</span>':'';
+  const _pDueBadge=_pDS?' <span style="margin-left:6px;font-size:12px;color:'+(_pDS.overdue?'#fff':_pDS.color)+';background:'+(_pDS.overdue?_pDS.color:'rgba(217,169,77,.15)')+';border:'+(_pDS.overdue?'none':'0.5px solid '+_pDS.color)+';border-radius:3px;padding:1px 5px">'+_pDS.label+'</span>':'';
   const _pDuePay=(_pDS&&_pDS.overdue&&S.role!=='client')?' <button class="ib" onclick="markFirmDuePaid(\''+f.id+'\')" style="font-size:12px;padding:1px 7px;color:var(--green);border:0.5px solid var(--green)44" title="Marcar como pago">Marcar pago</button>':'';
   document.getElementById('pay-info').innerHTML=`<div class="traf-row"><span class="traf-lbl">Início do programa</span><span class="traf-val">${fd(f.start)}</span></div><div class="traf-row"><span class="traf-lbl">Vencimento mensal</span><span class="traf-val">${_pDD?('Dia '+_pDD):'Não definido'}${_pDueBadge}${_pDuePay}</span></div><div class="traf-row"><span class="traf-lbl">Semana atual</span><span class="traf-val">${_weekFromStart(f)} de ${f.total}</span></div><div class="div"></div><div style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Pagamentos</div>${(d.payments||[]).map(p=>`<div class="payment-row"><div><div class="pay-lbl">${fd(p.date)}</div>${p.ref?`<div style="font-size:12px;color:var(--t2)">${p.ref}</div>`:''}<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">${(p.files||[]).map(f=>`<a href="${f.data}" download="${f.name}" style="font-size:12px;color:var(--blue);display:flex;align-items:center;gap:3px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>${f.name}</a>`).join('')}</div></div><span class="b bg">R$ ${p.amount.toLocaleString('pt-BR')}</span></div>`).join('')||'<div class="empty" style="padding:12px">Sem pagamentos registrados.</div>'}`;
   if(S.role!=='client'){const _ceb=document.getElementById('contrato-edit-btn');if(_ceb)_ceb.style.display='';}
@@ -4244,8 +4240,8 @@ function openProfile(){
     +'<div style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Alterar credenciais de acesso</div>'
     +'<div style="font-size:13px;color:var(--t2);margin-bottom:12px">Atual: <span style="color:var(--text)">'+currentEmail+'</span></div>'
     +'<div class="fg"><label>Novo e-mail</label><input class="fi" id="upf-email" type="email" placeholder="Deixe vazio para manter o atual"></div>'
-    +'<div class="fg"><label>Nova senha</label><input class="fi" id="upf-pass" type="password" autocomplete="new-password" placeholder="Deixe vazio para manter a atual"><div style="font-size:11px;color:var(--t2);margin-top:3px">Mínimo de 6 caracteres</div></div>'
-    +'<div class="fg"><label>Confirmar nova senha</label><input class="fi" id="upf-pass2" type="password" autocomplete="new-password" placeholder="Repita a nova senha"></div>'
+    +'<div class="fg"><label>Nova senha</label><div class="pass-wrap"><input class="fi" id="upf-pass" type="password" autocomplete="new-password" placeholder="Deixe vazio para manter a atual"><button type="button" class="pass-eye" onclick="togglePassVisibility(\'upf-pass\',this)" title="Mostrar/ocultar senha"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div><div style="font-size:11px;color:var(--t2);margin-top:3px">Mínimo de 6 caracteres</div></div>'
+    +'<div class="fg"><label>Confirmar nova senha</label><div class="pass-wrap"><input class="fi" id="upf-pass2" type="password" autocomplete="new-password" placeholder="Repita a nova senha"><button type="button" class="pass-eye" onclick="togglePassVisibility(\'upf-pass2\',this)" title="Mostrar/ocultar senha"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>'
     +'<div id="upf-cred-msg" style="font-size:13px;min-height:16px;margin-top:-4px"></div>'
     +'</div>';
   document.getElementById('prof-ov').classList.add('on');
@@ -4922,7 +4918,7 @@ function rFirms(){
     var cBar='<div style="margin-top:6px"><div style="display:flex;justify-content:space-between;font-size:13px;color:var(--t2);margin-bottom:3px"><span>Contrato</span><span>'+wkPct+'%</span></div><div style="height:4px;background:var(--s3);border-radius:2px"><div style="height:100%;width:'+wkPct+'%;background:'+(wkPct>=85?'var(--green)':wkPct>=50?'var(--blue)':'var(--gold)')+';border-radius:2px;transition:width .4s"></div></div></div>';
     return '<div class="card" style="padding:14px 16px;margin-bottom:8px">'
       +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">'
-      +(function(){var _ds=_dueStatus(f);var _db='';if(_ds)_db=' <span style="font-size:13px;font-weight:700;color:'+(_ds.overdue?'#fff':_ds.color)+';background:'+(_ds.overdue?_ds.color:'rgba(201,168,67,.15)')+';border:'+(_ds.overdue?'none':'0.5px solid '+_ds.color)+';border-radius:3px;padding:1px 5px">'+_ds.label+'</span>'+(_ds.overdue?' <button class="ib" onclick="markFirmDuePaid(\''+f.id+'\')" style="font-size:12px;padding:1px 7px;color:var(--green);border:0.5px solid var(--green)44" title="Marcar como pago">Marcar pago</button>':'');return '<div><div style="font-size:13px;font-weight:600">'+f.name+_db+'</div>';})()
+      +(function(){var _ds=_dueStatus(f);var _db='';if(_ds)_db=' <span style="font-size:13px;font-weight:700;color:'+(_ds.overdue?'#fff':_ds.color)+';background:'+(_ds.overdue?_ds.color:'rgba(217,169,77,.15)')+';border:'+(_ds.overdue?'none':'0.5px solid '+_ds.color)+';border-radius:3px;padding:1px 5px">'+_ds.label+'</span>'+(_ds.overdue?' <button class="ib" onclick="markFirmDuePaid(\''+f.id+'\')" style="font-size:12px;padding:1px 7px;color:var(--green);border:0.5px solid var(--green)44" title="Marcar como pago">Marcar pago</button>':'');return '<div><div style="font-size:13px;font-weight:600">'+f.name+_db+'</div>';})()
       +'<div style="font-size:12px;color:var(--t2);margin-top:2px">'+(f.area||'')+' · '+(f.city||'')+'</div></div>'
       +'<div style="display:flex;gap:6px;align-items:center">'
       +'<span style="font-size:13px;font-weight:700;color:'+hc+';background:'+hc+'22;border:0.5px solid '+hc+'44;border-radius:4px;padding:2px 6px">'+hl+(health!==null?' '+health+'%':'')+'</span>'
