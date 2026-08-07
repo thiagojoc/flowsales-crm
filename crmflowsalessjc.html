@@ -381,7 +381,7 @@
   </div>
   <div class="kpi-grid">
     <div class="kpi-card"><div class="kpi-adjust"><button class="kpi-adjust-btn" data-kpi-minus="abordado" title="Remover 1">&minus;</button><div class="kpi-num" id="kpi-abordados">0</div><button class="kpi-adjust-btn" data-kpi-plus="abordado" title="Adicionar 1">+</button></div><div class="kpi-lbl">Leads abordados</div></div>
-    <div class="kpi-card"><div class="kpi-num" id="kpi-interacao">0</div><div class="kpi-lbl">Interação</div></div>
+    <div class="kpi-card"><div class="kpi-adjust"><button class="kpi-adjust-btn" data-kpi-minus="interacao" title="Remover 1">&minus;</button><div class="kpi-num" id="kpi-interacao">0</div><button class="kpi-adjust-btn" data-kpi-plus="interacao" title="Adicionar 1">+</button></div><div class="kpi-lbl">Interação</div></div>
     <div class="kpi-card"><div class="kpi-adjust"><button class="kpi-adjust-btn" data-kpi-minus="call" title="Remover 1">&minus;</button><div class="kpi-num" id="kpi-calls">0</div><button class="kpi-adjust-btn" data-kpi-plus="call" title="Adicionar 1">+</button></div><div class="kpi-lbl">Ligações realizadas</div></div>
     <div class="kpi-card"><div class="kpi-adjust"><button class="kpi-adjust-btn" data-kpi-minus="whatsapp" title="Remover 1">&minus;</button><div class="kpi-num" id="kpi-wa">0</div><button class="kpi-adjust-btn" data-kpi-plus="whatsapp" title="Adicionar 1">+</button></div><div class="kpi-lbl">Mensagens no WhatsApp</div></div>
     <div class="kpi-card"><div class="kpi-adjust"><button class="kpi-adjust-btn" data-kpi-minus="meeting" title="Remover 1">&minus;</button><div class="kpi-num" id="kpi-meetings">0</div><button class="kpi-adjust-btn" data-kpi-plus="meeting" title="Adicionar 1">+</button></div><div class="kpi-lbl">Reuniões agendadas</div></div>
@@ -670,6 +670,7 @@ Quem costuma decidir sobre investir em marketing aí no escritório?</div>
           <option value="whatsapp">WhatsApp</option>
           <option value="meeting">Reunião agendada</option>
           <option value="abordado">Lead abordado</option>
+          <option value="interacao">Interação</option>
           <option value="ganho">Venda ganha</option>
         </select>
       </div>
@@ -860,6 +861,11 @@ function uid(prefix){ return (prefix||'x') + Date.now() + Math.floor(Math.random
 function digitsOnly(str){ return String(str||'').replace(/\D/g,''); }
 function escapeHtml(str){ return String(str||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function tagClass(tag){ if(tag==='alta') return 'tag-alta'; if(tag==='media') return 'tag-media'; if(tag==='baixa') return 'tag-baixa'; return 'tag-default'; }
+const TAG_LABELS = { alta: 'Alta', media: 'Média', baixa: 'Baixa' };
+// mostra o acento certo nas tags padrao (o valor guardado continua sem acento,
+// pra nao quebrar filtro/comparacao com dados antigos); tag customizada so
+// capitaliza a primeira letra.
+function tagLabel(tag){ return TAG_LABELS[tag] || (String(tag||'').charAt(0).toUpperCase() + String(tag||'').slice(1)); }
 function waLink(contact){ let number = contact.waNumber || digitsOnly(contact.phone); if(number && !number.startsWith('55')) number = '55' + number; return number; }
 function initialsOf(first, last){ return ((first||'?')[0] + (last||'')[0]).toUpperCase(); }
 
@@ -1120,11 +1126,12 @@ function renderKpis(){
   const whats = activities.filter(a => a.type === 'whatsapp' && inPeriod(a.createdAt));
   const meets = activities.filter(a => a.type === 'meeting' && inPeriod(a.createdAt));
   const abordadosManual = activities.filter(a => a.type === 'abordado' && inPeriod(a.createdAt)).length;
+  const interacaoManual = activities.filter(a => a.type === 'interacao' && inPeriod(a.createdAt)).length;
   const ganhosManual = activities.filter(a => a.type === 'ganho' && inPeriod(a.createdAt)).length;
   const abordadosSet = new Set(activities.filter(a => inPeriod(a.createdAt) && a.contactId).map(a => a.contactId));
   const ganhas = opportunities.filter(o => o.outcome === 'ganho' && inPeriod(o.updatedAt || o.createdAt));
   document.getElementById('kpi-abordados').textContent = abordadosSet.size + abordadosManual;
-  document.getElementById('kpi-interacao').textContent = calls.length + whats.length + meets.length;
+  document.getElementById('kpi-interacao').textContent = calls.length + whats.length + meets.length + interacaoManual;
   document.getElementById('kpi-calls').textContent = calls.length;
   document.getElementById('kpi-wa').textContent = whats.length;
   document.getElementById('kpi-meetings').textContent = meets.length;
@@ -1148,7 +1155,7 @@ function renderFilterPanel(allTags){
     list.innerHTML = '<div class="filter-empty">Nenhuma tag ainda.</div>';
   } else {
     list.innerHTML = allTags.map(t =>
-      '<label class="filter-check"><input type="checkbox" class="tag-check" value="'+escapeHtml(t)+'"'+(tagFilters.has(t)?' checked':'')+'> <span style="text-transform:capitalize;">'+escapeHtml(t)+'</span></label>'
+      '<label class="filter-check"><input type="checkbox" class="tag-check" value="'+escapeHtml(t)+'"'+(tagFilters.has(t)?' checked':'')+'> '+escapeHtml(tagLabel(t))+'</label>'
     ).join('');
     list.querySelectorAll('.tag-check').forEach(chk => chk.addEventListener('change', () => {
       if(chk.checked) tagFilters.add(chk.value); else tagFilters.delete(chk.value);
@@ -1233,7 +1240,7 @@ function renderOpp(){
         '<div class="card-label">Status</div>' +
         '<span class="outcome-pill outcome-'+opp.outcome+'">'+opp.outcome+'</span>' +
         (c.tags && c.tags.length ? '<div class="card-label" style="margin-top:8px;">Tags</div>' : '') +
-        '<div class="tags">'+(c.tags||[]).map(t => '<span class="tag-pill '+tagClass(t)+'">'+escapeHtml(t)+'</span>').join('')+'</div>' +
+        '<div class="tags">'+(c.tags||[]).map(t => '<span class="tag-pill '+tagClass(t)+'">'+escapeHtml(tagLabel(t))+'</span>').join('')+'</div>' +
         '<div class="row-actions">' +
           (wa ? '<a class="card-icon-btn wa" title="WhatsApp" data-wa="'+c.id+'" href="#">'+WHATSAPP_ICON_SVG+'</a>' : '') +
           (c.instagram ? '<a class="card-icon-btn" title="Instagram" target="_blank" href="https://instagram.com/'+encodeURIComponent(c.instagram)+'">'+INSTAGRAM_ICON_SVG+'</a>' : '') +
@@ -1265,7 +1272,7 @@ function renderContactsFilterPanel(allTags){
     list.innerHTML = '<div class="filter-empty">Nenhuma tag ainda.</div>';
   } else {
     list.innerHTML = allTags.map(t =>
-      '<label class="filter-check"><input type="checkbox" class="contacts-tag-check" value="'+escapeHtml(t)+'"'+(contactsTagFilters.has(t)?' checked':'')+'> <span style="text-transform:capitalize;">'+escapeHtml(t)+'</span></label>'
+      '<label class="filter-check"><input type="checkbox" class="contacts-tag-check" value="'+escapeHtml(t)+'"'+(contactsTagFilters.has(t)?' checked':'')+'> '+escapeHtml(tagLabel(t))+'</label>'
     ).join('');
     list.querySelectorAll('.contacts-tag-check').forEach(chk => chk.addEventListener('change', () => {
       if(chk.checked) contactsTagFilters.add(chk.value); else contactsTagFilters.delete(chk.value);
@@ -1300,7 +1307,7 @@ function renderContacts(){
       '<td>'+escapeHtml(c.phone)+'</td>' +
       '<td>'+escapeHtml(c.email)+'</td>' +
       '<td>'+(c.instagram ? '<a class="link" target="_blank" href="https://instagram.com/'+encodeURIComponent(c.instagram)+'">@'+escapeHtml(c.instagram)+'</a>' : '')+'</td>' +
-      '<td>'+(c.tags||[]).map(t => '<span class="tag-pill '+tagClass(t)+'">'+escapeHtml(t)+'</span>').join('')+'</td>' +
+      '<td>'+(c.tags||[]).map(t => '<span class="tag-pill '+tagClass(t)+'">'+escapeHtml(tagLabel(t))+'</span>').join('')+'</td>' +
       '<td>'+formatDate(c.createdAt)+'</td>' +
       '<td><div class="row-actions">' +
         (wa ? '<a class="card-icon-btn wa" title="WhatsApp" data-wa="'+c.id+'" href="#">'+WHATSAPP_ICON_SVG+'</a>' : '') +
@@ -1739,7 +1746,7 @@ function allKnownTags(){ return Array.from(new Set(contacts.flatMap(c => c.tags 
 function renderLeadTagsChips(){
   const wrap = document.getElementById('lead-tags-chips');
   wrap.innerHTML = _leadTagsSelected.length ? _leadTagsSelected.map(t =>
-    '<span class="tag-pill '+tagClass(t)+'">'+escapeHtml(t)+' <span class="tag-remove" data-remove-tag="'+escapeHtml(t)+'">&times;</span></span>'
+    '<span class="tag-pill '+tagClass(t)+'">'+escapeHtml(tagLabel(t))+' <span class="tag-remove" data-remove-tag="'+escapeHtml(t)+'">&times;</span></span>'
   ).join('') : '<span class="hint">Nenhuma tag selecionada</span>';
   wrap.querySelectorAll('[data-remove-tag]').forEach(x => x.addEventListener('click', () => {
     _leadTagsSelected = _leadTagsSelected.filter(t => t !== x.dataset.removeTag);
@@ -1752,7 +1759,7 @@ function renderLeadTagsDropdown(){
   const q = input.value.trim().toLowerCase();
   const dd = document.getElementById('lead-tags-dropdown');
   const options = allKnownTags().filter(t => !_leadTagsSelected.includes(t) && (!q || t.toLowerCase().includes(q)));
-  let html = options.map(t => '<div class="tag-picker-option" data-add-tag="'+escapeHtml(t)+'">'+escapeHtml(t)+'</div>').join('');
+  let html = options.map(t => '<div class="tag-picker-option" data-add-tag="'+escapeHtml(t)+'">'+escapeHtml(tagLabel(t))+'</div>').join('');
   const typed = input.value.trim();
   const exists = typed && (allKnownTags().some(t => t.toLowerCase() === typed.toLowerCase()) || _leadTagsSelected.some(t => t.toLowerCase() === typed.toLowerCase()));
   if(typed && !exists){
@@ -1815,7 +1822,7 @@ async function confirmSchedule(){
 }
 
 // ---- atividades: registro manual + gerenciamento (pra corrigir cliques de teste) --
-const ACT_TYPE_LABEL = { call: 'Ligação', whatsapp: 'WhatsApp', meeting: 'Reunião agendada', abordado: 'Lead abordado', ganho: 'Venda ganha' };
+const ACT_TYPE_LABEL = { call: 'Ligação', whatsapp: 'WhatsApp', meeting: 'Reunião agendada', abordado: 'Lead abordado', interacao: 'Interação', ganho: 'Venda ganha' };
 
 function openActivitiesModal(){
   const contactSel = document.getElementById('act-new-contact');
