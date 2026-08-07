@@ -908,6 +908,7 @@ function initCardDrag(card, opp){
           const liveOpp = opportunities.find(o => o.id === opp.id);
           if(liveOpp && liveOpp.stageId !== stageId){
             liveOpp.stageId = stageId;
+            liveOpp.stageChangedAt = new Date().toISOString();
             await DB.saveOpportunities(opportunities);
             render();
           }
@@ -1197,7 +1198,9 @@ function renderOpp(){
     col.className = 'col';
     col.dataset.stageId = st.id;
 
-    const items = filtered.filter(o => o.stageId === st.id);
+    // dentro da etapa, quem mudou de etapa mais recentemente fica em cima
+    const items = filtered.filter(o => o.stageId === st.id)
+      .sort((a, b) => new Date(b.stageChangedAt || b.createdAt) - new Date(a.stageChangedAt || a.createdAt));
     const head = document.createElement('div');
     head.className = 'col-head';
     head.innerHTML =
@@ -1948,9 +1951,12 @@ async function saveLead(){
     const outcome = document.getElementById('lead-outcome').value;
     if(oppId){
       const opp = opportunities.find(o => o.id === oppId);
+      const stageChanged = opp.stageId !== stageId || opp.pipelineId !== pipelineId;
       Object.assign(opp, { pipelineId, stageId, outcome, updatedAt: new Date().toISOString() });
+      if(stageChanged) opp.stageChangedAt = new Date().toISOString();
     } else {
-      opportunities.push({ id: uid('o'), contactId: contact.id, pipelineId, stageId, outcome, createdAt: new Date().toISOString() });
+      const now = new Date().toISOString();
+      opportunities.push({ id: uid('o'), contactId: contact.id, pipelineId, stageId, outcome, createdAt: now, stageChangedAt: now });
     }
     await DB.saveOpportunities(opportunities);
     // pula direto pro pipeline/etapa escolhidos no modal, pra sempre ver onde o lead foi parar
