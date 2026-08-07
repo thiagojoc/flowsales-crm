@@ -106,6 +106,8 @@
   .card-icon-btn:hover { border-color: #d9a94d; color: #d9a94d; }
   .card-icon-btn.wa { background: rgba(63,174,129,0.14); border-color: rgba(63,174,129,0.3); color: #3fae81; }
   .card-icon-btn.wa:hover { background: rgba(63,174,129,0.22); color: #3fae81; }
+  .card-icon-btn.cal { background: rgba(91,147,201,0.14); border-color: rgba(91,147,201,0.3); color: #5b93c9; }
+  .card-icon-btn.cal:hover { background: rgba(91,147,201,0.22); color: #5b93c9; }
 
   table.contacts-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   table.contacts-table th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: #9a9da6; padding: 10px 14px; border-bottom: 1px solid rgba(217,169,77,0.14); }
@@ -808,8 +810,7 @@ const SESSION_KEY = 'crm_sjc_session';
 const EYE_ICON = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
 const EYE_OFF_ICON = '<path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.77 21.77 0 0 1 5.06-6.06M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.77 21.77 0 0 1-3.22 4.53"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
 
-// icones das acoes rapidas do card (ligar, whatsapp, instagram, agendar)
-const PHONE_ICON_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>';
+// icones das acoes rapidas do card (whatsapp, instagram, agendar)
 const CALENDAR_ICON_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
 const WHATSAPP_ICON_SVG = '<svg width="15" height="15" viewBox="0 0 448 512" fill="currentColor"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/></svg>';
 const INSTAGRAM_ICON_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>';
@@ -1233,10 +1234,9 @@ function renderOpp(){
         (c.tags && c.tags.length ? '<div class="card-label" style="margin-top:8px;">Tags</div>' : '') +
         '<div class="tags">'+(c.tags||[]).map(t => '<span class="tag-pill '+tagClass(t)+'">'+escapeHtml(t)+'</span>').join('')+'</div>' +
         '<div class="row-actions">' +
-          (wa ? '<a class="card-icon-btn" title="Ligar" data-call="'+c.id+'" href="#">'+PHONE_ICON_SVG+'</a>' : '') +
           (wa ? '<a class="card-icon-btn wa" title="WhatsApp" data-wa="'+c.id+'" href="#">'+WHATSAPP_ICON_SVG+'</a>' : '') +
           (c.instagram ? '<a class="card-icon-btn" title="Instagram" target="_blank" href="https://instagram.com/'+encodeURIComponent(c.instagram)+'">'+INSTAGRAM_ICON_SVG+'</a>' : '') +
-          '<button class="card-icon-btn schedule-btn" title="Agendar" data-id="'+c.id+'">'+CALENDAR_ICON_SVG+'</button>' +
+          '<button class="card-icon-btn cal schedule-btn" title="Agendar" data-id="'+c.id+'">'+CALENDAR_ICON_SVG+'</button>' +
         '</div>';
       initCardDrag(card, opp);
       body.appendChild(card);
@@ -1249,12 +1249,6 @@ function renderOpp(){
   board.querySelectorAll('.col-del').forEach(btn => btn.addEventListener('click', () => deleteStage(btn.dataset.id)));
   board.querySelectorAll('.col-title').forEach(inp => inp.addEventListener('change', () => renameStage(inp.dataset.id, inp.value)));
   board.querySelectorAll('.schedule-btn').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); openScheduleModal(btn.dataset.id); }));
-  board.querySelectorAll('[data-call]').forEach(a => a.addEventListener('click', (e) => {
-    e.preventDefault();
-    const c = contactById(a.dataset.call);
-    if(!c) return;
-    window.open('https://wa.me/'+waLink(c), '_blank');
-  }));
   board.querySelectorAll('[data-wa]').forEach(a => a.addEventListener('click', async (e) => {
     e.preventDefault();
     const c = contactById(a.dataset.wa);
@@ -1308,9 +1302,8 @@ function renderContacts(){
       '<td>'+(c.tags||[]).map(t => '<span class="tag-pill '+tagClass(t)+'">'+escapeHtml(t)+'</span>').join('')+'</td>' +
       '<td>'+formatDate(c.createdAt)+'</td>' +
       '<td><div class="row-actions">' +
-        (wa ? '<a class="card-icon-btn" title="Ligar" data-call="'+c.id+'" href="#">'+PHONE_ICON_SVG+'</a>' : '') +
         (wa ? '<a class="card-icon-btn wa" title="WhatsApp" data-wa="'+c.id+'" href="#">'+WHATSAPP_ICON_SVG+'</a>' : '') +
-        '<button class="card-icon-btn schedule-btn" title="Agendar" data-id="'+c.id+'">'+CALENDAR_ICON_SVG+'</button>' +
+        '<button class="card-icon-btn cal schedule-btn" title="Agendar" data-id="'+c.id+'">'+CALENDAR_ICON_SVG+'</button>' +
       '</div></td>' +
     '</tr>';
   }).join('');
@@ -1319,12 +1312,6 @@ function renderContacts(){
     openLeadModal(null, tr.dataset.id);
   }));
   tbody.querySelectorAll('.schedule-btn').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); openScheduleModal(btn.dataset.id); }));
-  tbody.querySelectorAll('[data-call]').forEach(a => a.addEventListener('click', (e) => {
-    e.preventDefault();
-    const c = contactById(a.dataset.call);
-    if(!c) return;
-    window.open('https://wa.me/'+waLink(c), '_blank');
-  }));
   tbody.querySelectorAll('[data-wa]').forEach(a => a.addEventListener('click', async (e) => {
     e.preventDefault();
     const c = contactById(a.dataset.wa);
