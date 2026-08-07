@@ -70,7 +70,7 @@
   .btn-link:hover { text-decoration: underline; }
   .spacer { flex: 1; }
 
-  .tag-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 2px 8px; border-radius: 10px; margin-right: 4px; margin-top: 4px; }
+  .tag-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; text-transform: capitalize; letter-spacing: .02em; padding: 2px 8px; border-radius: 10px; margin-right: 4px; margin-top: 4px; }
   .tag-alta { background: rgba(217,97,74,0.15); color: #d9614a; }
   .tag-media { background: rgba(217,169,77,0.15); color: #d9a94d; }
   .tag-baixa { background: rgba(91,147,201,0.15); color: #5b93c9; }
@@ -271,7 +271,7 @@
 <div class="tabs">
   <button class="tab-btn active" id="tab-opp">Oportunidades</button>
   <button class="tab-btn" id="tab-contacts">Contatos</button>
-  <button class="tab-btn" id="tab-kpis">KPIs</button>
+  <button class="tab-btn" id="tab-kpis">KPI's</button>
   <button class="tab-btn" id="tab-approach">Abordagens</button>
 </div>
 
@@ -286,7 +286,7 @@
 <div id="view-opp">
   <div class="toolbar">
     <select id="pipeline-select"></select>
-    <button class="btn-outline btn-sm" id="edit-funnel-btn">Editar funil</button>
+    <button class="icon-btn" id="edit-pipeline-name-btn" title="Editar nome do pipeline"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
     <input type="text" id="search-input-opp" placeholder="Buscar por nome, telefone ou escritório">
     <div class="filter-wrap">
       <button class="btn-outline btn-sm" id="filters-btn">Filtros</button>
@@ -311,8 +311,9 @@
     </div>
     <div class="spacer"></div>
     <div class="filter-wrap">
-      <button class="btn-outline btn-sm" id="more-actions-btn">Mais ações</button>
+      <button class="btn-secondary" id="more-actions-btn">Mais ações</button>
       <div class="filter-panel menu-panel" id="more-actions-panel">
+        <button class="menu-item" id="new-pipeline-btn">Novo Pipeline</button>
         <button class="menu-item" id="wa-template-btn">Mensagem padrão</button>
         <button class="menu-item" id="export-btn">Exportar CSV</button>
         <button class="menu-item" id="import-btn">Importar leads</button>
@@ -716,16 +717,17 @@ Quem costuma decidir sobre investir em marketing aí no escritório?</div>
 
 <div class="modal-bg" id="funnel-modal-bg">
   <div class="modal">
-    <h3 class="serif">Editar funil</h3>
-    <div class="field"><label>Nome da pipeline atual</label><input type="text" id="funnel-rename-input"></div>
+    <h3 class="serif" id="funnel-modal-title">Editar nome do pipeline</h3>
+    <div id="funnel-rename-section">
+      <div class="field"><label>Nome da pipeline atual</label><input type="text" id="funnel-rename-input"></div>
+    </div>
+    <div id="funnel-new-section" style="display:none;">
+      <div class="field"><label>Nome da nova pipeline</label><input type="text" id="funnel-new-input" placeholder="Ex.: Indicações"></div>
+    </div>
     <div class="modal-actions"><div></div><div class="right">
-      <button class="btn-secondary" id="funnel-cancel-btn">Fechar</button>
+      <button class="btn-secondary" id="funnel-cancel-btn">Cancelar</button>
       <button class="btn-primary" id="funnel-rename-save-btn">Salvar nome</button>
-    </div></div>
-    <hr>
-    <div class="field"><label>Nova pipeline</label><input type="text" id="funnel-new-input" placeholder="Ex.: Indicações"></div>
-    <div class="modal-actions"><div></div><div class="right">
-      <button class="btn-primary" id="funnel-new-save-btn">Criar pipeline</button>
+      <button class="btn-primary" id="funnel-new-save-btn" style="display:none;">Criar pipeline</button>
     </div></div>
   </div>
 </div>
@@ -1249,7 +1251,6 @@ function renderOpp(){
     const c = contactById(a.dataset.call);
     if(!c) return;
     window.open('https://wa.me/'+waLink(c), '_blank');
-    DB.logActivity('call', c.id, null);
   }));
   board.querySelectorAll('[data-wa]').forEach(a => a.addEventListener('click', async (e) => {
     e.preventDefault();
@@ -1257,7 +1258,6 @@ function renderOpp(){
     const template = await DB.getWaTemplate();
     const msg = template.replace(/\{\{nome\}\}/g, c.firstName || '');
     window.open('https://wa.me/'+waLink(c)+'?text='+encodeURIComponent(msg), '_blank');
-    DB.logActivity('whatsapp', c.id, null);
   }));
 }
 
@@ -1321,7 +1321,6 @@ function renderContacts(){
     const c = contactById(a.dataset.call);
     if(!c) return;
     window.open('https://wa.me/'+waLink(c), '_blank');
-    DB.logActivity('call', c.id, null);
   }));
   tbody.querySelectorAll('[data-wa]').forEach(a => a.addEventListener('click', async (e) => {
     e.preventDefault();
@@ -1329,7 +1328,6 @@ function renderContacts(){
     const template = await DB.getWaTemplate();
     const msg = template.replace(/\{\{nome\}\}/g, c.firstName || '');
     window.open('https://wa.me/'+waLink(c)+'?text='+encodeURIComponent(msg), '_blank');
-    DB.logActivity('whatsapp', c.id, null);
   }));
 }
 
@@ -1462,11 +1460,26 @@ function bindStaticEvents(){
 
   document.getElementById('pipeline-select').addEventListener('change', (e) => { currentPipelineId = e.target.value; render(); });
 
-  document.getElementById('edit-funnel-btn').addEventListener('click', () => {
+  document.getElementById('edit-pipeline-name-btn').addEventListener('click', () => {
     const pipeline = pipelineById(currentPipelineId);
+    document.getElementById('funnel-modal-title').textContent = 'Editar nome do pipeline';
     document.getElementById('funnel-rename-input').value = pipeline.name;
-    document.getElementById('funnel-new-input').value = '';
+    document.getElementById('funnel-rename-section').style.display = 'block';
+    document.getElementById('funnel-new-section').style.display = 'none';
+    document.getElementById('funnel-rename-save-btn').style.display = 'inline-block';
+    document.getElementById('funnel-new-save-btn').style.display = 'none';
     document.getElementById('funnel-modal-bg').classList.add('show');
+    document.getElementById('funnel-rename-input').focus();
+  });
+  document.getElementById('new-pipeline-btn').addEventListener('click', () => {
+    document.getElementById('funnel-modal-title').textContent = 'Novo pipeline';
+    document.getElementById('funnel-new-input').value = '';
+    document.getElementById('funnel-rename-section').style.display = 'none';
+    document.getElementById('funnel-new-section').style.display = 'block';
+    document.getElementById('funnel-rename-save-btn').style.display = 'none';
+    document.getElementById('funnel-new-save-btn').style.display = 'inline-block';
+    document.getElementById('funnel-modal-bg').classList.add('show');
+    document.getElementById('funnel-new-input').focus();
   });
   document.getElementById('funnel-cancel-btn').addEventListener('click', () => document.getElementById('funnel-modal-bg').classList.remove('show'));
   document.getElementById('funnel-rename-save-btn').addEventListener('click', async () => {
@@ -1940,6 +1953,13 @@ async function saveLead(){
       opportunities.push({ id: uid('o'), contactId: contact.id, pipelineId, stageId, outcome, createdAt: new Date().toISOString() });
     }
     await DB.saveOpportunities(opportunities);
+    // pula direto pro pipeline/etapa escolhidos no modal, pra sempre ver onde o lead foi parar
+    currentPipelineId = pipelineId;
+    closeLeadModal();
+    render();
+    const targetCol = document.querySelector('.col[data-stage-id="'+stageId+'"]');
+    if(targetCol) targetCol.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    return;
   }
   closeLeadModal();
   render();
