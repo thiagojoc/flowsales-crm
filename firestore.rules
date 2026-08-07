@@ -74,6 +74,15 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // CRM de prospecção SJC (crm-flowsales-sjc.html, ferramenta separada do
+    // painel principal, mas no mesmo projeto Firebase). Documento único com
+    // contatos/pipelines/oportunidades. Quem entra é controlado na tela de
+    // login do próprio arquivo (e-mail/senha de Thiago e Carlos); aqui só
+    // exige estar autenticado (mesmo que anonimamente, via signInAnonymously).
+    match /crm_sjc/{docId} {
+      allow read, write: if request.auth != null;
+    }
+
     // Qualquer outra coisa fora do previsto acima: negado por padrão.
     match /{document=**} {
       allow read, write: if false;
