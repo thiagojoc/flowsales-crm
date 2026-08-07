@@ -1078,7 +1078,8 @@ document.getElementById('login-step-email').addEventListener('submit', async (e)
     await _fbInit();
   } catch(err){
     btn.disabled = false; btn.textContent = 'Continuar';
-    errEl.textContent = 'Não consegui conectar ao servidor. Verifique sua internet e tente de novo em alguns segundos.';
+    const code = (err && (err.code || err.message)) || 'desconhecido';
+    errEl.innerHTML = 'Não consegui conectar ao servidor.<br><span style="font-family:ui-monospace,monospace;font-size:11px;color:#7c7e85;">Erro: '+escapeHtml(String(code))+'</span>';
     return;
   }
   btn.disabled = false; btn.textContent = 'Continuar';
