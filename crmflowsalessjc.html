@@ -97,7 +97,7 @@
   .modal { background: #14161a; border: 1px solid rgba(217,169,77,0.2); border-radius: 14px; padding: 26px; width: 440px; max-width: 92vw; }
   .modal h3 { margin: 0 0 18px; font-size: 17px; }
   .field-row { display: flex; gap: 10px; }
-  .field-row .field { flex: 1; }
+  .field-row .field { flex: 1; min-width: 0; }
   .field { margin-bottom: 12px; }
   .field label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #9a9da6; margin-bottom: 5px; }
   .field input, .field select, .field textarea { width: 100%; background: #1c1f24; border: 1px solid rgba(217,169,77,0.18); border-radius: 7px; color: #f5f3ee; padding: 9px 11px; font-size: 13.5px; font-family: inherit; }
@@ -137,9 +137,8 @@
   .filter-group { margin-bottom: 12px; }
   .filter-group:last-of-type { margin-bottom: 0; }
   .filter-group-title { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #9a9da6; margin-bottom: 8px; }
-  .filter-group .field-row input[type=date] { padding: 6px 8px; font-size: 12px; }
-  .filter-group .field-row .field { margin-bottom: 0; }
-  .filter-group .field-row .field label { font-size: 9.5px; margin-bottom: 3px; }
+  .filter-group input[type=date] { padding: 6px 8px; font-size: 12px; }
+  .filter-group .field label { font-size: 9.5px; margin-bottom: 3px; }
   .filter-check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #f5f3ee; padding: 4px 0; cursor: pointer; }
   .filter-check input { accent-color: #d9a94d; width: 14px; height: 14px; cursor: pointer; }
   .filter-empty { font-size: 12px; color: #5c5e64; }
@@ -274,10 +273,8 @@
         </div>
         <div class="filter-group">
           <div class="filter-group-title">Data de criação</div>
-          <div class="field-row">
-            <div class="field"><label>De</label><input type="date" id="filter-date-from"></div>
-            <div class="field"><label>Até</label><input type="date" id="filter-date-to"></div>
-          </div>
+          <div class="field"><label>De</label><input type="date" id="filter-date-from"></div>
+          <div class="field" style="margin-bottom:0;"><label>Até</label><input type="date" id="filter-date-to"></div>
         </div>
         <button class="btn-secondary btn-sm" id="clear-filters-btn" style="width:100%;">Limpar filtros</button>
       </div>
@@ -308,10 +305,8 @@
         </div>
         <div class="filter-group">
           <div class="filter-group-title">Criado em</div>
-          <div class="field-row">
-            <div class="field"><label>De</label><input type="date" id="contacts-filter-date-from"></div>
-            <div class="field"><label>Até</label><input type="date" id="contacts-filter-date-to"></div>
-          </div>
+          <div class="field"><label>De</label><input type="date" id="contacts-filter-date-from"></div>
+          <div class="field" style="margin-bottom:0;"><label>Até</label><input type="date" id="contacts-filter-date-to"></div>
         </div>
         <button class="btn-secondary btn-sm" id="contacts-clear-filters-btn" style="width:100%;">Limpar filtros</button>
       </div>
@@ -1350,7 +1345,8 @@ async function confirmSchedule(){
   if(isNaN(start.getTime())){ alert('Data ou hora inválida.'); return; }
   const durMin = parseInt(document.getElementById('schedule-duration').value, 10) || 30;
   const end = new Date(start.getTime() + durMin*60000);
-  const title = 'Reunião com '+(c.firstName+' '+c.lastName).trim();
+  const meFirstName = (currentUser && currentUser.firstName) || 'FlowSales';
+  const title = 'FlowSales - '+meFirstName+' & '+(c.firstName||'').trim();
   const detailsParts = [];
   if(c.phone) detailsParts.push('Telefone: '+c.phone);
   if(c.office) detailsParts.push('Escritório: '+c.office);
@@ -1358,7 +1354,8 @@ async function confirmSchedule(){
     + '&text='+encodeURIComponent(title)
     + '&dates='+gcalDateFmt(start)+'/'+gcalDateFmt(end)
     + (detailsParts.length ? '&details='+encodeURIComponent(detailsParts.join('\n')) : '')
-    + (c.address ? '&location='+encodeURIComponent(c.address) : '');
+    + (c.address ? '&location='+encodeURIComponent(c.address) : '')
+    + (c.email ? '&add='+encodeURIComponent(c.email) : '');
   window.open(url, '_blank');
   await DB.logActivity('meeting', contactId, null);
   document.getElementById('schedule-modal-bg').classList.remove('show');
