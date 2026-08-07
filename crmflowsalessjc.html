@@ -80,7 +80,12 @@
   .outcome-ganho { background: rgba(63,174,129,0.15); color: #3fae81; }
   .outcome-perdido { background: rgba(217,97,74,0.15); color: #d9614a; }
 
-  .board { display: flex; gap: 14px; padding: 18px 20px 40px; overflow-x: auto; align-items: flex-start; }
+  .board { display: flex; gap: 14px; padding: 18px 20px 40px; overflow-x: auto; align-items: flex-start; cursor: grab; scrollbar-width: thin; scrollbar-color: rgba(217,169,77,0.3) transparent; }
+  .board.panning { cursor: grabbing; user-select: none; }
+  .board::-webkit-scrollbar { height: 8px; }
+  .board::-webkit-scrollbar-track { background: transparent; }
+  .board::-webkit-scrollbar-thumb { background: rgba(217,169,77,0.3); border-radius: 4px; }
+  .board::-webkit-scrollbar-thumb:hover { background: rgba(217,169,77,0.5); }
   .col { min-width: 260px; max-width: 260px; background: #16181c; border: 1px solid rgba(217,169,77,0.12); border-radius: 12px; flex-shrink: 0; }
   .col.dragover { border-color: #d9a94d; background: rgba(217,169,77,0.05); }
   .col-head { padding: 10px 12px; border-bottom: 1px solid rgba(217,169,77,0.10); display: flex; align-items: center; gap: 6px; }
@@ -870,6 +875,35 @@ function waLink(contact){ let number = contact.waNumber || digitsOnly(contact.ph
 function initialsOf(first, last){ return ((first||'?')[0] + (last||'')[0]).toUpperCase(); }
 
 // ---- drag (mouse + touch, via Pointer Events) e clique no card -----------
+// segurar o mouse em area vazia do quadro (fora dos cards) e arrastar rola horizontalmente
+function initBoardPan(board){
+  board.addEventListener('pointerdown', (e) => {
+    if(e.target.closest('.card, button, a, input, select, textarea')) return;
+    if(e.button !== undefined && e.button !== 0) return;
+    const startX = e.clientX;
+    const startScrollLeft = board.scrollLeft;
+    let dragging = false;
+
+    const onMove = (ev) => {
+      const dx = ev.clientX - startX;
+      if(!dragging){
+        if(Math.abs(dx) < 6) return;
+        dragging = true;
+        board.classList.add('panning');
+        try { board.setPointerCapture(e.pointerId); } catch(err){}
+      }
+      board.scrollLeft = startScrollLeft - dx;
+    };
+    const onUp = () => {
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      board.classList.remove('panning');
+    };
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp, { once: true });
+  });
+}
+
 function initCardDrag(card, opp){
   card.addEventListener('pointerdown', (e) => {
     if(e.target.closest('a,button')) return; // deixa botoes/links do card agirem normalmente
@@ -1362,6 +1396,7 @@ async function deleteStage(stageId){
 }
 
 function bindStaticEvents(){
+  initBoardPan(document.getElementById('board'));
   document.getElementById('tab-opp').addEventListener('click', () => switchTab('opp'));
   document.getElementById('tab-contacts').addEventListener('click', () => switchTab('contacts'));
   document.getElementById('tab-kpis').addEventListener('click', () => switchTab('kpis'));
