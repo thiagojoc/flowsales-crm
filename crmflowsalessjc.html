@@ -141,9 +141,9 @@
   .tag-picker-chips .tag-pill .tag-remove { cursor: pointer; margin-left: 2px; font-size: 12px; }
   .tag-picker-wrap { position: relative; }
   .tag-picker-dropdown { display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 35; background: #1c1f24; border: 1px solid rgba(217,169,77,0.22); border-radius: 8px; max-height: 170px; overflow-y: auto; box-shadow: 0 18px 40px -12px rgba(0,0,0,.6); }
-  .tag-picker-option { padding: 8px 12px; font-size: 13px; cursor: pointer; color: #f5f3ee; }
+  .tag-picker-option { padding: 8px 12px; font-size: 13px; cursor: pointer; color: #f5f3ee; text-transform: capitalize; }
   .tag-picker-option:hover { background: rgba(217,169,77,0.1); }
-  .tag-picker-create { color: #d9a94d; font-weight: 700; border-top: 1px solid rgba(217,169,77,0.14); }
+  .tag-picker-create { color: #d9a94d; font-weight: 700; border-top: 1px solid rgba(217,169,77,0.14); text-transform: none; }
 
   .import-area textarea { width: 100%; min-height: 160px; background: #1c1f24; border: 1px solid rgba(217,169,77,0.18); border-radius: 7px; color: #f5f3ee; padding: 10px; font-size: 13px; font-family: ui-monospace, monospace; }
   .hint-block { font-size: 11.5px; color: #9a9da6; margin-top: 6px; line-height: 1.5; }
@@ -365,11 +365,10 @@
 <div id="view-kpis" style="display:none;">
   <div class="toolbar">
     <select id="kpi-period">
-      <option value="today">Hoje</option>
+      <option value="today" selected>Hoje</option>
       <option value="7d">Últimos 7 dias</option>
       <option value="30d">Últimos 30 dias</option>
-      <option value="all" selected>Tudo</option>
-      <option value="custom">Data específica...</option>
+      <option value="custom">Data</option>
     </select>
     <div class="kpi-custom-range" id="kpi-custom-range">
       <input type="date" id="kpi-date-from">
@@ -382,6 +381,7 @@
   </div>
   <div class="kpi-grid">
     <div class="kpi-card"><div class="kpi-adjust"><button class="kpi-adjust-btn" data-kpi-minus="abordado" title="Remover 1">&minus;</button><div class="kpi-num" id="kpi-abordados">0</div><button class="kpi-adjust-btn" data-kpi-plus="abordado" title="Adicionar 1">+</button></div><div class="kpi-lbl">Leads abordados</div></div>
+    <div class="kpi-card"><div class="kpi-num" id="kpi-interacao">0</div><div class="kpi-lbl">Interação</div></div>
     <div class="kpi-card"><div class="kpi-adjust"><button class="kpi-adjust-btn" data-kpi-minus="call" title="Remover 1">&minus;</button><div class="kpi-num" id="kpi-calls">0</div><button class="kpi-adjust-btn" data-kpi-plus="call" title="Adicionar 1">+</button></div><div class="kpi-lbl">Ligações realizadas</div></div>
     <div class="kpi-card"><div class="kpi-adjust"><button class="kpi-adjust-btn" data-kpi-minus="whatsapp" title="Remover 1">&minus;</button><div class="kpi-num" id="kpi-wa">0</div><button class="kpi-adjust-btn" data-kpi-plus="whatsapp" title="Adicionar 1">+</button></div><div class="kpi-lbl">Mensagens no WhatsApp</div></div>
     <div class="kpi-card"><div class="kpi-adjust"><button class="kpi-adjust-btn" data-kpi-minus="meeting" title="Remover 1">&minus;</button><div class="kpi-num" id="kpi-meetings">0</div><button class="kpi-adjust-btn" data-kpi-plus="meeting" title="Adicionar 1">+</button></div><div class="kpi-lbl">Reuniões agendadas</div></div>
@@ -1016,7 +1016,7 @@ let tagFilters = new Set(), outcomeFilters = new Set();
 let dateFromFilter = '', dateToFilter = '';
 let contactsTagFilters = new Set();
 let contactsDateFrom = '', contactsDateTo = '';
-let kpiPeriod = 'all';
+let kpiPeriod = 'today';
 let kpiCustomFrom = '', kpiCustomTo = '';
 let activeTab = 'opp';
 let currentUser = null; // { baseEmail, firstName, lastName, photo, loginEmail }
@@ -1124,6 +1124,7 @@ function renderKpis(){
   const abordadosSet = new Set(activities.filter(a => inPeriod(a.createdAt) && a.contactId).map(a => a.contactId));
   const ganhas = opportunities.filter(o => o.outcome === 'ganho' && inPeriod(o.updatedAt || o.createdAt));
   document.getElementById('kpi-abordados').textContent = abordadosSet.size + abordadosManual;
+  document.getElementById('kpi-interacao').textContent = calls.length + whats.length + meets.length;
   document.getElementById('kpi-calls').textContent = calls.length;
   document.getElementById('kpi-wa').textContent = whats.length;
   document.getElementById('kpi-meetings').textContent = meets.length;
@@ -1147,7 +1148,7 @@ function renderFilterPanel(allTags){
     list.innerHTML = '<div class="filter-empty">Nenhuma tag ainda.</div>';
   } else {
     list.innerHTML = allTags.map(t =>
-      '<label class="filter-check"><input type="checkbox" class="tag-check" value="'+escapeHtml(t)+'"'+(tagFilters.has(t)?' checked':'')+'> '+escapeHtml(t)+'</label>'
+      '<label class="filter-check"><input type="checkbox" class="tag-check" value="'+escapeHtml(t)+'"'+(tagFilters.has(t)?' checked':'')+'> <span style="text-transform:capitalize;">'+escapeHtml(t)+'</span></label>'
     ).join('');
     list.querySelectorAll('.tag-check').forEach(chk => chk.addEventListener('change', () => {
       if(chk.checked) tagFilters.add(chk.value); else tagFilters.delete(chk.value);
@@ -1264,7 +1265,7 @@ function renderContactsFilterPanel(allTags){
     list.innerHTML = '<div class="filter-empty">Nenhuma tag ainda.</div>';
   } else {
     list.innerHTML = allTags.map(t =>
-      '<label class="filter-check"><input type="checkbox" class="contacts-tag-check" value="'+escapeHtml(t)+'"'+(contactsTagFilters.has(t)?' checked':'')+'> '+escapeHtml(t)+'</label>'
+      '<label class="filter-check"><input type="checkbox" class="contacts-tag-check" value="'+escapeHtml(t)+'"'+(contactsTagFilters.has(t)?' checked':'')+'> <span style="text-transform:capitalize;">'+escapeHtml(t)+'</span></label>'
     ).join('');
     list.querySelectorAll('.contacts-tag-check').forEach(chk => chk.addEventListener('change', () => {
       if(chk.checked) contactsTagFilters.add(chk.value); else contactsTagFilters.delete(chk.value);
