@@ -21,10 +21,10 @@
   .icon-btn-danger:hover { background: rgba(217,97,74,0.14); border-color: #d9614a; color: #d9614a; }
 
   .tabs { display: flex; gap: 4px; padding: 10px 20px 0; border-bottom: 1px solid rgba(217,169,77,0.10); }
-  .tab-btn { background: none; border: none; color: #9a9da6; font-size: 13.5px; font-weight: 700; padding: 10px 16px; cursor: pointer; border-bottom: 2px solid transparent; font-family: inherit; }
+  .tab-btn { background: none; border: none; color: #9a9da6; font-size: 13.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 10px 16px; cursor: pointer; border-bottom: 2px solid transparent; font-family: inherit; }
   .tab-btn.active { color: #d9a94d; border-bottom-color: #d9a94d; }
 
-  .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: rgba(217,169,77,0.14); border-bottom: 1px solid rgba(217,169,77,0.14); }
+  .stats { display: none; grid-template-columns: repeat(5, 1fr); gap: 1px; background: rgba(217,169,77,0.14); border-bottom: 1px solid rgba(217,169,77,0.14); }
   .stat-box { background: #0a0b0d; padding: 12px 18px; }
   .stat-box .num { font-size: 20px; font-weight: 700; font-family: ui-serif, Georgia, serif; }
   .stat-box .lbl { font-size: 10.5px; font-weight: 700; color: #9a9da6; text-transform: uppercase; letter-spacing: .05em; margin-top: 2px; }
@@ -33,6 +33,9 @@
   .kpi-card { background: #16181c; border: 1px solid rgba(217,169,77,0.14); border-radius: 12px; padding: 22px 18px; text-align: center; }
   .kpi-num { font-size: 32px; font-weight: 700; font-family: ui-serif, Georgia, serif; color: #d9a94d; }
   .kpi-lbl { font-size: 11.5px; color: #c3c5cb; text-transform: uppercase; letter-spacing: .05em; margin-top: 8px; font-weight: 700; }
+  .kpi-adjust { display: flex; align-items: center; justify-content: center; gap: 12px; }
+  .kpi-adjust-btn { width: 26px; height: 26px; border-radius: 50%; background: #1c1f24; border: 1px solid rgba(217,169,77,0.28); color: #d9a94d; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; padding: 0; flex-shrink: 0; }
+  .kpi-adjust-btn:hover { background: rgba(217,169,77,0.14); }
 
   /* abordagens */
   .approach-wrap { padding: 20px; max-width: 760px; }
@@ -42,6 +45,11 @@
   .approach-card { background: #16181c; border: 1px solid rgba(217,169,77,0.14); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
   .approach-card-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #d9a94d; margin-bottom: 8px; }
   .approach-text { font-size: 13.5px; color: #f5f3ee; line-height: 1.6; white-space: pre-line; margin-bottom: 10px; }
+  .approach-textarea { width: 100%; min-height: 100px; background: #1c1f24; border: 1px solid rgba(217,169,77,0.3); border-radius: 7px; color: #f5f3ee; padding: 9px 11px; font-size: 13.5px; line-height: 1.6; font-family: inherit; margin-bottom: 10px; resize: vertical; }
+  .approach-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .approach-subtabs { display: flex; gap: 4px; padding: 14px 20px 0; border-bottom: 1px solid rgba(217,169,77,0.10); }
+  .subtab-btn { background: none; border: none; color: #9a9da6; font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 8px 14px; cursor: pointer; border-bottom: 2px solid transparent; font-family: inherit; }
+  .subtab-btn.active { color: #d9a94d; border-bottom-color: #d9a94d; }
 
   .toolbar { display: flex; gap: 10px; align-items: center; padding: 14px 20px; flex-wrap: wrap; border-bottom: 1px solid rgba(217,169,77,0.10); }
   .toolbar input[type=text], .toolbar input[type=date], .toolbar select { background: #14161a; border: 1px solid rgba(217,169,77,0.18); border-radius: 8px; color: #f5f3ee; padding: 9px 12px; font-size: 13.5px; }
@@ -93,6 +101,10 @@
   .card .phone { color: #aeb0b6; font-size: 12px; margin-bottom: 6px; }
   .card .tags { margin-bottom: 4px; }
   .card .row-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .card-icon-btn { width: 28px; height: 28px; border-radius: 7px; display: inline-flex; align-items: center; justify-content: center; background: #14161a; border: 1px solid rgba(217,169,77,0.18); color: #aeb0b6; text-decoration: none; flex-shrink: 0; cursor: pointer; padding: 0; }
+  .card-icon-btn:hover { border-color: #d9a94d; color: #d9a94d; }
+  .card-icon-btn.wa { background: rgba(63,174,129,0.14); border-color: rgba(63,174,129,0.3); color: #3fae81; }
+  .card-icon-btn.wa:hover { background: rgba(63,174,129,0.22); color: #3fae81; }
 
   table.contacts-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   table.contacts-table th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: #9a9da6; padding: 10px 14px; border-bottom: 1px solid rgba(217,169,77,0.14); }
@@ -365,121 +377,216 @@
     <button class="btn-secondary btn-sm" id="manage-activities-btn">Registrar / gerenciar atividades</button>
   </div>
   <div class="kpi-grid">
-    <div class="kpi-card"><div class="kpi-num" id="kpi-abordados">0</div><div class="kpi-lbl">Leads abordados</div></div>
-    <div class="kpi-card"><div class="kpi-num" id="kpi-calls">0</div><div class="kpi-lbl">Ligações realizadas</div></div>
-    <div class="kpi-card"><div class="kpi-num" id="kpi-wa">0</div><div class="kpi-lbl">Mensagens no WhatsApp</div></div>
-    <div class="kpi-card"><div class="kpi-num" id="kpi-meetings">0</div><div class="kpi-lbl">Reuniões agendadas</div></div>
-    <div class="kpi-card"><div class="kpi-num" id="kpi-ganhas">0</div><div class="kpi-lbl">Vendas ganhas</div></div>
+    <div class="kpi-card"><div class="kpi-adjust"><button class="kpi-adjust-btn" data-kpi-minus="abordado" title="Remover 1">&minus;</button><div class="kpi-num" id="kpi-abordados">0</div><button class="kpi-adjust-btn" data-kpi-plus="abordado" title="Adicionar 1">+</button></div><div class="kpi-lbl">Leads abordados</div></div>
+    <div class="kpi-card"><div class="kpi-adjust"><button class="kpi-adjust-btn" data-kpi-minus="call" title="Remover 1">&minus;</button><div class="kpi-num" id="kpi-calls">0</div><button class="kpi-adjust-btn" data-kpi-plus="call" title="Adicionar 1">+</button></div><div class="kpi-lbl">Ligações realizadas</div></div>
+    <div class="kpi-card"><div class="kpi-adjust"><button class="kpi-adjust-btn" data-kpi-minus="whatsapp" title="Remover 1">&minus;</button><div class="kpi-num" id="kpi-wa">0</div><button class="kpi-adjust-btn" data-kpi-plus="whatsapp" title="Adicionar 1">+</button></div><div class="kpi-lbl">Mensagens no WhatsApp</div></div>
+    <div class="kpi-card"><div class="kpi-adjust"><button class="kpi-adjust-btn" data-kpi-minus="meeting" title="Remover 1">&minus;</button><div class="kpi-num" id="kpi-meetings">0</div><button class="kpi-adjust-btn" data-kpi-plus="meeting" title="Adicionar 1">+</button></div><div class="kpi-lbl">Reuniões agendadas</div></div>
+    <div class="kpi-card"><div class="kpi-adjust"><button class="kpi-adjust-btn" data-kpi-minus="ganho" title="Remover 1">&minus;</button><div class="kpi-num" id="kpi-ganhas">0</div><button class="kpi-adjust-btn" data-kpi-plus="ganho" title="Adicionar 1">+</button></div><div class="kpi-lbl">Vendas ganhas</div></div>
   </div>
 </div>
 
 <div id="view-approach" style="display:none;">
-  <div class="approach-wrap">
-    <p class="hint-block" style="font-size:12.5px;margin:0 0 20px;">Sugestões de abordagem pra prospecção de escritórios de advocacia. Ajuste o tom conforme a conversa — o objetivo é sempre soar como gente falando com gente, não como script decorado. Clique em "Copiar" pra colar direto no WhatsApp.</p>
-
+  <p class="hint-block" style="font-size:12.5px;margin:16px 20px 0;">Sugestões de abordagem pra prospecção de escritórios de advocacia. Ajuste o tom conforme a conversa: o objetivo é sempre soar como gente falando com gente, não como script decorado. Clique em "Editar" pra ajustar um texto do seu jeito, fica salvo pra próxima vez.</p>
+  <div class="approach-subtabs">
+    <button class="subtab-btn active" id="subtab-wa">WhatsApp</button>
+    <button class="subtab-btn" id="subtab-call">Ligação</button>
+  </div>
+  <div class="approach-wrap" id="approach-wa-panel">
     <div class="approach-section">
       <h3 class="serif">Mensagem inicial (primeiro contato)</h3>
       <p class="approach-hint">Pra abrir conversa com um lead novo. Troque {{nome}} pelo primeiro nome dele.</p>
-
-      <div class="approach-card">
+      <div class="approach-card" data-key="wa-inicial-direta">
         <div class="approach-card-label">Direta, focada em resultado</div>
         <div class="approach-text">Oi {{nome}}, tudo bem? Aqui é o Thiago, da FlowSales. Ajudamos escritórios de advocacia a conseguirem clientes novos todo mês com anúncios no Instagram e Google, sem depender só de indicação. Posso te mandar um resumo rapidinho de como funciona?</div>
-        <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+        <textarea class="approach-textarea" style="display:none;"></textarea>
+        <div class="approach-actions">
+          <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+          <button class="btn-secondary btn-sm edit-btn">Editar</button>
+          <button class="btn-primary btn-sm save-edit-btn" style="display:none;">Salvar</button>
+          <button class="btn-secondary btn-sm restore-default-btn" style="display:none;">Usar sugestão original</button>
+          <button class="btn-secondary btn-sm cancel-edit-btn" style="display:none;">Cancelar</button>
+        </div>
       </div>
 
-      <div class="approach-card">
+      <div class="approach-card" data-key="wa-inicial-diagnostico">
         <div class="approach-card-label">Pergunta de diagnóstico</div>
         <div class="approach-text">Oi {{nome}}, tudo bem? Sou o Thiago, da FlowSales. Posso te fazer uma pergunta rápida: hoje o escritório de vocês depende principalmente de indicação pra conseguir cliente novo, ou já usam algum tipo de anúncio pra gerar demanda? Trabalhamos com escritórios estruturando esse processo e queria entender se faz sentido pra vocês.</div>
-        <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+        <textarea class="approach-textarea" style="display:none;"></textarea>
+        <div class="approach-actions">
+          <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+          <button class="btn-secondary btn-sm edit-btn">Editar</button>
+          <button class="btn-primary btn-sm save-edit-btn" style="display:none;">Salvar</button>
+          <button class="btn-secondary btn-sm restore-default-btn" style="display:none;">Usar sugestão original</button>
+          <button class="btn-secondary btn-sm cancel-edit-btn" style="display:none;">Cancelar</button>
+        </div>
       </div>
 
-      <div class="approach-card">
+      <div class="approach-card" data-key="wa-inicial-social">
         <div class="approach-card-label">Prova social</div>
         <div class="approach-text">Oi {{nome}}! Aqui é o Thiago, da FlowSales. Ajudamos escritórios de advocacia aqui em SJC e região a gerarem leads qualificados todo mês com anúncios pagos, sem depender só de indicação. Você tem 5 minutinhos essa semana pra eu te mostrar como funciona?</div>
-        <button class="btn-secondary btn-sm copy-btn">Copiar</button>
-      </div>
-    </div>
-
-    <div class="approach-section">
-      <h3 class="serif">Roteiro de ligação</h3>
-      <p class="approach-hint">Guia pra call, não texto decorado. Adapte pelo tom da conversa.</p>
-
-      <div class="approach-card">
-        <div class="approach-card-label">Abertura (primeiros 15 segundos)</div>
-        <div class="approach-text">Oi, {{nome}}, tudo bem? Aqui é o Thiago, da FlowSales. Te liguei rapidinho porque a gente ajuda escritórios de advocacia a conseguirem mais clientes com anúncios pagos — você tem 2 minutinhos agora?</div>
-        <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+        <textarea class="approach-textarea" style="display:none;"></textarea>
+        <div class="approach-actions">
+          <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+          <button class="btn-secondary btn-sm edit-btn">Editar</button>
+          <button class="btn-primary btn-sm save-edit-btn" style="display:none;">Salvar</button>
+          <button class="btn-secondary btn-sm restore-default-btn" style="display:none;">Usar sugestão original</button>
+          <button class="btn-secondary btn-sm cancel-edit-btn" style="display:none;">Cancelar</button>
+        </div>
       </div>
 
-      <div class="approach-card">
-        <div class="approach-card-label">Perguntas de descoberta</div>
-        <div class="approach-text">- Hoje como o escritório consegue a maioria dos clientes novos: indicação, anúncio ou boca a boca?
-- Em média, quantos clientes novos entram por mês?
-- Já tentaram anúncio antes? Como foi a experiência?
-- Qual a área de atuação principal do escritório (trabalhista, cível, família...)?
-- Quem costuma decidir sobre investir em marketing aí no escritório?</div>
-        <button class="btn-secondary btn-sm copy-btn">Copiar</button>
-      </div>
-
-      <div class="approach-card">
-        <div class="approach-card-label">Conectando a dor com a solução</div>
-        <div class="approach-text">Entendi. O que a gente faz na FlowSales é estruturar esse processo: colocamos o escritório rodando anúncios pra pessoas que já estão buscando um advogado da área de vocês, e organizamos isso num funil pra não perder nenhum lead — boa parte dos escritórios perde cliente simplesmente porque demora pra responder ou não tem um processo de acompanhamento.</div>
-        <button class="btn-secondary btn-sm copy-btn">Copiar</button>
-      </div>
-
-      <div class="approach-card">
-        <div class="approach-card-label">Fechamento (marcar próximo passo)</div>
-        <div class="approach-text">Faz sentido eu te mostrar como isso funcionaria pro escritório de vocês? Consigo separar uns 20 minutinhos essa semana — terça ou quinta, o que funciona melhor pra você?</div>
-        <button class="btn-secondary btn-sm copy-btn">Copiar</button>
-      </div>
-
-      <div class="approach-card">
-        <div class="approach-card-label">Principais objeções e como responder</div>
-        <div class="approach-text">"Já tentei anúncio e não funcionou" → Entendo, isso é bem comum quando o anúncio não vem junto com um processo de atendimento. Posso te mostrar como estruturamos isso pra não acontecer de novo.
-
-"Não tenho orçamento agora" → Sem problema, dá pra eu te mostrar os números com calma pra você decidir quando fizer sentido — a conversa não tem compromisso nenhum.
-
-"Prefiro só indicação" → Faz todo sentido, indicação é ótimo. A ideia não é substituir, é ter uma segunda fonte previsível de clientes além da indicação.</div>
-        <button class="btn-secondary btn-sm copy-btn">Copiar</button>
-      </div>
     </div>
 
     <div class="approach-section">
       <h3 class="serif">Follow-up de leads que não respondem</h3>
-      <p class="approach-hint">Sequência pra quem viu a mensagem e não respondeu, ou não atendeu a ligação.</p>
-
-      <div class="approach-card">
+      <p class="approach-hint">Sequência pra quem viu a mensagem e não respondeu.</p>
+      <div class="approach-card" data-key="wa-followup-d1">
         <div class="approach-card-label">1 dia depois</div>
-        <div class="approach-text">Oi {{nome}}, passando aqui de novo — sei que a rotina de advogado é corrida! Fica à vontade pra me chamar quando puder, é rapidinho.</div>
-        <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+        <div class="approach-text">Oi {{nome}}, passando aqui de novo. Sei que a rotina de advogado é corrida! Fica à vontade pra me chamar quando puder, é rapidinho.</div>
+        <textarea class="approach-textarea" style="display:none;"></textarea>
+        <div class="approach-actions">
+          <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+          <button class="btn-secondary btn-sm edit-btn">Editar</button>
+          <button class="btn-primary btn-sm save-edit-btn" style="display:none;">Salvar</button>
+          <button class="btn-secondary btn-sm restore-default-btn" style="display:none;">Usar sugestão original</button>
+          <button class="btn-secondary btn-sm cancel-edit-btn" style="display:none;">Cancelar</button>
+        </div>
       </div>
 
-      <div class="approach-card">
+      <div class="approach-card" data-key="wa-followup-d3">
         <div class="approach-card-label">3 dias depois</div>
-        <div class="approach-text">Oi {{nome}}, tudo bem? Separei um resultado de um escritório parecido com o de vocês que aumentou os clientes novos com a gente — quer que eu te mande rapidinho?</div>
-        <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+        <div class="approach-text">Oi {{nome}}, tudo bem? Separei um resultado de um escritório parecido com o de vocês que aumentou os clientes novos com a gente. Quer que eu te mande rapidinho?</div>
+        <textarea class="approach-textarea" style="display:none;"></textarea>
+        <div class="approach-actions">
+          <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+          <button class="btn-secondary btn-sm edit-btn">Editar</button>
+          <button class="btn-primary btn-sm save-edit-btn" style="display:none;">Salvar</button>
+          <button class="btn-secondary btn-sm restore-default-btn" style="display:none;">Usar sugestão original</button>
+          <button class="btn-secondary btn-sm cancel-edit-btn" style="display:none;">Cancelar</button>
+        </div>
       </div>
 
-      <div class="approach-card">
+      <div class="approach-card" data-key="wa-followup-d7">
         <div class="approach-card-label">7 dias depois (última tentativa)</div>
         <div class="approach-text">Oi {{nome}}, imagino que não seja prioridade agora, sem problema! Vou parar de te incomodar por aqui. Se um dia fizer sentido conversar sobre atrair mais clientes pro escritório, é só me chamar. Sucesso aí! 🙌</div>
-        <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+        <textarea class="approach-textarea" style="display:none;"></textarea>
+        <div class="approach-actions">
+          <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+          <button class="btn-secondary btn-sm edit-btn">Editar</button>
+          <button class="btn-primary btn-sm save-edit-btn" style="display:none;">Salvar</button>
+          <button class="btn-secondary btn-sm restore-default-btn" style="display:none;">Usar sugestão original</button>
+          <button class="btn-secondary btn-sm cancel-edit-btn" style="display:none;">Cancelar</button>
+        </div>
       </div>
+
     </div>
 
     <div class="approach-section">
       <h3 class="serif">Reunião marcada e pós-reunião</h3>
-
-      <div class="approach-card">
+      <div class="approach-card" data-key="wa-confirmacao">
         <div class="approach-card-label">Confirmação de reunião</div>
-        <div class="approach-text">Perfeito, {{nome}}! Ficou marcado então. Vou te mandar o convite do Google Agenda agora — qualquer imprevisto, só me avisar por aqui. Até lá!</div>
-        <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+        <div class="approach-text">Perfeito, {{nome}}! Ficou marcado então. Vou te mandar o convite do Google Agenda agora. Qualquer imprevisto, só me avisar por aqui. Até lá!</div>
+        <textarea class="approach-textarea" style="display:none;"></textarea>
+        <div class="approach-actions">
+          <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+          <button class="btn-secondary btn-sm edit-btn">Editar</button>
+          <button class="btn-primary btn-sm save-edit-btn" style="display:none;">Salvar</button>
+          <button class="btn-secondary btn-sm restore-default-btn" style="display:none;">Usar sugestão original</button>
+          <button class="btn-secondary btn-sm cancel-edit-btn" style="display:none;">Cancelar</button>
+        </div>
       </div>
 
-      <div class="approach-card">
+      <div class="approach-card" data-key="wa-posreuniao">
         <div class="approach-card-label">Sumiu depois da reunião</div>
         <div class="approach-text">Oi {{nome}}, tudo bem? Ficou alguma dúvida da nossa conversa que eu possa esclarecer? Fico à disposição pra fechar os próximos passos quando fizer sentido pra você.</div>
-        <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+        <textarea class="approach-textarea" style="display:none;"></textarea>
+        <div class="approach-actions">
+          <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+          <button class="btn-secondary btn-sm edit-btn">Editar</button>
+          <button class="btn-primary btn-sm save-edit-btn" style="display:none;">Salvar</button>
+          <button class="btn-secondary btn-sm restore-default-btn" style="display:none;">Usar sugestão original</button>
+          <button class="btn-secondary btn-sm cancel-edit-btn" style="display:none;">Cancelar</button>
+        </div>
       </div>
+
+    </div>
+  </div>
+  <div class="approach-wrap" id="approach-call-panel" style="display:none;">
+    <div class="approach-section">
+      <h3 class="serif">Roteiro de ligação</h3>
+      <p class="approach-hint">Guia pra call, não texto decorado. Adapte pelo tom da conversa.</p>
+      <div class="approach-card" data-key="call-abertura">
+        <div class="approach-card-label">Abertura (primeiros 15 segundos)</div>
+        <div class="approach-text">Oi, {{nome}}, tudo bem? Aqui é o Thiago, da FlowSales. Te liguei rapidinho porque a gente ajuda escritórios de advocacia a conseguirem mais clientes com anúncios pagos. Você tem 2 minutinhos agora?</div>
+        <textarea class="approach-textarea" style="display:none;"></textarea>
+        <div class="approach-actions">
+          <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+          <button class="btn-secondary btn-sm edit-btn">Editar</button>
+          <button class="btn-primary btn-sm save-edit-btn" style="display:none;">Salvar</button>
+          <button class="btn-secondary btn-sm restore-default-btn" style="display:none;">Usar sugestão original</button>
+          <button class="btn-secondary btn-sm cancel-edit-btn" style="display:none;">Cancelar</button>
+        </div>
+      </div>
+
+      <div class="approach-card" data-key="call-perguntas">
+        <div class="approach-card-label">Perguntas de descoberta</div>
+        <div class="approach-text">Hoje como o escritório consegue a maioria dos clientes novos: indicação, anúncio ou boca a boca?
+Em média, quantos clientes novos entram por mês?
+Já tentaram anúncio antes? Como foi a experiência?
+Qual a área de atuação principal do escritório (trabalhista, cível, família...)?
+Quem costuma decidir sobre investir em marketing aí no escritório?</div>
+        <textarea class="approach-textarea" style="display:none;"></textarea>
+        <div class="approach-actions">
+          <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+          <button class="btn-secondary btn-sm edit-btn">Editar</button>
+          <button class="btn-primary btn-sm save-edit-btn" style="display:none;">Salvar</button>
+          <button class="btn-secondary btn-sm restore-default-btn" style="display:none;">Usar sugestão original</button>
+          <button class="btn-secondary btn-sm cancel-edit-btn" style="display:none;">Cancelar</button>
+        </div>
+      </div>
+
+      <div class="approach-card" data-key="call-pitch">
+        <div class="approach-card-label">Conectando a dor com a solução</div>
+        <div class="approach-text">Entendi. O que a gente faz na FlowSales é estruturar esse processo: colocamos o escritório rodando anúncios pra pessoas que já estão buscando um advogado da área de vocês, e organizamos isso num funil pra não perder nenhum lead. Boa parte dos escritórios perde cliente simplesmente porque demora pra responder ou não tem um processo de acompanhamento.</div>
+        <textarea class="approach-textarea" style="display:none;"></textarea>
+        <div class="approach-actions">
+          <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+          <button class="btn-secondary btn-sm edit-btn">Editar</button>
+          <button class="btn-primary btn-sm save-edit-btn" style="display:none;">Salvar</button>
+          <button class="btn-secondary btn-sm restore-default-btn" style="display:none;">Usar sugestão original</button>
+          <button class="btn-secondary btn-sm cancel-edit-btn" style="display:none;">Cancelar</button>
+        </div>
+      </div>
+
+      <div class="approach-card" data-key="call-fechamento">
+        <div class="approach-card-label">Fechamento (marcar próximo passo)</div>
+        <div class="approach-text">Faz sentido eu te mostrar como isso funcionaria pro escritório de vocês? Consigo separar uns 20 minutinhos essa semana, terça ou quinta, o que funciona melhor pra você?</div>
+        <textarea class="approach-textarea" style="display:none;"></textarea>
+        <div class="approach-actions">
+          <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+          <button class="btn-secondary btn-sm edit-btn">Editar</button>
+          <button class="btn-primary btn-sm save-edit-btn" style="display:none;">Salvar</button>
+          <button class="btn-secondary btn-sm restore-default-btn" style="display:none;">Usar sugestão original</button>
+          <button class="btn-secondary btn-sm cancel-edit-btn" style="display:none;">Cancelar</button>
+        </div>
+      </div>
+
+      <div class="approach-card" data-key="call-objecoes">
+        <div class="approach-card-label">Principais objeções e como responder</div>
+        <div class="approach-text">"Já tentei anúncio e não funcionou": Entendo, isso é bem comum quando o anúncio não vem junto com um processo de atendimento. Posso te mostrar como estruturamos isso pra não acontecer de novo.
+
+"Não tenho orçamento agora": Sem problema, dá pra eu te mostrar os números com calma pra você decidir quando fizer sentido, sem compromisso nenhum.
+
+"Prefiro só indicação": Faz todo sentido, indicação é ótimo. A ideia não é substituir, é ter uma segunda fonte previsível de clientes além da indicação.</div>
+        <textarea class="approach-textarea" style="display:none;"></textarea>
+        <div class="approach-actions">
+          <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+          <button class="btn-secondary btn-sm edit-btn">Editar</button>
+          <button class="btn-primary btn-sm save-edit-btn" style="display:none;">Salvar</button>
+          <button class="btn-secondary btn-sm restore-default-btn" style="display:none;">Usar sugestão original</button>
+          <button class="btn-secondary btn-sm cancel-edit-btn" style="display:none;">Cancelar</button>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -558,6 +665,8 @@
           <option value="call">Ligação</option>
           <option value="whatsapp">WhatsApp</option>
           <option value="meeting">Reunião agendada</option>
+          <option value="abordado">Lead abordado</option>
+          <option value="ganho">Venda ganha</option>
         </select>
       </div>
       <div class="field"><label>Quantidade</label><input type="number" id="act-new-qty" min="1" value="1"></div>
@@ -695,6 +804,12 @@ const CRM_USERS = [
 const SESSION_KEY = 'crm_sjc_session';
 const EYE_ICON = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
 const EYE_OFF_ICON = '<path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.77 21.77 0 0 1 5.06-6.06M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.77 21.77 0 0 1-3.22 4.53"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+
+// icones das acoes rapidas do card (ligar, whatsapp, instagram, agendar)
+const PHONE_ICON_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>';
+const CALENDAR_ICON_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
+const WHATSAPP_ICON_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>';
+const INSTAGRAM_ICON_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>';
 function togglePassVisibility(inputId, btn){
   const input = document.getElementById(inputId);
   if(!input) return;
@@ -879,7 +994,14 @@ const DB = {
     _fbData.activities.push({ id: uid('act'), type, contactId, oppId: oppId||null, createdAt: new Date().toISOString(), by: currentUser ? currentUser.baseEmail : '' });
     await setDoc(CRM_DOC, { activities: _fbData.activities }, { merge: true });
   },
-  async saveActivities(list){ await _fbInit(); _fbData.activities = list; await setDoc(CRM_DOC, { activities: list }, { merge: true }); }
+  async saveActivities(list){ await _fbInit(); _fbData.activities = list; await setDoc(CRM_DOC, { activities: list }, { merge: true }); },
+  async getApproachTexts(){ await _fbInit(); return _fbData.approachTexts || {}; },
+  async saveApproachText(key, text){
+    await _fbInit();
+    _fbData.approachTexts = _fbData.approachTexts || {};
+    _fbData.approachTexts[key] = text;
+    await setDoc(CRM_DOC, { approachTexts: _fbData.approachTexts }, { merge: true });
+  }
 };
 
 let contacts = [], pipelines = [], opportunities = [], activities = [];
@@ -906,6 +1028,7 @@ async function boot(){
   activities = await DB.getActivities();
   currentPipelineId = pipelines[0].id;
   bindStaticEvents();
+  applyApproachOverrides();
   render();
   DB.onUpdate(() => {
     contacts = _fbData.contacts || [];
@@ -913,7 +1036,26 @@ async function boot(){
     opportunities = _fbData.opportunities || [];
     activities = _fbData.activities || [];
     if(!pipelineById(currentPipelineId)) currentPipelineId = pipelines[0].id;
+    applyApproachOverrides();
     render();
+  });
+}
+
+// ---- abordagens: textos editaveis, com padrao vindo do HTML e ajustes no Firestore --
+function captureApproachDefaults(){
+  document.querySelectorAll('.approach-card[data-key]').forEach(card => {
+    card.dataset.default = card.querySelector('.approach-text').textContent;
+  });
+}
+captureApproachDefaults();
+
+function applyApproachOverrides(){
+  const overrides = (_fbData && _fbData.approachTexts) || {};
+  document.querySelectorAll('.approach-card[data-key]').forEach(card => {
+    if(card.classList.contains('editing')) return; // nao pisa em cima de uma edicao em andamento
+    const key = card.dataset.key;
+    const textEl = card.querySelector('.approach-text');
+    textEl.textContent = overrides[key] || card.dataset.default;
   });
 }
 
@@ -927,7 +1069,7 @@ function switchTab(tab){
   document.getElementById('view-contacts').style.display = tab==='contacts' ? 'block' : 'none';
   document.getElementById('view-kpis').style.display = tab==='kpis' ? 'block' : 'none';
   document.getElementById('view-approach').style.display = tab==='approach' ? 'block' : 'none';
-  document.getElementById('stats-row').style.display = tab==='opp' ? 'grid' : 'none';
+  document.getElementById('stats-row').style.display = tab==='kpis' ? 'grid' : 'none';
   render();
 }
 
@@ -958,25 +1100,40 @@ function kpiPeriodRange(){
   return { start: null, end: null };
 }
 
-function renderKpis(){
+function kpiInPeriod(iso){
   const { start, end } = kpiPeriodRange();
-  const inPeriod = iso => {
-    if(!iso) return false;
-    const d = new Date(iso);
-    if(start && d < start) return false;
-    if(end && d > end) return false;
-    return true;
-  };
+  if(!iso) return false;
+  const d = new Date(iso);
+  if(start && d < start) return false;
+  if(end && d > end) return false;
+  return true;
+}
+
+function renderKpis(){
+  const inPeriod = kpiInPeriod;
   const calls = activities.filter(a => a.type === 'call' && inPeriod(a.createdAt));
   const whats = activities.filter(a => a.type === 'whatsapp' && inPeriod(a.createdAt));
   const meets = activities.filter(a => a.type === 'meeting' && inPeriod(a.createdAt));
+  const abordadosManual = activities.filter(a => a.type === 'abordado' && inPeriod(a.createdAt)).length;
+  const ganhosManual = activities.filter(a => a.type === 'ganho' && inPeriod(a.createdAt)).length;
   const abordadosSet = new Set(activities.filter(a => inPeriod(a.createdAt) && a.contactId).map(a => a.contactId));
   const ganhas = opportunities.filter(o => o.outcome === 'ganho' && inPeriod(o.updatedAt || o.createdAt));
-  document.getElementById('kpi-abordados').textContent = abordadosSet.size;
+  document.getElementById('kpi-abordados').textContent = abordadosSet.size + abordadosManual;
   document.getElementById('kpi-calls').textContent = calls.length;
   document.getElementById('kpi-wa').textContent = whats.length;
   document.getElementById('kpi-meetings').textContent = meets.length;
-  document.getElementById('kpi-ganhas').textContent = ganhas.length;
+  document.getElementById('kpi-ganhas').textContent = ganhas.length + ganhosManual;
+
+  // resumo geral do funil (todas as pipelines, sem filtro de periodo)
+  const totalOpps = opportunities.length;
+  const abertasOpps = opportunities.filter(o => o.outcome==='aberto').length;
+  const ganhasOpps = opportunities.filter(o => o.outcome==='ganho').length;
+  const perdidasOpps = opportunities.filter(o => o.outcome==='perdido').length;
+  document.getElementById('stat-total').textContent = totalOpps;
+  document.getElementById('stat-abertas').textContent = abertasOpps;
+  document.getElementById('stat-ganhas').textContent = ganhasOpps;
+  document.getElementById('stat-perdidas').textContent = perdidasOpps;
+  document.getElementById('stat-conversao').textContent = totalOpps ? Math.round((ganhasOpps/totalOpps)*100)+'%' : '0%';
 }
 
 function renderFilterPanel(allTags){
@@ -1068,11 +1225,10 @@ function renderOpp(){
         '<span class="outcome-pill outcome-'+opp.outcome+'">'+opp.outcome+'</span>' +
         '<div class="tags">'+(c.tags||[]).map(t => '<span class="tag-pill '+tagClass(t)+'">'+escapeHtml(t)+'</span>').join('')+'</div>' +
         '<div class="row-actions">' +
-          '<button class="btn-secondary btn-sm edit-opp" data-id="'+opp.id+'">Editar</button>' +
-          (wa ? '<a class="btn-secondary btn-sm" style="text-decoration:none;" data-call="'+c.id+'" href="#">Ligar</a>' : '') +
-          (wa ? '<a class="btn-wa btn-sm" style="text-decoration:none;" data-wa="'+c.id+'" href="#">WhatsApp</a>' : '') +
-          (c.instagram ? '<a class="btn-secondary btn-sm" style="text-decoration:none;" target="_blank" href="https://instagram.com/'+encodeURIComponent(c.instagram)+'">Instagram</a>' : '') +
-          '<button class="btn-secondary btn-sm schedule-btn" data-id="'+c.id+'">Agendar</button>' +
+          (wa ? '<a class="card-icon-btn" title="Ligar" data-call="'+c.id+'" href="#">'+PHONE_ICON_SVG+'</a>' : '') +
+          (wa ? '<a class="card-icon-btn wa" title="WhatsApp" data-wa="'+c.id+'" href="#">'+WHATSAPP_ICON_SVG+'</a>' : '') +
+          (c.instagram ? '<a class="card-icon-btn" title="Instagram" target="_blank" href="https://instagram.com/'+encodeURIComponent(c.instagram)+'">'+INSTAGRAM_ICON_SVG+'</a>' : '') +
+          '<button class="card-icon-btn schedule-btn" title="Agendar" data-id="'+c.id+'">'+CALENDAR_ICON_SVG+'</button>' +
         '</div>';
       initCardDrag(card, opp);
       body.appendChild(card);
@@ -1082,7 +1238,6 @@ function renderOpp(){
     board.appendChild(col);
   });
 
-  board.querySelectorAll('.edit-opp').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); openLeadModal(btn.dataset.id); }));
   board.querySelectorAll('.col-del').forEach(btn => btn.addEventListener('click', () => deleteStage(btn.dataset.id)));
   board.querySelectorAll('.col-title').forEach(inp => inp.addEventListener('change', () => renameStage(inp.dataset.id, inp.value)));
   board.querySelectorAll('.schedule-btn').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); openScheduleModal(btn.dataset.id); }));
@@ -1101,16 +1256,6 @@ function renderOpp(){
     window.open('https://wa.me/'+waLink(c)+'?text='+encodeURIComponent(msg), '_blank');
     DB.logActivity('whatsapp', c.id, null);
   }));
-
-  const total = oppsInPipeline.length;
-  const abertas = oppsInPipeline.filter(o => o.outcome==='aberto').length;
-  const ganhas = oppsInPipeline.filter(o => o.outcome==='ganho').length;
-  const perdidas = oppsInPipeline.filter(o => o.outcome==='perdido').length;
-  document.getElementById('stat-total').textContent = total;
-  document.getElementById('stat-abertas').textContent = abertas;
-  document.getElementById('stat-ganhas').textContent = ganhas;
-  document.getElementById('stat-perdidas').textContent = perdidas;
-  document.getElementById('stat-conversao').textContent = total ? Math.round((ganhas/total)*100)+'%' : '0%';
 }
 
 function renderContactsFilterPanel(allTags){
@@ -1157,10 +1302,9 @@ function renderContacts(){
       '<td>'+(c.tags||[]).map(t => '<span class="tag-pill '+tagClass(t)+'">'+escapeHtml(t)+'</span>').join('')+'</td>' +
       '<td>'+formatDate(c.createdAt)+'</td>' +
       '<td><div class="row-actions">' +
-        '<button class="btn-secondary btn-sm edit-contact" data-id="'+c.id+'">Editar</button>' +
-        (wa ? '<a class="btn-secondary btn-sm" style="text-decoration:none;" data-call="'+c.id+'" href="#">Ligar</a>' : '') +
-        (wa ? '<a class="btn-wa btn-sm" style="text-decoration:none;" data-wa="'+c.id+'" href="#">WhatsApp</a>' : '') +
-        '<button class="btn-secondary btn-sm schedule-btn" data-id="'+c.id+'">Agendar</button>' +
+        (wa ? '<a class="card-icon-btn" title="Ligar" data-call="'+c.id+'" href="#">'+PHONE_ICON_SVG+'</a>' : '') +
+        (wa ? '<a class="card-icon-btn wa" title="WhatsApp" data-wa="'+c.id+'" href="#">'+WHATSAPP_ICON_SVG+'</a>' : '') +
+        '<button class="card-icon-btn schedule-btn" title="Agendar" data-id="'+c.id+'">'+CALENDAR_ICON_SVG+'</button>' +
       '</div></td>' +
     '</tr>';
   }).join('');
@@ -1168,7 +1312,6 @@ function renderContacts(){
     if(e.target.closest('a,button')) return;
     openLeadModal(null, tr.dataset.id);
   }));
-  tbody.querySelectorAll('.edit-contact').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); openLeadModal(null, btn.dataset.id); }));
   tbody.querySelectorAll('.schedule-btn').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); openScheduleModal(btn.dataset.id); }));
   tbody.querySelectorAll('[data-call]').forEach(a => a.addEventListener('click', (e) => {
     e.preventDefault();
@@ -1224,16 +1367,77 @@ function bindStaticEvents(){
   document.getElementById('tab-contacts').addEventListener('click', () => switchTab('contacts'));
   document.getElementById('tab-kpis').addEventListener('click', () => switchTab('kpis'));
   document.getElementById('tab-approach').addEventListener('click', () => switchTab('approach'));
-  document.querySelectorAll('.copy-btn').forEach(btn => btn.addEventListener('click', () => {
-    const text = btn.previousElementSibling.textContent;
-    const original = btn.textContent;
-    const flash = (label) => { btn.textContent = label; setTimeout(() => { btn.textContent = original; }, 1500); };
-    if(navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(text).then(() => flash('Copiado!')).catch(() => flash('Selecione e copie manualmente'));
-    } else {
-      flash('Selecione e copie manualmente');
-    }
-  }));
+
+  document.getElementById('subtab-wa').addEventListener('click', () => {
+    document.getElementById('subtab-wa').classList.add('active');
+    document.getElementById('subtab-call').classList.remove('active');
+    document.getElementById('approach-wa-panel').style.display = 'block';
+    document.getElementById('approach-call-panel').style.display = 'none';
+  });
+  document.getElementById('subtab-call').addEventListener('click', () => {
+    document.getElementById('subtab-call').classList.add('active');
+    document.getElementById('subtab-wa').classList.remove('active');
+    document.getElementById('approach-call-panel').style.display = 'block';
+    document.getElementById('approach-wa-panel').style.display = 'none';
+  });
+
+  document.querySelectorAll('.approach-card[data-key]').forEach(card => {
+    const textEl = card.querySelector('.approach-text');
+    const textarea = card.querySelector('.approach-textarea');
+    const copyBtn = card.querySelector('.copy-btn');
+    const editBtn = card.querySelector('.edit-btn');
+    const saveBtn = card.querySelector('.save-edit-btn');
+    const restoreBtn = card.querySelector('.restore-default-btn');
+    const cancelBtn = card.querySelector('.cancel-edit-btn');
+
+    const flash = (btn, label) => { const original = btn.textContent; btn.textContent = label; setTimeout(() => { btn.textContent = original; }, 1500); };
+
+    copyBtn.addEventListener('click', () => {
+      const text = textEl.textContent;
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(() => flash(copyBtn, 'Copiado!')).catch(() => flash(copyBtn, 'Selecione e copie manualmente'));
+      } else {
+        flash(copyBtn, 'Selecione e copie manualmente');
+      }
+    });
+
+    const enterEdit = () => {
+      card.classList.add('editing');
+      textarea.value = textEl.textContent;
+      textEl.style.display = 'none';
+      textarea.style.display = 'block';
+      editBtn.style.display = 'none';
+      copyBtn.style.display = 'none';
+      saveBtn.style.display = 'inline-block';
+      restoreBtn.style.display = 'inline-block';
+      cancelBtn.style.display = 'inline-block';
+      textarea.focus();
+    };
+    const exitEdit = () => {
+      card.classList.remove('editing');
+      textarea.style.display = 'none';
+      textEl.style.display = 'block';
+      editBtn.style.display = 'inline-block';
+      copyBtn.style.display = 'inline-block';
+      saveBtn.style.display = 'none';
+      restoreBtn.style.display = 'none';
+      cancelBtn.style.display = 'none';
+    };
+
+    editBtn.addEventListener('click', enterEdit);
+    cancelBtn.addEventListener('click', exitEdit);
+    restoreBtn.addEventListener('click', () => { textarea.value = card.dataset.default; });
+    saveBtn.addEventListener('click', async () => {
+      const val = textarea.value.trim();
+      if(!val) return;
+      textEl.textContent = val;
+      exitEdit();
+      await DB.saveApproachText(card.dataset.key, val);
+    });
+  });
+
+  document.querySelectorAll('[data-kpi-plus]').forEach(btn => btn.addEventListener('click', () => kpiAdjustPlus(btn.dataset.kpiPlus)));
+  document.querySelectorAll('[data-kpi-minus]').forEach(btn => btn.addEventListener('click', () => kpiAdjustMinus(btn.dataset.kpiMinus)));
   document.getElementById('kpi-period').addEventListener('change', (e) => {
     kpiPeriod = e.target.value;
     document.getElementById('kpi-custom-range').classList.toggle('show', kpiPeriod === 'custom');
@@ -1604,7 +1808,7 @@ async function confirmSchedule(){
 }
 
 // ---- atividades: registro manual + gerenciamento (pra corrigir cliques de teste) --
-const ACT_TYPE_LABEL = { call: 'Ligação', whatsapp: 'WhatsApp', meeting: 'Reunião agendada' };
+const ACT_TYPE_LABEL = { call: 'Ligação', whatsapp: 'WhatsApp', meeting: 'Reunião agendada', abordado: 'Lead abordado', ganho: 'Venda ganha' };
 
 function openActivitiesModal(){
   const contactSel = document.getElementById('act-new-contact');
@@ -1675,6 +1879,22 @@ async function clearAllActivities(){
   activities = [];
   await DB.saveActivities(activities);
   renderActivitiesList();
+  render();
+}
+
+async function kpiAdjustPlus(type){
+  activities.push({ id: uid('act'), type, contactId: null, oppId: null, createdAt: new Date().toISOString(), by: currentUser ? currentUser.baseEmail : '', manual: true });
+  await DB.saveActivities(activities);
+  render();
+}
+
+async function kpiAdjustMinus(type){
+  const candidates = activities.filter(a => a.type === type && kpiInPeriod(a.createdAt));
+  if(!candidates.length) return;
+  candidates.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const manual = candidates.find(a => a.manual) || candidates[0];
+  activities = activities.filter(a => a.id !== manual.id);
+  await DB.saveActivities(activities);
   render();
 }
 
