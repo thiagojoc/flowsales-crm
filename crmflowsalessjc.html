@@ -89,8 +89,8 @@
   table.contacts-table tr:hover td { background: rgba(217,169,77,0.03); }
   .contacts-wrap { padding: 6px 20px 40px; overflow-x: auto; }
 
-  .empty-state { text-align: center; padding: 60px 20px; color: #7c7e85; }
-  .empty-state h2 { color: #f5f3ee; font-size: 19px; margin-bottom: 8px; }
+  .empty-state { text-align: center; padding: 16px 20px; color: #9a9da6; font-size: 13px; }
+  .empty-state h2 { color: #f5f3ee; font-size: 15px; margin-bottom: 4px; }
 
   .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 60; overflow-y: auto; padding: 30px 0; }
   .modal-bg.show { display: flex; }
@@ -142,6 +142,11 @@
   .filter-check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #f5f3ee; padding: 4px 0; cursor: pointer; }
   .filter-check input { accent-color: #d9a94d; width: 14px; height: 14px; cursor: pointer; }
   .filter-empty { font-size: 12px; color: #5c5e64; }
+
+  /* menu suspenso (Mais acoes) */
+  .menu-panel { width: 200px; padding: 6px; }
+  .menu-item { display: block; width: 100%; text-align: left; background: none; border: none; color: #f5f3ee; font-size: 13px; font-weight: 600; padding: 9px 10px; border-radius: 6px; cursor: pointer; font-family: inherit; }
+  .menu-item:hover { background: rgba(217,169,77,0.1); color: #d9a94d; }
 
   /* avatar */
   .avatar-circle { border-radius: 50%; background: #1c1f24; border: 1px solid rgba(217,169,77,0.28); display: flex; align-items: center; justify-content: center; font-weight: 700; color: #d9a94d; overflow: hidden; flex-shrink: 0; }
@@ -280,10 +285,15 @@
       </div>
     </div>
     <div class="spacer"></div>
-    <button class="btn-secondary" id="wa-template-btn">Mensagem padrão</button>
-    <button class="btn-secondary" id="export-btn">Exportar CSV</button>
-    <button class="btn-secondary" id="import-btn">Importar leads</button>
-    <button class="btn-secondary" id="new-col-btn">Nova etapa</button>
+    <div class="filter-wrap">
+      <button class="btn-outline btn-sm" id="more-actions-btn">Mais ações</button>
+      <div class="filter-panel menu-panel" id="more-actions-panel">
+        <button class="menu-item" id="wa-template-btn">Mensagem padrão</button>
+        <button class="menu-item" id="export-btn">Exportar CSV</button>
+        <button class="menu-item" id="import-btn">Importar leads</button>
+        <button class="menu-item" id="new-col-btn">Nova etapa</button>
+      </div>
+    </div>
     <button class="btn-primary" id="new-lead-btn">Novo lead</button>
   </div>
   <div id="empty-state" class="empty-state" style="display:none;">
@@ -833,8 +843,11 @@ function renderOpp(){
     return (c.firstName+' '+c.lastName).toLowerCase().includes(s) || (c.phone||'').includes(s) || (c.office||'').toLowerCase().includes(s);
   });
 
+  // o quadro fica sempre visivel (as etapas precisam aparecer mesmo com a pipeline
+  // vazia, senao some tudo assim que voce cria uma etapa numa pipeline sem leads ainda);
+  // a mensagem de "vazio" some só quando ja tem oportunidade em alguma etapa.
   document.getElementById('empty-state').style.display = oppsInPipeline.length===0 ? 'block' : 'none';
-  document.getElementById('board').style.display = oppsInPipeline.length===0 ? 'none' : 'flex';
+  document.getElementById('board').style.display = 'flex';
 
   const board = document.getElementById('board');
   board.innerHTML = '';
@@ -1009,6 +1022,10 @@ async function addNewStage(){
   await DB.savePipelines(pipelines);
   document.getElementById('stage-modal-bg').classList.remove('show');
   render();
+  // a etapa nova sempre entra no fim; rola o board pra ela ficar visivel
+  // (o board pode ter mais colunas do que cabem na tela, sem isso parece que "nao apareceu")
+  const board = document.getElementById('board');
+  board.scrollTo({ left: board.scrollWidth, behavior: 'smooth' });
 }
 
 async function deleteStage(stageId){
@@ -1074,6 +1091,13 @@ function bindStaticEvents(){
     e.stopPropagation();
     document.getElementById('contacts-filter-panel').classList.toggle('show');
   });
+  document.getElementById('more-actions-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    document.getElementById('more-actions-panel').classList.toggle('show');
+  });
+  document.getElementById('more-actions-panel').addEventListener('click', (e) => {
+    if(e.target.closest('.menu-item')) document.getElementById('more-actions-panel').classList.remove('show');
+  });
   document.addEventListener('click', (e) => {
     const panel = document.getElementById('filter-panel');
     if(panel.classList.contains('show') && !panel.contains(e.target) && e.target.id !== 'filters-btn'){
@@ -1082,6 +1106,10 @@ function bindStaticEvents(){
     const cPanel = document.getElementById('contacts-filter-panel');
     if(cPanel.classList.contains('show') && !cPanel.contains(e.target) && e.target.id !== 'contacts-filters-btn'){
       cPanel.classList.remove('show');
+    }
+    const mPanel = document.getElementById('more-actions-panel');
+    if(mPanel.classList.contains('show') && !mPanel.contains(e.target) && e.target.id !== 'more-actions-btn'){
+      mPanel.classList.remove('show');
     }
   });
   document.querySelectorAll('.outcome-check').forEach(chk => chk.addEventListener('change', () => {
