@@ -80,13 +80,18 @@
   .outcome-ganho { background: rgba(63,174,129,0.15); color: #3fae81; }
   .outcome-perdido { background: rgba(217,97,74,0.15); color: #d9614a; }
 
-  .board { display: flex; gap: 14px; padding: 18px 20px 40px; overflow-x: auto; align-items: flex-start; cursor: grab; scrollbar-width: thin; scrollbar-color: rgba(217,169,77,0.3) transparent; }
+  .board { display: flex; gap: 14px; padding: 18px 20px 20px; overflow-x: auto; overflow-y: hidden; align-items: stretch; height: calc(100vh - 190px); cursor: grab; scrollbar-width: thin; scrollbar-color: rgba(217,169,77,0.3) transparent; }
   .board.panning { cursor: grabbing; user-select: none; }
   .board::-webkit-scrollbar { height: 8px; }
   .board::-webkit-scrollbar-track { background: transparent; }
   .board::-webkit-scrollbar-thumb { background: rgba(217,169,77,0.3); border-radius: 4px; }
   .board::-webkit-scrollbar-thumb:hover { background: rgba(217,169,77,0.5); }
-  .col { min-width: 260px; max-width: 260px; background: #16181c; border: 1px solid rgba(217,169,77,0.12); border-radius: 12px; flex-shrink: 0; }
+  .col-body { scrollbar-width: thin; scrollbar-color: rgba(217,169,77,0.2) transparent; }
+  .col-body::-webkit-scrollbar { width: 6px; }
+  .col-body::-webkit-scrollbar-track { background: transparent; }
+  .col-body::-webkit-scrollbar-thumb { background: rgba(217,169,77,0.2); border-radius: 3px; }
+  .col-body::-webkit-scrollbar-thumb:hover { background: rgba(217,169,77,0.4); }
+  .col { min-width: 260px; max-width: 260px; background: #16181c; border: 1px solid rgba(217,169,77,0.12); border-radius: 12px; flex-shrink: 0; display: flex; flex-direction: column; }
   .col.dragover { border-color: #d9a94d; background: rgba(217,169,77,0.05); }
   .col-head { padding: 10px 12px; border-bottom: 1px solid rgba(217,169,77,0.10); display: flex; align-items: center; gap: 6px; }
   .col-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
@@ -95,7 +100,7 @@
   .col-count { font-size: 11px; color: #9a9da6; flex-shrink: 0; }
   .col-del { background: none; border: none; color: #5c5e64; cursor: pointer; font-size: 13px; padding: 2px 4px; }
   .col-del:hover { color: #d9614a; }
-  .col-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 60px; }
+  .col-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 60px; overflow-y: auto; flex: 1; }
   .empty-col { font-size: 11.5px; color: #5c5e64; text-align: center; padding: 14px 6px; }
 
   .card { background: #1c1f24; border: 1px solid rgba(217,169,77,0.14); border-radius: 9px; padding: 10px 12px; cursor: pointer; font-size: 13px; touch-action: pan-y; user-select: none; }
