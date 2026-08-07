@@ -342,6 +342,8 @@
       <option value="30d">Últimos 30 dias</option>
       <option value="all" selected>Tudo</option>
     </select>
+    <div class="spacer"></div>
+    <button class="btn-secondary btn-sm" id="manage-activities-btn">Registrar / gerenciar atividades</button>
   </div>
   <div class="kpi-grid">
     <div class="kpi-card"><div class="kpi-num" id="kpi-abordados">0</div><div class="kpi-lbl">Leads abordados</div></div>
@@ -412,6 +414,37 @@
     <div class="modal-actions"><div></div><div class="right">
       <button class="btn-secondary" id="schedule-cancel-btn">Cancelar</button>
       <button class="btn-primary" id="schedule-confirm-btn">Abrir no Google Agenda</button>
+    </div></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="activities-modal-bg">
+  <div class="modal" style="width:540px;">
+    <h3 class="serif">Atividades</h3>
+    <div class="field-group-title">Registrar manualmente</div>
+    <div class="field-row" style="margin-top:10px;">
+      <div class="field"><label>Tipo</label>
+        <select id="act-new-type">
+          <option value="call">Ligação</option>
+          <option value="whatsapp">WhatsApp</option>
+          <option value="meeting">Reunião agendada</option>
+        </select>
+      </div>
+      <div class="field"><label>Quantidade</label><input type="number" id="act-new-qty" min="1" value="1"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Contato (opcional)</label><select id="act-new-contact"><option value="">— avulso —</option></select></div>
+      <div class="field"><label>Data</label><input type="date" id="act-new-date"></div>
+    </div>
+    <button class="btn-primary" id="act-add-btn" style="width:100%;">Adicionar</button>
+    <hr>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <div class="field-group-title" style="margin-bottom:0;">Histórico</div>
+      <button class="btn-secondary btn-sm" id="act-clear-all-btn">Limpar tudo</button>
+    </div>
+    <div id="act-list" style="max-height:240px;overflow-y:auto;"></div>
+    <div class="modal-actions"><div></div><div class="right">
+      <button class="btn-secondary" id="act-close-btn">Fechar</button>
     </div></div>
   </div>
 </div>
@@ -715,7 +748,8 @@ const DB = {
     _fbData.activities = _fbData.activities || [];
     _fbData.activities.push({ id: uid('act'), type, contactId, oppId: oppId||null, createdAt: new Date().toISOString(), by: currentUser ? currentUser.baseEmail : '' });
     await setDoc(CRM_DOC, { activities: _fbData.activities }, { merge: true });
-  }
+  },
+  async saveActivities(list){ await _fbInit(); _fbData.activities = list; await setDoc(CRM_DOC, { activities: list }, { merge: true }); }
 };
 
 let contacts = [], pipelines = [], opportunities = [], activities = [];
@@ -791,7 +825,7 @@ function renderKpis(){
   const calls = activities.filter(a => a.type === 'call' && inPeriod(a.createdAt));
   const whats = activities.filter(a => a.type === 'whatsapp' && inPeriod(a.createdAt));
   const meets = activities.filter(a => a.type === 'meeting' && inPeriod(a.createdAt));
-  const abordadosSet = new Set(activities.filter(a => inPeriod(a.createdAt)).map(a => a.contactId));
+  const abordadosSet = new Set(activities.filter(a => inPeriod(a.createdAt) && a.contactId).map(a => a.contactId));
   const ganhas = opportunities.filter(o => o.outcome === 'ganho' && inPeriod(o.updatedAt || o.createdAt));
   document.getElementById('kpi-abordados').textContent = abordadosSet.size;
   document.getElementById('kpi-calls').textContent = calls.length;
@@ -1191,6 +1225,11 @@ function bindStaticEvents(){
     const id = document.getElementById('lead-id').value;
     if(id) openScheduleModal(id);
   });
+
+  document.getElementById('manage-activities-btn').addEventListener('click', openActivitiesModal);
+  document.getElementById('act-close-btn').addEventListener('click', () => document.getElementById('activities-modal-bg').classList.remove('show'));
+  document.getElementById('act-add-btn').addEventListener('click', addManualActivity);
+  document.getElementById('act-clear-all-btn').addEventListener('click', clearAllActivities);
 }
 
 function bindModalOutsideClose(){
@@ -1387,6 +1426,81 @@ async function confirmSchedule(){
   window.open(url, '_blank');
   await DB.logActivity('meeting', contactId, null);
   document.getElementById('schedule-modal-bg').classList.remove('show');
+  render();
+}
+
+// ---- atividades: registro manual + gerenciamento (pra corrigir cliques de teste) --
+const ACT_TYPE_LABEL = { call: 'Ligação', whatsapp: 'WhatsApp', meeting: 'Reunião agendada' };
+
+function openActivitiesModal(){
+  const contactSel = document.getElementById('act-new-contact');
+  contactSel.innerHTML = '<option value="">— avulso —</option>' + contacts
+    .slice()
+    .sort((a,b) => (a.firstName||'').localeCompare(b.firstName||''))
+    .map(c => '<option value="'+c.id+'">'+escapeHtml((c.firstName+' '+c.lastName).trim())+'</option>').join('');
+  document.getElementById('act-new-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('act-new-qty').value = 1;
+  document.getElementById('act-new-type').value = 'call';
+  renderActivitiesList();
+  document.getElementById('activities-modal-bg').classList.add('show');
+}
+
+function renderActivitiesList(){
+  const list = document.getElementById('act-list');
+  const sorted = activities.slice().sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  if(!sorted.length){
+    list.innerHTML = '<div class="filter-empty">Nenhuma atividade registrada ainda.</div>';
+    return;
+  }
+  list.innerHTML = sorted.map(a => {
+    const c = a.contactId ? contactById(a.contactId) : null;
+    const name = c ? (c.firstName+' '+c.lastName).trim() : (a.manual ? 'Avulso' : '—');
+    return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid rgba(217,169,77,0.08);font-size:12.5px;">'
+      + '<span>'+formatDate(a.createdAt)+' — <b>'+(ACT_TYPE_LABEL[a.type]||a.type)+'</b> — '+escapeHtml(name)+(a.manual ? ' <span class="hint" style="display:inline;">(manual)</span>' : '')+'</span>'
+      + '<span data-del-act="'+a.id+'" title="Remover" style="cursor:pointer;color:#d9614a;font-size:16px;line-height:1;padding:0 4px;flex-shrink:0;">&times;</span>'
+      + '</div>';
+  }).join('');
+  list.querySelectorAll('[data-del-act]').forEach(el => el.addEventListener('click', async () => {
+    activities = activities.filter(a => a.id !== el.dataset.delAct);
+    await DB.saveActivities(activities);
+    renderActivitiesList();
+    render();
+  }));
+}
+
+async function addManualActivity(){
+  const type = document.getElementById('act-new-type').value;
+  const qty = Math.max(1, Math.min(500, parseInt(document.getElementById('act-new-qty').value, 10) || 1));
+  const contactId = document.getElementById('act-new-contact').value || null;
+  const dateVal = document.getElementById('act-new-date').value;
+  const createdAt = dateVal ? new Date(dateVal+'T12:00:00').toISOString() : new Date().toISOString();
+  const by = currentUser ? currentUser.baseEmail : '';
+  for(let i=0;i<qty;i++){
+    activities.push({ id: uid('act'), type, contactId, oppId: null, createdAt, by, manual: true });
+  }
+  await DB.saveActivities(activities);
+  renderActivitiesList();
+  render();
+}
+
+let _clearActsArmed = false;
+async function clearAllActivities(){
+  const btn = document.getElementById('act-clear-all-btn');
+  if(!_clearActsArmed){
+    _clearActsArmed = true;
+    btn.textContent = 'Clique de novo pra confirmar';
+    btn.classList.add('btn-danger');
+    setTimeout(() => {
+      if(_clearActsArmed){ _clearActsArmed = false; btn.textContent = 'Limpar tudo'; btn.classList.remove('btn-danger'); }
+    }, 4000);
+    return;
+  }
+  _clearActsArmed = false;
+  btn.textContent = 'Limpar tudo';
+  btn.classList.remove('btn-danger');
+  activities = [];
+  await DB.saveActivities(activities);
+  renderActivitiesList();
   render();
 }
 
