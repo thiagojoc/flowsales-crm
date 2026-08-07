@@ -12,17 +12,27 @@
 
   header.top { display: flex; align-items: center; gap: 10px; padding: 14px 24px; background: #0a0b0d; border-bottom: 1px solid rgba(217,169,77,0.14); flex-wrap: wrap; }
   header.top span.brand { font-weight: 700; letter-spacing: .04em; font-size: 14px; }
-  .header-user { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: #aeb0b6; }
-  .header-user b { color: #f5f3ee; }
+  .header-user { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: #c3c5cb; }
+  .header-user b { color: #f5f3ee; font-size: 13.5px; }
+
+  .icon-btn { background: none; border: 1px solid rgba(217,169,77,0.2); color: #aeb0b6; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; flex-shrink: 0; }
+  .icon-btn:hover { border-color: #d9a94d; color: #d9a94d; }
+  .icon-btn-danger { border-color: rgba(217,97,74,0.3); color: #d9614a; }
+  .icon-btn-danger:hover { background: rgba(217,97,74,0.14); border-color: #d9614a; color: #d9614a; }
 
   .tabs { display: flex; gap: 4px; padding: 10px 20px 0; border-bottom: 1px solid rgba(217,169,77,0.10); }
-  .tab-btn { background: none; border: none; color: #7c7e85; font-size: 13.5px; font-weight: 700; padding: 10px 16px; cursor: pointer; border-bottom: 2px solid transparent; font-family: inherit; }
+  .tab-btn { background: none; border: none; color: #9a9da6; font-size: 13.5px; font-weight: 700; padding: 10px 16px; cursor: pointer; border-bottom: 2px solid transparent; font-family: inherit; }
   .tab-btn.active { color: #d9a94d; border-bottom-color: #d9a94d; }
 
   .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: rgba(217,169,77,0.14); border-bottom: 1px solid rgba(217,169,77,0.14); }
   .stat-box { background: #0a0b0d; padding: 12px 18px; }
   .stat-box .num { font-size: 20px; font-weight: 700; font-family: ui-serif, Georgia, serif; }
-  .stat-box .lbl { font-size: 10px; color: #7c7e85; text-transform: uppercase; letter-spacing: .05em; margin-top: 2px; }
+  .stat-box .lbl { font-size: 10.5px; font-weight: 700; color: #9a9da6; text-transform: uppercase; letter-spacing: .05em; margin-top: 2px; }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; padding: 20px; }
+  .kpi-card { background: #16181c; border: 1px solid rgba(217,169,77,0.14); border-radius: 12px; padding: 22px 18px; text-align: center; }
+  .kpi-num { font-size: 32px; font-weight: 700; font-family: ui-serif, Georgia, serif; color: #d9a94d; }
+  .kpi-lbl { font-size: 11.5px; color: #c3c5cb; text-transform: uppercase; letter-spacing: .05em; margin-top: 8px; font-weight: 700; }
 
   .toolbar { display: flex; gap: 10px; align-items: center; padding: 14px 20px; flex-wrap: wrap; border-bottom: 1px solid rgba(217,169,77,0.10); }
   .toolbar input[type=text], .toolbar select { background: #14161a; border: 1px solid rgba(217,169,77,0.18); border-radius: 8px; color: #f5f3ee; padding: 9px 12px; font-size: 13.5px; }
@@ -58,14 +68,15 @@
   .col-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
   .col-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; background: none; border: none; color: #f5f3ee; padding: 2px 4px; width: 100%; font-family: inherit; }
   .col-title:focus { outline: 1px solid #d9a94d; border-radius: 4px; }
-  .col-count { font-size: 11px; color: #7c7e85; flex-shrink: 0; }
+  .col-count { font-size: 11px; color: #9a9da6; flex-shrink: 0; }
   .col-del { background: none; border: none; color: #5c5e64; cursor: pointer; font-size: 13px; padding: 2px 4px; }
   .col-del:hover { color: #d9614a; }
   .col-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 60px; }
   .empty-col { font-size: 11.5px; color: #5c5e64; text-align: center; padding: 14px 6px; }
 
-  .card { background: #1c1f24; border: 1px solid rgba(217,169,77,0.14); border-radius: 9px; padding: 10px 12px; cursor: grab; font-size: 13px; }
-  .card:active { cursor: grabbing; }
+  .card { background: #1c1f24; border: 1px solid rgba(217,169,77,0.14); border-radius: 9px; padding: 10px 12px; cursor: pointer; font-size: 13px; touch-action: pan-y; user-select: none; }
+  .card.dragging-source { opacity: .35; }
+  .drag-ghost { position: fixed; z-index: 100; pointer-events: none; opacity: .95; box-shadow: 0 18px 40px -10px rgba(0,0,0,.7); transform: rotate(-1.5deg); }
   .card .name { font-weight: 700; color: #f5f3ee; margin-bottom: 3px; }
   .card .office { color: #aeb0b6; font-size: 11.5px; margin-bottom: 4px; }
   .card .phone { color: #aeb0b6; font-size: 12px; margin-bottom: 6px; }
@@ -73,7 +84,7 @@
   .card .row-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
 
   table.contacts-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  table.contacts-table th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: #7c7e85; padding: 10px 14px; border-bottom: 1px solid rgba(217,169,77,0.14); }
+  table.contacts-table th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: #9a9da6; padding: 10px 14px; border-bottom: 1px solid rgba(217,169,77,0.14); }
   table.contacts-table td { padding: 10px 14px; border-bottom: 1px solid rgba(217,169,77,0.08); vertical-align: top; }
   table.contacts-table tr:hover td { background: rgba(217,169,77,0.03); }
   .contacts-wrap { padding: 6px 20px 40px; overflow-x: auto; }
@@ -81,25 +92,35 @@
   .empty-state { text-align: center; padding: 60px 20px; color: #7c7e85; }
   .empty-state h2 { color: #f5f3ee; font-size: 19px; margin-bottom: 8px; }
 
-  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 40; overflow-y: auto; padding: 30px 0; }
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 60; overflow-y: auto; padding: 30px 0; }
   .modal-bg.show { display: flex; }
   .modal { background: #14161a; border: 1px solid rgba(217,169,77,0.2); border-radius: 14px; padding: 26px; width: 440px; max-width: 92vw; }
   .modal h3 { margin: 0 0 18px; font-size: 17px; }
   .field-row { display: flex; gap: 10px; }
   .field-row .field { flex: 1; }
   .field { margin-bottom: 12px; }
-  .field label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: #7c7e85; margin-bottom: 5px; }
+  .field label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #9a9da6; margin-bottom: 5px; }
   .field input, .field select, .field textarea { width: 100%; background: #1c1f24; border: 1px solid rgba(217,169,77,0.18); border-radius: 7px; color: #f5f3ee; padding: 9px 11px; font-size: 13.5px; font-family: inherit; }
   .field textarea { min-height: 55px; resize: vertical; }
   .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: #d9a94d; }
-  .field .hint { font-size: 11px; color: #5c5e64; margin-top: 4px; }
+  .field .hint { font-size: 11px; color: #7c7e85; margin-top: 4px; }
   .modal-actions { display: flex; justify-content: space-between; margin-top: 20px; }
   .modal-actions .right { display: flex; gap: 8px; }
   .modal hr { border: none; border-top: 1px solid rgba(217,169,77,0.14); margin: 18px 0; }
   .field-group-title { font-size: 12px; font-weight: 700; color: #d9a94d; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 4px; }
 
+  /* tags: chips + dropdown de selecao/criacao */
+  .tag-picker-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; min-height: 22px; }
+  .tag-picker-chips .tag-pill { cursor: default; }
+  .tag-picker-chips .tag-pill .tag-remove { cursor: pointer; margin-left: 2px; font-size: 12px; }
+  .tag-picker-wrap { position: relative; }
+  .tag-picker-dropdown { display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 35; background: #1c1f24; border: 1px solid rgba(217,169,77,0.22); border-radius: 8px; max-height: 170px; overflow-y: auto; box-shadow: 0 18px 40px -12px rgba(0,0,0,.6); }
+  .tag-picker-option { padding: 8px 12px; font-size: 13px; cursor: pointer; color: #f5f3ee; }
+  .tag-picker-option:hover { background: rgba(217,169,77,0.1); }
+  .tag-picker-create { color: #d9a94d; font-weight: 700; border-top: 1px solid rgba(217,169,77,0.14); }
+
   .import-area textarea { width: 100%; min-height: 160px; background: #1c1f24; border: 1px solid rgba(217,169,77,0.18); border-radius: 7px; color: #f5f3ee; padding: 10px; font-size: 13px; font-family: ui-monospace, monospace; }
-  .hint-block { font-size: 11.5px; color: #7c7e85; margin-top: 6px; line-height: 1.5; }
+  .hint-block { font-size: 11.5px; color: #9a9da6; margin-top: 6px; line-height: 1.5; }
   a.link { color: #d9a94d; text-decoration: none; }
   a.link:hover { text-decoration: underline; }
 
@@ -115,7 +136,10 @@
   .filter-panel.show { display: block; }
   .filter-group { margin-bottom: 12px; }
   .filter-group:last-of-type { margin-bottom: 0; }
-  .filter-group-title { font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: #7c7e85; margin-bottom: 8px; }
+  .filter-group-title { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #9a9da6; margin-bottom: 8px; }
+  .filter-group .field-row input[type=date] { padding: 6px 8px; font-size: 12px; }
+  .filter-group .field-row .field { margin-bottom: 0; }
+  .filter-group .field-row .field label { font-size: 9.5px; margin-bottom: 3px; }
   .filter-check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #f5f3ee; padding: 4px 0; cursor: pointer; }
   .filter-check input { accent-color: #d9a94d; width: 14px; height: 14px; cursor: pointer; }
   .filter-empty { font-size: 12px; color: #5c5e64; }
@@ -209,16 +233,17 @@
   <span class="brand">FlowSales CRM</span>
   <div class="spacer"></div>
   <div class="header-user">
+    <button class="icon-btn" id="profile-btn" title="Editar perfil"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
     <div class="avatar-circle avatar-sm" id="header-avatar">?</div>
-    Logado como <b id="user-name"></b>
+    <b id="user-name"></b>
   </div>
-  <button class="btn-outline btn-sm" id="profile-btn">Perfil</button>
-  <button class="btn-outline btn-sm" id="logout-btn">Sair</button>
+  <button class="icon-btn icon-btn-danger" id="logout-btn" title="Sair"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
 </header>
 
 <div class="tabs">
   <button class="tab-btn active" id="tab-opp">Oportunidades</button>
   <button class="tab-btn" id="tab-contacts">Contatos</button>
+  <button class="tab-btn" id="tab-kpis">KPIs</button>
 </div>
 
 <div class="stats" id="stats-row">
@@ -247,6 +272,13 @@
           <label class="filter-check"><input type="checkbox" class="outcome-check" value="ganho"> Ganho</label>
           <label class="filter-check"><input type="checkbox" class="outcome-check" value="perdido"> Perdido</label>
         </div>
+        <div class="filter-group">
+          <div class="filter-group-title">Data de criação</div>
+          <div class="field-row">
+            <div class="field"><label>De</label><input type="date" id="filter-date-from"></div>
+            <div class="field"><label>Até</label><input type="date" id="filter-date-to"></div>
+          </div>
+        </div>
         <button class="btn-secondary btn-sm" id="clear-filters-btn" style="width:100%;">Limpar filtros</button>
       </div>
     </div>
@@ -267,16 +299,51 @@
 <div id="view-contacts" style="display:none;">
   <div class="toolbar">
     <input type="text" id="search-input-contacts" placeholder="Buscar por nome, telefone ou escritório">
+    <div class="filter-wrap">
+      <button class="btn-outline btn-sm" id="contacts-filters-btn">Filtros</button>
+      <div class="filter-panel" id="contacts-filter-panel">
+        <div class="filter-group">
+          <div class="filter-group-title">Tags</div>
+          <div id="contacts-filter-tags-list"></div>
+        </div>
+        <div class="filter-group">
+          <div class="filter-group-title">Criado em</div>
+          <div class="field-row">
+            <div class="field"><label>De</label><input type="date" id="contacts-filter-date-from"></div>
+            <div class="field"><label>Até</label><input type="date" id="contacts-filter-date-to"></div>
+          </div>
+        </div>
+        <button class="btn-secondary btn-sm" id="contacts-clear-filters-btn" style="width:100%;">Limpar filtros</button>
+      </div>
+    </div>
     <div class="spacer"></div>
     <button class="btn-primary" id="new-contact-btn">Novo contato</button>
   </div>
   <div class="contacts-wrap">
     <table class="contacts-table">
       <thead><tr>
-        <th>Nome</th><th>Escritório</th><th>Telefone</th><th>E-mail</th><th>Instagram</th><th>Tags</th><th>Ações</th>
+        <th>Nome</th><th>Escritório</th><th>Telefone</th><th>E-mail</th><th>Instagram</th><th>Tags</th><th>Criado em</th><th>Ações</th>
       </tr></thead>
       <tbody id="contacts-tbody"></tbody>
     </table>
+  </div>
+</div>
+
+<div id="view-kpis" style="display:none;">
+  <div class="toolbar">
+    <select id="kpi-period">
+      <option value="today">Hoje</option>
+      <option value="7d">Últimos 7 dias</option>
+      <option value="30d">Últimos 30 dias</option>
+      <option value="all" selected>Tudo</option>
+    </select>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-num" id="kpi-abordados">0</div><div class="kpi-lbl">Leads abordados</div></div>
+    <div class="kpi-card"><div class="kpi-num" id="kpi-calls">0</div><div class="kpi-lbl">Ligações realizadas</div></div>
+    <div class="kpi-card"><div class="kpi-num" id="kpi-wa">0</div><div class="kpi-lbl">Mensagens no WhatsApp</div></div>
+    <div class="kpi-card"><div class="kpi-num" id="kpi-meetings">0</div><div class="kpi-lbl">Reuniões agendadas</div></div>
+    <div class="kpi-card"><div class="kpi-num" id="kpi-ganhas">0</div><div class="kpi-lbl">Vendas ganhas</div></div>
   </div>
 </div>
 
@@ -295,6 +362,7 @@
     </div>
     <div class="field"><label>E-mail</label><input type="text" id="lead-email"></div>
     <div class="field"><label>Endereço</label><input type="text" id="lead-address"></div>
+    <div class="field"><label>Criado em</label><input type="date" id="lead-created-at"></div>
     <div class="field-row" id="opp-fields">
       <div class="field"><label>Pipeline</label><select id="lead-pipeline"></select></div>
       <div class="field"><label>Etapa</label><select id="lead-stage"></select></div>
@@ -303,15 +371,43 @@
       <label>Situação da oportunidade</label>
       <select id="lead-outcome"><option value="aberto">Aberto</option><option value="ganho">Ganho</option><option value="perdido">Perdido</option></select>
     </div>
-    <div class="field"><label>Tags</label><input type="text" id="lead-tags" placeholder="alta, indicacao, urgente"><div class="hint">Separe por vírgula.</div></div>
+    <div class="field">
+      <label>Tags</label>
+      <div class="tag-picker-chips" id="lead-tags-chips"></div>
+      <div class="tag-picker-wrap">
+        <input type="text" id="lead-tags-input" placeholder="Buscar ou criar tag...">
+        <div class="tag-picker-dropdown" id="lead-tags-dropdown"></div>
+      </div>
+    </div>
     <div class="field"><label>Observação</label><textarea id="lead-note"></textarea></div>
     <div class="modal-actions">
       <button class="btn-danger" id="delete-lead-btn" style="display:none;">Excluir</button>
       <div class="right">
+        <button class="btn-secondary" id="schedule-from-lead-btn" style="display:none;">Agendar</button>
         <button class="btn-secondary" id="cancel-lead-btn">Cancelar</button>
         <button class="btn-primary" id="save-lead-btn">Salvar</button>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="schedule-modal-bg">
+  <div class="modal">
+    <h3 class="serif">Agendar reunião</h3>
+    <input type="hidden" id="schedule-contact-id">
+    <div class="field"><label>Com</label><div id="schedule-contact-name" style="font-size:13.5px;color:#f5f3ee;padding:4px 0 8px;"></div></div>
+    <div class="field-row">
+      <div class="field"><label>Data</label><input type="date" id="schedule-date"></div>
+      <div class="field"><label>Hora</label><input type="time" id="schedule-time"></div>
+    </div>
+    <div class="field"><label>Duração</label>
+      <select id="schedule-duration"><option value="15">15 min</option><option value="30">30 min</option><option value="60" selected>1 hora</option></select>
+    </div>
+    <div class="hint" style="margin-bottom:4px;">Abre um evento pronto no Google Agenda, é só confirmar por lá.</div>
+    <div class="modal-actions"><div></div><div class="right">
+      <button class="btn-secondary" id="schedule-cancel-btn">Cancelar</button>
+      <button class="btn-primary" id="schedule-confirm-btn">Abrir no Google Agenda</button>
+    </div></div>
   </div>
 </div>
 
@@ -352,6 +448,17 @@
     <div class="field"><label>Nova pipeline</label><input type="text" id="funnel-new-input" placeholder="Ex.: Indicações"></div>
     <div class="modal-actions"><div></div><div class="right">
       <button class="btn-primary" id="funnel-new-save-btn">Criar pipeline</button>
+    </div></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="stage-modal-bg">
+  <div class="modal" style="width:360px;">
+    <h3 class="serif">Nova etapa</h3>
+    <div class="field"><label>Nome da etapa</label><input type="text" id="stage-name-input" placeholder="Ex.: Em negociação"></div>
+    <div class="modal-actions"><div></div><div class="right">
+      <button class="btn-secondary" id="stage-cancel-btn">Cancelar</button>
+      <button class="btn-primary" id="stage-add-btn">Adicionar</button>
     </div></div>
   </div>
 </div>
@@ -469,6 +576,66 @@ function tagClass(tag){ if(tag==='alta') return 'tag-alta'; if(tag==='media') re
 function waLink(contact){ let number = contact.waNumber || digitsOnly(contact.phone); if(number && !number.startsWith('55')) number = '55' + number; return number; }
 function initialsOf(first, last){ return ((first||'?')[0] + (last||'')[0]).toUpperCase(); }
 
+// ---- drag (mouse + touch, via Pointer Events) e clique no card -----------
+function initCardDrag(card, opp){
+  card.addEventListener('pointerdown', (e) => {
+    if(e.target.closest('a,button')) return; // deixa botoes/links do card agirem normalmente
+    if(e.button !== undefined && e.button !== 0) return;
+    const startX = e.clientX, startY = e.clientY;
+    let dragging = false, ghost = null;
+
+    const onMove = (ev) => {
+      const dx = ev.clientX - startX, dy = ev.clientY - startY;
+      if(!dragging){
+        if(Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+        dragging = true;
+        card.classList.add('dragging-source');
+        try { card.setPointerCapture(e.pointerId); } catch(err){}
+        ghost = card.cloneNode(true);
+        ghost.classList.add('drag-ghost');
+        ghost.style.width = card.offsetWidth + 'px';
+        ghost.style.left = (ev.clientX - card.offsetWidth/2) + 'px';
+        ghost.style.top = (ev.clientY - 24) + 'px';
+        document.body.appendChild(ghost);
+      }
+      if(ghost){
+        ghost.style.left = (ev.clientX - card.offsetWidth/2) + 'px';
+        ghost.style.top = (ev.clientY - 24) + 'px';
+      }
+      document.querySelectorAll('.col').forEach(c => c.classList.remove('dragover'));
+      const under = document.elementFromPoint(ev.clientX, ev.clientY);
+      const col = under && under.closest('.col');
+      if(col) col.classList.add('dragover');
+    };
+
+    const onUp = async (ev) => {
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      document.querySelectorAll('.col').forEach(c => c.classList.remove('dragover'));
+      if(dragging){
+        card.classList.remove('dragging-source');
+        if(ghost) ghost.remove();
+        const under = document.elementFromPoint(ev.clientX, ev.clientY);
+        const col = under && under.closest('.col');
+        if(col && col.dataset.stageId){
+          const stageId = col.dataset.stageId;
+          const liveOpp = opportunities.find(o => o.id === opp.id);
+          if(liveOpp && liveOpp.stageId !== stageId){
+            liveOpp.stageId = stageId;
+            await DB.saveOpportunities(opportunities);
+            render();
+          }
+        }
+      } else {
+        openLeadModal(opp.id);
+      }
+    };
+
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp, { once: true });
+  });
+}
+
 // ---- camada Firestore -----------------------------------------------------
 let _fbData = null;
 let _fbReady = false;
@@ -483,7 +650,7 @@ function _seedData(){
     createdAt: new Date().toISOString()
   }));
   const opportunities = contacts.map(c => ({ id: uid('o'), contactId: c.id, pipelineId: 'pl-sdr', stageId: 'novo', outcome: 'aberto', createdAt: new Date().toISOString() }));
-  return { contacts, pipelines: JSON.parse(JSON.stringify(DEFAULT_PIPELINES)), opportunities, waTemplate: DEFAULT_WA_TEMPLATE, profiles: {} };
+  return { contacts, pipelines: JSON.parse(JSON.stringify(DEFAULT_PIPELINES)), opportunities, waTemplate: DEFAULT_WA_TEMPLATE, profiles: {}, activities: [] };
 }
 
 async function _fbInit(){
@@ -497,6 +664,7 @@ async function _fbInit(){
         _fbData = snap.data();
         if(!_fbData.pipelines || !_fbData.pipelines.length) _fbData.pipelines = JSON.parse(JSON.stringify(DEFAULT_PIPELINES));
         if(!_fbData.profiles) _fbData.profiles = {};
+        if(!_fbData.activities) _fbData.activities = [];
       } else {
         _fbData = _seedData();
         await setDoc(CRM_DOC, _fbData);
@@ -505,6 +673,7 @@ async function _fbInit(){
         if(!snap.exists()) return;
         _fbData = snap.data();
         if(!_fbData.profiles) _fbData.profiles = {};
+        if(!_fbData.activities) _fbData.activities = [];
         if(_onFbUpdate) _onFbUpdate();
       });
       _fbReady = true;
@@ -534,16 +703,28 @@ const DB = {
     _fbData.profiles = _fbData.profiles || {};
     _fbData.profiles[email] = Object.assign({}, _fbData.profiles[email]||{}, data);
     await setDoc(CRM_DOC, { profiles: _fbData.profiles }, { merge: true });
+  },
+  async getActivities(){ await _fbInit(); return _fbData.activities || []; },
+  async logActivity(type, contactId, oppId){
+    await _fbInit();
+    _fbData.activities = _fbData.activities || [];
+    _fbData.activities.push({ id: uid('act'), type, contactId, oppId: oppId||null, createdAt: new Date().toISOString(), by: currentUser ? currentUser.baseEmail : '' });
+    await setDoc(CRM_DOC, { activities: _fbData.activities }, { merge: true });
   }
 };
 
-let contacts = [], pipelines = [], opportunities = [];
+let contacts = [], pipelines = [], opportunities = [], activities = [];
 let currentPipelineId = null;
 let searchOpp = '', searchContacts = '';
 let tagFilters = new Set(), outcomeFilters = new Set();
-let draggedOppId = null;
+let dateFromFilter = '', dateToFilter = '';
+let contactsTagFilters = new Set();
+let contactsDateFrom = '', contactsDateTo = '';
+let kpiPeriod = 'all';
 let activeTab = 'opp';
 let currentUser = null; // { baseEmail, firstName, lastName, photo, loginEmail }
+let _leadTagsSelected = [];
+let _scheduleContactId = null;
 
 function contactById(id){ return contacts.find(c => c.id === id); }
 function pipelineById(id){ return pipelines.find(p => p.id === id); }
@@ -552,6 +733,7 @@ async function boot(){
   contacts = await DB.getContacts();
   pipelines = await DB.getPipelines();
   opportunities = await DB.getOpportunities();
+  activities = await DB.getActivities();
   currentPipelineId = pipelines[0].id;
   bindStaticEvents();
   render();
@@ -559,6 +741,7 @@ async function boot(){
     contacts = _fbData.contacts || [];
     pipelines = (_fbData.pipelines && _fbData.pipelines.length) ? _fbData.pipelines : pipelines;
     opportunities = _fbData.opportunities || [];
+    activities = _fbData.activities || [];
     if(!pipelineById(currentPipelineId)) currentPipelineId = pipelines[0].id;
     render();
   });
@@ -568,14 +751,48 @@ function switchTab(tab){
   activeTab = tab;
   document.getElementById('tab-opp').classList.toggle('active', tab==='opp');
   document.getElementById('tab-contacts').classList.toggle('active', tab==='contacts');
+  document.getElementById('tab-kpis').classList.toggle('active', tab==='kpis');
   document.getElementById('view-opp').style.display = tab==='opp' ? 'block' : 'none';
   document.getElementById('view-contacts').style.display = tab==='contacts' ? 'block' : 'none';
+  document.getElementById('view-kpis').style.display = tab==='kpis' ? 'block' : 'none';
   document.getElementById('stats-row').style.display = tab==='opp' ? 'grid' : 'none';
   render();
 }
 
 function render(){
-  if(activeTab === 'opp') renderOpp(); else renderContacts();
+  if(activeTab === 'opp') renderOpp();
+  else if(activeTab === 'contacts') renderContacts();
+  else renderKpis();
+}
+
+function formatDate(iso){
+  if(!iso) return '—';
+  const d = new Date(iso);
+  if(isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('pt-BR');
+}
+
+function periodCutoff(period){
+  const now = new Date();
+  if(period === 'today'){ const d = new Date(now); d.setHours(0,0,0,0); return d; }
+  if(period === '7d') return new Date(now.getTime() - 7*24*3600*1000);
+  if(period === '30d') return new Date(now.getTime() - 30*24*3600*1000);
+  return null;
+}
+
+function renderKpis(){
+  const cutoff = periodCutoff(kpiPeriod);
+  const inPeriod = iso => !cutoff || (iso && new Date(iso) >= cutoff);
+  const calls = activities.filter(a => a.type === 'call' && inPeriod(a.createdAt));
+  const whats = activities.filter(a => a.type === 'whatsapp' && inPeriod(a.createdAt));
+  const meets = activities.filter(a => a.type === 'meeting' && inPeriod(a.createdAt));
+  const abordadosSet = new Set(activities.filter(a => inPeriod(a.createdAt)).map(a => a.contactId));
+  const ganhas = opportunities.filter(o => o.outcome === 'ganho' && inPeriod(o.updatedAt || o.createdAt));
+  document.getElementById('kpi-abordados').textContent = abordadosSet.size;
+  document.getElementById('kpi-calls').textContent = calls.length;
+  document.getElementById('kpi-wa').textContent = whats.length;
+  document.getElementById('kpi-meetings').textContent = meets.length;
+  document.getElementById('kpi-ganhas').textContent = ganhas.length;
 }
 
 function renderFilterPanel(allTags){
@@ -592,7 +809,9 @@ function renderFilterPanel(allTags){
     }));
   }
   document.querySelectorAll('.outcome-check').forEach(chk => { chk.checked = outcomeFilters.has(chk.value); });
-  const total = tagFilters.size + outcomeFilters.size;
+  document.getElementById('filter-date-from').value = dateFromFilter;
+  document.getElementById('filter-date-to').value = dateToFilter;
+  const total = tagFilters.size + outcomeFilters.size + (dateFromFilter || dateToFilter ? 1 : 0);
   const btn = document.getElementById('filters-btn');
   btn.textContent = total ? 'Filtros ('+total+')' : 'Filtros';
   btn.classList.toggle('has-active', total > 0);
@@ -612,6 +831,8 @@ function renderOpp(){
     if(!c) return false;
     if(outcomeFilters.size && !outcomeFilters.has(o.outcome)) return false;
     if(tagFilters.size && !(c.tags||[]).some(t => tagFilters.has(t))) return false;
+    if(dateFromFilter && (!o.createdAt || o.createdAt.slice(0,10) < dateFromFilter)) return false;
+    if(dateToFilter && (!o.createdAt || o.createdAt.slice(0,10) > dateToFilter)) return false;
     if(!searchOpp) return true;
     const s = searchOpp.toLowerCase();
     return (c.firstName+' '+c.lastName).toLowerCase().includes(s) || (c.phone||'').includes(s) || (c.office||'').toLowerCase().includes(s);
@@ -626,6 +847,7 @@ function renderOpp(){
   pipeline.stages.forEach(st => {
     const col = document.createElement('div');
     col.className = 'col';
+    col.dataset.stageId = st.id;
 
     const items = filtered.filter(o => o.stageId === st.id);
     const head = document.createElement('div');
@@ -648,7 +870,7 @@ function renderOpp(){
       const c = contactById(opp.contactId);
       if(!c) return;
       const card = document.createElement('div');
-      card.className = 'card'; card.draggable = true; card.dataset.id = opp.id;
+      card.className = 'card'; card.dataset.id = opp.id;
       const fullName = (c.firstName+' '+c.lastName).trim();
       const wa = waLink(c);
       card.innerHTML =
@@ -659,38 +881,37 @@ function renderOpp(){
         '<div class="tags">'+(c.tags||[]).map(t => '<span class="tag-pill '+tagClass(t)+'">'+escapeHtml(t)+'</span>').join('')+'</div>' +
         '<div class="row-actions">' +
           '<button class="btn-secondary btn-sm edit-opp" data-id="'+opp.id+'">Editar</button>' +
-          (c.phone ? '<a class="btn-secondary btn-sm" style="text-decoration:none;" href="tel:+55'+digitsOnly(c.phone)+'">Ligar</a>' : '') +
+          (wa ? '<a class="btn-secondary btn-sm" style="text-decoration:none;" data-call="'+c.id+'" href="#">Ligar</a>' : '') +
           (wa ? '<a class="btn-wa btn-sm" style="text-decoration:none;" data-wa="'+c.id+'" href="#">WhatsApp</a>' : '') +
           (c.instagram ? '<a class="btn-secondary btn-sm" style="text-decoration:none;" target="_blank" href="https://instagram.com/'+encodeURIComponent(c.instagram)+'">Instagram</a>' : '') +
+          '<button class="btn-secondary btn-sm schedule-btn" data-id="'+c.id+'">Agendar</button>' +
         '</div>';
-      card.addEventListener('dragstart', () => { draggedOppId = opp.id; card.style.opacity = '0.4'; });
-      card.addEventListener('dragend', () => { card.style.opacity = '1'; });
+      initCardDrag(card, opp);
       body.appendChild(card);
     });
     col.appendChild(body);
 
-    col.addEventListener('dragover', (e) => { e.preventDefault(); col.classList.add('dragover'); });
-    col.addEventListener('dragleave', () => col.classList.remove('dragover'));
-    col.addEventListener('drop', async (e) => {
-      e.preventDefault(); col.classList.remove('dragover');
-      if(draggedOppId){
-        const opp = opportunities.find(o => o.id === draggedOppId);
-        if(opp){ opp.stageId = st.id; await DB.saveOpportunities(opportunities); render(); }
-        draggedOppId = null;
-      }
-    });
     board.appendChild(col);
   });
 
-  document.querySelectorAll('.edit-opp').forEach(btn => btn.addEventListener('click', () => openLeadModal(btn.dataset.id)));
-  document.querySelectorAll('.col-del').forEach(btn => btn.addEventListener('click', () => deleteStage(btn.dataset.id)));
-  document.querySelectorAll('.col-title').forEach(inp => inp.addEventListener('change', () => renameStage(inp.dataset.id, inp.value)));
-  document.querySelectorAll('[data-wa]').forEach(a => a.addEventListener('click', async (e) => {
+  board.querySelectorAll('.edit-opp').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); openLeadModal(btn.dataset.id); }));
+  board.querySelectorAll('.col-del').forEach(btn => btn.addEventListener('click', () => deleteStage(btn.dataset.id)));
+  board.querySelectorAll('.col-title').forEach(inp => inp.addEventListener('change', () => renameStage(inp.dataset.id, inp.value)));
+  board.querySelectorAll('.schedule-btn').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); openScheduleModal(btn.dataset.id); }));
+  board.querySelectorAll('[data-call]').forEach(a => a.addEventListener('click', (e) => {
+    e.preventDefault();
+    const c = contactById(a.dataset.call);
+    if(!c) return;
+    window.open('https://wa.me/'+waLink(c), '_blank');
+    DB.logActivity('call', c.id, null);
+  }));
+  board.querySelectorAll('[data-wa]').forEach(a => a.addEventListener('click', async (e) => {
     e.preventDefault();
     const c = contactById(a.dataset.wa);
     const template = await DB.getWaTemplate();
     const msg = template.replace(/\{\{nome\}\}/g, c.firstName || '');
     window.open('https://wa.me/'+waLink(c)+'?text='+encodeURIComponent(msg), '_blank');
+    DB.logActivity('whatsapp', c.id, null);
   }));
 
   const total = oppsInPipeline.length;
@@ -704,33 +925,77 @@ function renderOpp(){
   document.getElementById('stat-conversao').textContent = total ? Math.round((ganhas/total)*100)+'%' : '0%';
 }
 
+function renderContactsFilterPanel(allTags){
+  const list = document.getElementById('contacts-filter-tags-list');
+  if(!allTags.length){
+    list.innerHTML = '<div class="filter-empty">Nenhuma tag ainda.</div>';
+  } else {
+    list.innerHTML = allTags.map(t =>
+      '<label class="filter-check"><input type="checkbox" class="contacts-tag-check" value="'+escapeHtml(t)+'"'+(contactsTagFilters.has(t)?' checked':'')+'> '+escapeHtml(t)+'</label>'
+    ).join('');
+    list.querySelectorAll('.contacts-tag-check').forEach(chk => chk.addEventListener('change', () => {
+      if(chk.checked) contactsTagFilters.add(chk.value); else contactsTagFilters.delete(chk.value);
+      render();
+    }));
+  }
+  document.getElementById('contacts-filter-date-from').value = contactsDateFrom;
+  document.getElementById('contacts-filter-date-to').value = contactsDateTo;
+  const total = contactsTagFilters.size + (contactsDateFrom || contactsDateTo ? 1 : 0);
+  const btn = document.getElementById('contacts-filters-btn');
+  btn.textContent = total ? 'Filtros ('+total+')' : 'Filtros';
+  btn.classList.toggle('has-active', total > 0);
+}
+
 function renderContacts(){
   const tbody = document.getElementById('contacts-tbody');
+  const allTags = Array.from(new Set(contacts.flatMap(c => c.tags || []))).sort();
+  renderContactsFilterPanel(allTags);
   const s = searchContacts.toLowerCase();
-  const filtered = contacts.filter(c => !s || (c.firstName+' '+c.lastName).toLowerCase().includes(s) || (c.phone||'').includes(s) || (c.office||'').toLowerCase().includes(s));
+  const filtered = contacts.filter(c => {
+    if(contactsTagFilters.size && !(c.tags||[]).some(t => contactsTagFilters.has(t))) return false;
+    if(contactsDateFrom && (!c.createdAt || c.createdAt.slice(0,10) < contactsDateFrom)) return false;
+    if(contactsDateTo && (!c.createdAt || c.createdAt.slice(0,10) > contactsDateTo)) return false;
+    if(!s) return true;
+    return (c.firstName+' '+c.lastName).toLowerCase().includes(s) || (c.phone||'').includes(s) || (c.office||'').toLowerCase().includes(s);
+  });
   tbody.innerHTML = filtered.map(c => {
     const wa = waLink(c);
-    return '<tr>' +
+    return '<tr data-id="'+c.id+'" style="cursor:pointer;">' +
       '<td>'+escapeHtml((c.firstName+' '+c.lastName).trim())+'</td>' +
       '<td>'+escapeHtml(c.office)+'</td>' +
       '<td>'+escapeHtml(c.phone)+'</td>' +
       '<td>'+escapeHtml(c.email)+'</td>' +
       '<td>'+(c.instagram ? '<a class="link" target="_blank" href="https://instagram.com/'+encodeURIComponent(c.instagram)+'">@'+escapeHtml(c.instagram)+'</a>' : '')+'</td>' +
       '<td>'+(c.tags||[]).map(t => '<span class="tag-pill '+tagClass(t)+'">'+escapeHtml(t)+'</span>').join('')+'</td>' +
+      '<td>'+formatDate(c.createdAt)+'</td>' +
       '<td><div class="row-actions">' +
         '<button class="btn-secondary btn-sm edit-contact" data-id="'+c.id+'">Editar</button>' +
-        (c.phone ? '<a class="btn-secondary btn-sm" style="text-decoration:none;" href="tel:+55'+digitsOnly(c.phone)+'">Ligar</a>' : '') +
+        (wa ? '<a class="btn-secondary btn-sm" style="text-decoration:none;" data-call="'+c.id+'" href="#">Ligar</a>' : '') +
         (wa ? '<a class="btn-wa btn-sm" style="text-decoration:none;" data-wa="'+c.id+'" href="#">WhatsApp</a>' : '') +
+        '<button class="btn-secondary btn-sm schedule-btn" data-id="'+c.id+'">Agendar</button>' +
       '</div></td>' +
     '</tr>';
   }).join('');
-  document.querySelectorAll('.edit-contact').forEach(btn => btn.addEventListener('click', () => openLeadModal(null, btn.dataset.id)));
-  document.querySelectorAll('[data-wa]').forEach(a => a.addEventListener('click', async (e) => {
+  tbody.querySelectorAll('tr').forEach(tr => tr.addEventListener('click', (e) => {
+    if(e.target.closest('a,button')) return;
+    openLeadModal(null, tr.dataset.id);
+  }));
+  tbody.querySelectorAll('.edit-contact').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); openLeadModal(null, btn.dataset.id); }));
+  tbody.querySelectorAll('.schedule-btn').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); openScheduleModal(btn.dataset.id); }));
+  tbody.querySelectorAll('[data-call]').forEach(a => a.addEventListener('click', (e) => {
+    e.preventDefault();
+    const c = contactById(a.dataset.call);
+    if(!c) return;
+    window.open('https://wa.me/'+waLink(c), '_blank');
+    DB.logActivity('call', c.id, null);
+  }));
+  tbody.querySelectorAll('[data-wa]').forEach(a => a.addEventListener('click', async (e) => {
     e.preventDefault();
     const c = contactById(a.dataset.wa);
     const template = await DB.getWaTemplate();
     const msg = template.replace(/\{\{nome\}\}/g, c.firstName || '');
     window.open('https://wa.me/'+waLink(c)+'?text='+encodeURIComponent(msg), '_blank');
+    DB.logActivity('whatsapp', c.id, null);
   }));
 }
 
@@ -740,6 +1005,17 @@ async function renameStage(stageId, newLabel){
   const st = pipeline.stages.find(s => s.id === stageId);
   if(st){ st.label = newLabel; await DB.savePipelines(pipelines); }
 }
+async function addNewStage(){
+  const label = document.getElementById('stage-name-input').value.trim();
+  if(!label) return;
+  const palette = ['#7c7e85','#5b93c9','#d9a94d','#3fae81','#d9614a'];
+  const pipeline = pipelineById(currentPipelineId);
+  pipeline.stages.push({ id: uid('st'), label, color: palette[pipeline.stages.length % palette.length] });
+  await DB.savePipelines(pipelines);
+  document.getElementById('stage-modal-bg').classList.remove('show');
+  render();
+}
+
 async function deleteStage(stageId){
   const pipeline = pipelineById(currentPipelineId);
   if(pipeline.stages.length <= 1){ alert('A pipeline precisa ter pelo menos uma etapa.'); return; }
@@ -754,6 +1030,8 @@ async function deleteStage(stageId){
 function bindStaticEvents(){
   document.getElementById('tab-opp').addEventListener('click', () => switchTab('opp'));
   document.getElementById('tab-contacts').addEventListener('click', () => switchTab('contacts'));
+  document.getElementById('tab-kpis').addEventListener('click', () => switchTab('kpis'));
+  document.getElementById('kpi-period').addEventListener('change', (e) => { kpiPeriod = e.target.value; render(); });
 
   document.getElementById('pipeline-select').addEventListener('change', (e) => { currentPipelineId = e.target.value; render(); });
 
@@ -784,32 +1062,47 @@ function bindStaticEvents(){
     render();
   });
 
-  document.getElementById('new-col-btn').addEventListener('click', async () => {
-    const label = prompt('Nome da nova etapa:');
-    if(!label) return;
-    const palette = ['#7c7e85','#5b93c9','#d9a94d','#3fae81','#d9614a'];
-    const pipeline = pipelineById(currentPipelineId);
-    pipeline.stages.push({ id: uid('st'), label: label.trim(), color: palette[pipeline.stages.length % palette.length] });
-    await DB.savePipelines(pipelines);
-    render();
+  document.getElementById('new-col-btn').addEventListener('click', () => {
+    document.getElementById('stage-name-input').value = '';
+    document.getElementById('stage-modal-bg').classList.add('show');
+    document.getElementById('stage-name-input').focus();
   });
+  document.getElementById('stage-cancel-btn').addEventListener('click', () => document.getElementById('stage-modal-bg').classList.remove('show'));
+  document.getElementById('stage-add-btn').addEventListener('click', addNewStage);
+  document.getElementById('stage-name-input').addEventListener('keydown', (e) => { if(e.key === 'Enter'){ e.preventDefault(); addNewStage(); } });
 
   document.getElementById('filters-btn').addEventListener('click', (e) => {
     e.stopPropagation();
     document.getElementById('filter-panel').classList.toggle('show');
+  });
+  document.getElementById('contacts-filters-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    document.getElementById('contacts-filter-panel').classList.toggle('show');
   });
   document.addEventListener('click', (e) => {
     const panel = document.getElementById('filter-panel');
     if(panel.classList.contains('show') && !panel.contains(e.target) && e.target.id !== 'filters-btn'){
       panel.classList.remove('show');
     }
+    const cPanel = document.getElementById('contacts-filter-panel');
+    if(cPanel.classList.contains('show') && !cPanel.contains(e.target) && e.target.id !== 'contacts-filters-btn'){
+      cPanel.classList.remove('show');
+    }
   });
   document.querySelectorAll('.outcome-check').forEach(chk => chk.addEventListener('change', () => {
     if(chk.checked) outcomeFilters.add(chk.value); else outcomeFilters.delete(chk.value);
     render();
   }));
+  document.getElementById('filter-date-from').addEventListener('change', (e) => { dateFromFilter = e.target.value; render(); });
+  document.getElementById('filter-date-to').addEventListener('change', (e) => { dateToFilter = e.target.value; render(); });
   document.getElementById('clear-filters-btn').addEventListener('click', () => {
-    tagFilters.clear(); outcomeFilters.clear();
+    tagFilters.clear(); outcomeFilters.clear(); dateFromFilter = ''; dateToFilter = '';
+    render();
+  });
+  document.getElementById('contacts-filter-date-from').addEventListener('change', (e) => { contactsDateFrom = e.target.value; render(); });
+  document.getElementById('contacts-filter-date-to').addEventListener('change', (e) => { contactsDateTo = e.target.value; render(); });
+  document.getElementById('contacts-clear-filters-btn').addEventListener('click', () => {
+    contactsTagFilters.clear(); contactsDateFrom = ''; contactsDateTo = '';
     render();
   });
 
@@ -848,7 +1141,43 @@ function bindStaticEvents(){
   document.getElementById('profile-avatar-edit').addEventListener('click', pickProfilePhoto);
   document.getElementById('pf-new-pass-eye').addEventListener('click', function(){ togglePassVisibility('pf-new-pass', this); });
   document.getElementById('pf-new-pass2-eye').addEventListener('click', function(){ togglePassVisibility('pf-new-pass2', this); });
+
+  const tagsInput = document.getElementById('lead-tags-input');
+  tagsInput.addEventListener('focus', renderLeadTagsDropdown);
+  tagsInput.addEventListener('input', renderLeadTagsDropdown);
+  tagsInput.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      const val = tagsInput.value.trim();
+      if(val && !_leadTagsSelected.some(t => t.toLowerCase() === val.toLowerCase())){
+        _leadTagsSelected.push(val);
+        tagsInput.value = '';
+        renderLeadTagsChips();
+        renderLeadTagsDropdown();
+      }
+    }
+  });
+  document.addEventListener('click', (e) => {
+    const dd = document.getElementById('lead-tags-dropdown');
+    if(dd.style.display === 'block' && !e.target.closest('.tag-picker-wrap')) dd.style.display = 'none';
+  });
+
+  document.getElementById('schedule-cancel-btn').addEventListener('click', () => document.getElementById('schedule-modal-bg').classList.remove('show'));
+  document.getElementById('schedule-confirm-btn').addEventListener('click', confirmSchedule);
+  document.getElementById('schedule-from-lead-btn').addEventListener('click', () => {
+    const id = document.getElementById('lead-id').value;
+    if(id) openScheduleModal(id);
+  });
 }
+
+function bindModalOutsideClose(){
+  document.querySelectorAll('.modal-bg').forEach(bg => {
+    bg.addEventListener('click', (e) => { if(e.target === bg) bg.classList.remove('show'); });
+  });
+}
+// os modais (inclusive o de "esqueci minha senha", fora do app-root) ja existem
+// no HTML desde o carregamento da pagina, entao isso pode ser ligado uma vez so aqui.
+bindModalOutsideClose();
 
 let _pendingPhoto = null;
 function pickProfilePhoto(){
@@ -930,8 +1259,13 @@ async function openLeadModal(oppId, contactId, forceOpp){
   document.getElementById('lead-instagram').value = contact ? (contact.instagram||'') : '';
   document.getElementById('lead-email').value = contact ? (contact.email||'') : '';
   document.getElementById('lead-address').value = contact ? (contact.address||'') : '';
-  document.getElementById('lead-tags').value = contact ? (contact.tags||[]).join(', ') : '';
+  document.getElementById('lead-created-at').value = (contact && contact.createdAt) ? contact.createdAt.slice(0,10) : new Date().toISOString().slice(0,10);
   document.getElementById('lead-note').value = contact ? (contact.note||'') : '';
+  _leadTagsSelected = contact ? (contact.tags||[]).slice() : [];
+  document.getElementById('lead-tags-input').value = '';
+  document.getElementById('lead-tags-dropdown').style.display = 'none';
+  renderLeadTagsChips();
+  document.getElementById('schedule-from-lead-btn').style.display = contact ? 'inline-block' : 'none';
 
   const pipeSel = document.getElementById('lead-pipeline');
   pipeSel.innerHTML = pipelines.map(p => '<option value="'+p.id+'">'+escapeHtml(p.name)+'</option>').join('');
@@ -953,6 +1287,84 @@ function fillStageOptions(pipelineId, selectStageId){
 }
 function closeLeadModal(){ document.getElementById('lead-modal-bg').classList.remove('show'); }
 
+function allKnownTags(){ return Array.from(new Set(contacts.flatMap(c => c.tags || []))).sort(); }
+
+function renderLeadTagsChips(){
+  const wrap = document.getElementById('lead-tags-chips');
+  wrap.innerHTML = _leadTagsSelected.length ? _leadTagsSelected.map(t =>
+    '<span class="tag-pill '+tagClass(t)+'">'+escapeHtml(t)+' <span class="tag-remove" data-remove-tag="'+escapeHtml(t)+'">&times;</span></span>'
+  ).join('') : '<span class="hint">Nenhuma tag selecionada</span>';
+  wrap.querySelectorAll('[data-remove-tag]').forEach(x => x.addEventListener('click', () => {
+    _leadTagsSelected = _leadTagsSelected.filter(t => t !== x.dataset.removeTag);
+    renderLeadTagsChips();
+  }));
+}
+
+function renderLeadTagsDropdown(){
+  const input = document.getElementById('lead-tags-input');
+  const q = input.value.trim().toLowerCase();
+  const dd = document.getElementById('lead-tags-dropdown');
+  const options = allKnownTags().filter(t => !_leadTagsSelected.includes(t) && (!q || t.toLowerCase().includes(q)));
+  let html = options.map(t => '<div class="tag-picker-option" data-add-tag="'+escapeHtml(t)+'">'+escapeHtml(t)+'</div>').join('');
+  const typed = input.value.trim();
+  const exists = typed && (allKnownTags().some(t => t.toLowerCase() === typed.toLowerCase()) || _leadTagsSelected.some(t => t.toLowerCase() === typed.toLowerCase()));
+  if(typed && !exists){
+    html += '<div class="tag-picker-option tag-picker-create" data-create-tag="'+escapeHtml(typed)+'">+ Criar tag "'+escapeHtml(typed)+'"</div>';
+  }
+  dd.innerHTML = html || '<div class="filter-empty" style="padding:8px 12px;">Nenhuma tag encontrada</div>';
+  dd.style.display = 'block';
+  dd.querySelectorAll('[data-add-tag]').forEach(el => el.addEventListener('click', () => {
+    _leadTagsSelected.push(el.dataset.addTag);
+    input.value = ''; renderLeadTagsChips(); renderLeadTagsDropdown(); input.focus();
+  }));
+  dd.querySelectorAll('[data-create-tag]').forEach(el => el.addEventListener('click', () => {
+    _leadTagsSelected.push(el.dataset.createTag);
+    input.value = ''; renderLeadTagsChips(); renderLeadTagsDropdown(); input.focus();
+  }));
+}
+
+function gcalDateFmt(d){ return d.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z'; }
+
+function openScheduleModal(contactId){
+  const c = contactById(contactId);
+  if(!c) return;
+  document.getElementById('schedule-contact-id').value = contactId;
+  document.getElementById('schedule-contact-name').textContent = (c.firstName+' '+c.lastName).trim();
+  const start = new Date();
+  start.setMinutes(0,0,0);
+  start.setHours(start.getHours()+1);
+  document.getElementById('schedule-date').value = start.toISOString().slice(0,10);
+  document.getElementById('schedule-time').value = String(start.getHours()).padStart(2,'0')+':00';
+  document.getElementById('schedule-duration').value = '60';
+  document.getElementById('schedule-modal-bg').classList.add('show');
+}
+
+async function confirmSchedule(){
+  const contactId = document.getElementById('schedule-contact-id').value;
+  const c = contactById(contactId);
+  if(!c) return;
+  const dateVal = document.getElementById('schedule-date').value;
+  const timeVal = document.getElementById('schedule-time').value;
+  if(!dateVal || !timeVal){ alert('Informe data e hora.'); return; }
+  const start = new Date(dateVal+'T'+timeVal+':00');
+  if(isNaN(start.getTime())){ alert('Data ou hora inválida.'); return; }
+  const durMin = parseInt(document.getElementById('schedule-duration').value, 10) || 30;
+  const end = new Date(start.getTime() + durMin*60000);
+  const title = 'Reunião com '+(c.firstName+' '+c.lastName).trim();
+  const detailsParts = [];
+  if(c.phone) detailsParts.push('Telefone: '+c.phone);
+  if(c.office) detailsParts.push('Escritório: '+c.office);
+  const url = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
+    + '&text='+encodeURIComponent(title)
+    + '&dates='+gcalDateFmt(start)+'/'+gcalDateFmt(end)
+    + (detailsParts.length ? '&details='+encodeURIComponent(detailsParts.join('\n')) : '')
+    + (c.address ? '&location='+encodeURIComponent(c.address) : '');
+  window.open(url, '_blank');
+  await DB.logActivity('meeting', contactId, null);
+  document.getElementById('schedule-modal-bg').classList.remove('show');
+  render();
+}
+
 async function saveLead(){
   const id = document.getElementById('lead-id').value;
   const oppId = document.getElementById('lead-opp-id').value;
@@ -964,16 +1376,19 @@ async function saveLead(){
   const instagram = document.getElementById('lead-instagram').value.trim().replace(/^@/,'');
   const email = document.getElementById('lead-email').value.trim();
   const address = document.getElementById('lead-address').value.trim();
-  const tags = document.getElementById('lead-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  const createdAtDate = document.getElementById('lead-created-at').value;
+  const tags = _leadTagsSelected.slice();
   const note = document.getElementById('lead-note').value.trim();
   const waNumber = digitsOnly(phone) ? '55'+digitsOnly(phone) : '';
 
   let contact;
   if(id){
     contact = contactById(id);
-    Object.assign(contact, { firstName, lastName, office, phone, instagram, email, address, tags, note, waNumber, updatedAt: new Date().toISOString() });
+    const createdAt = createdAtDate ? new Date(createdAtDate+'T12:00:00').toISOString() : contact.createdAt;
+    Object.assign(contact, { firstName, lastName, office, phone, instagram, email, address, tags, note, waNumber, createdAt, updatedAt: new Date().toISOString() });
   } else {
-    contact = { id: uid('c'), firstName, lastName, office, phone, instagram, email, address, tags, note, waNumber, createdAt: new Date().toISOString() };
+    const createdAt = createdAtDate ? new Date(createdAtDate+'T12:00:00').toISOString() : new Date().toISOString();
+    contact = { id: uid('c'), firstName, lastName, office, phone, instagram, email, address, tags, note, waNumber, createdAt };
     contacts.push(contact);
   }
   await DB.saveContacts(contacts);
