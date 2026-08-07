@@ -34,10 +34,21 @@
   .kpi-num { font-size: 32px; font-weight: 700; font-family: ui-serif, Georgia, serif; color: #d9a94d; }
   .kpi-lbl { font-size: 11.5px; color: #c3c5cb; text-transform: uppercase; letter-spacing: .05em; margin-top: 8px; font-weight: 700; }
 
+  /* abordagens */
+  .approach-wrap { padding: 20px; max-width: 760px; }
+  .approach-section { margin-bottom: 32px; }
+  .approach-section h3 { margin: 0 0 4px; font-size: 18px; color: #d9a94d; }
+  .approach-hint { font-size: 12.5px; color: #9a9da6; margin: 0 0 14px; }
+  .approach-card { background: #16181c; border: 1px solid rgba(217,169,77,0.14); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+  .approach-card-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #d9a94d; margin-bottom: 8px; }
+  .approach-text { font-size: 13.5px; color: #f5f3ee; line-height: 1.6; white-space: pre-line; margin-bottom: 10px; }
+
   .toolbar { display: flex; gap: 10px; align-items: center; padding: 14px 20px; flex-wrap: wrap; border-bottom: 1px solid rgba(217,169,77,0.10); }
-  .toolbar input[type=text], .toolbar select { background: #14161a; border: 1px solid rgba(217,169,77,0.18); border-radius: 8px; color: #f5f3ee; padding: 9px 12px; font-size: 13.5px; }
+  .toolbar input[type=text], .toolbar input[type=date], .toolbar select { background: #14161a; border: 1px solid rgba(217,169,77,0.18); border-radius: 8px; color: #f5f3ee; padding: 9px 12px; font-size: 13.5px; }
   .toolbar input[type=text] { min-width: 200px; }
-  .toolbar input[type=text]:focus, .toolbar select:focus { outline: none; border-color: #d9a94d; }
+  .toolbar input[type=text]:focus, .toolbar input[type=date]:focus, .toolbar select:focus { outline: none; border-color: #d9a94d; }
+  .kpi-custom-range { display: none; gap: 8px; align-items: center; }
+  .kpi-custom-range.show { display: flex; }
   button { border: none; border-radius: 8px; padding: 9px 16px; font-size: 13.5px; font-weight: 700; cursor: pointer; font-family: inherit; }
   button:disabled { opacity: .55; cursor: default; }
   .btn-primary { background: #d9a94d; color: #0a0b0d; }
@@ -248,6 +259,7 @@
   <button class="tab-btn active" id="tab-opp">Oportunidades</button>
   <button class="tab-btn" id="tab-contacts">Contatos</button>
   <button class="tab-btn" id="tab-kpis">KPIs</button>
+  <button class="tab-btn" id="tab-approach">Abordagens</button>
 </div>
 
 <div class="stats" id="stats-row">
@@ -341,7 +353,14 @@
       <option value="7d">Últimos 7 dias</option>
       <option value="30d">Últimos 30 dias</option>
       <option value="all" selected>Tudo</option>
+      <option value="custom">Data específica...</option>
     </select>
+    <div class="kpi-custom-range" id="kpi-custom-range">
+      <input type="date" id="kpi-date-from">
+      <span class="hint" style="margin:0;">até</span>
+      <input type="date" id="kpi-date-to">
+      <button class="btn-secondary btn-sm" id="kpi-apply-btn">Aplicar</button>
+    </div>
     <div class="spacer"></div>
     <button class="btn-secondary btn-sm" id="manage-activities-btn">Registrar / gerenciar atividades</button>
   </div>
@@ -351,6 +370,117 @@
     <div class="kpi-card"><div class="kpi-num" id="kpi-wa">0</div><div class="kpi-lbl">Mensagens no WhatsApp</div></div>
     <div class="kpi-card"><div class="kpi-num" id="kpi-meetings">0</div><div class="kpi-lbl">Reuniões agendadas</div></div>
     <div class="kpi-card"><div class="kpi-num" id="kpi-ganhas">0</div><div class="kpi-lbl">Vendas ganhas</div></div>
+  </div>
+</div>
+
+<div id="view-approach" style="display:none;">
+  <div class="approach-wrap">
+    <p class="hint-block" style="font-size:12.5px;margin:0 0 20px;">Sugestões de abordagem pra prospecção de escritórios de advocacia. Ajuste o tom conforme a conversa — o objetivo é sempre soar como gente falando com gente, não como script decorado. Clique em "Copiar" pra colar direto no WhatsApp.</p>
+
+    <div class="approach-section">
+      <h3 class="serif">Mensagem inicial (primeiro contato)</h3>
+      <p class="approach-hint">Pra abrir conversa com um lead novo. Troque {{nome}} pelo primeiro nome dele.</p>
+
+      <div class="approach-card">
+        <div class="approach-card-label">Direta, focada em resultado</div>
+        <div class="approach-text">Oi {{nome}}, tudo bem? Aqui é o Thiago, da FlowSales. Ajudamos escritórios de advocacia a conseguirem clientes novos todo mês com anúncios no Instagram e Google, sem depender só de indicação. Posso te mandar um resumo rapidinho de como funciona?</div>
+        <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+      </div>
+
+      <div class="approach-card">
+        <div class="approach-card-label">Pergunta de diagnóstico</div>
+        <div class="approach-text">Oi {{nome}}, tudo bem? Sou o Thiago, da FlowSales. Posso te fazer uma pergunta rápida: hoje o escritório de vocês depende principalmente de indicação pra conseguir cliente novo, ou já usam algum tipo de anúncio pra gerar demanda? Trabalhamos com escritórios estruturando esse processo e queria entender se faz sentido pra vocês.</div>
+        <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+      </div>
+
+      <div class="approach-card">
+        <div class="approach-card-label">Prova social</div>
+        <div class="approach-text">Oi {{nome}}! Aqui é o Thiago, da FlowSales. Ajudamos escritórios de advocacia aqui em SJC e região a gerarem leads qualificados todo mês com anúncios pagos, sem depender só de indicação. Você tem 5 minutinhos essa semana pra eu te mostrar como funciona?</div>
+        <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+      </div>
+    </div>
+
+    <div class="approach-section">
+      <h3 class="serif">Roteiro de ligação</h3>
+      <p class="approach-hint">Guia pra call, não texto decorado. Adapte pelo tom da conversa.</p>
+
+      <div class="approach-card">
+        <div class="approach-card-label">Abertura (primeiros 15 segundos)</div>
+        <div class="approach-text">Oi, {{nome}}, tudo bem? Aqui é o Thiago, da FlowSales. Te liguei rapidinho porque a gente ajuda escritórios de advocacia a conseguirem mais clientes com anúncios pagos — você tem 2 minutinhos agora?</div>
+        <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+      </div>
+
+      <div class="approach-card">
+        <div class="approach-card-label">Perguntas de descoberta</div>
+        <div class="approach-text">- Hoje como o escritório consegue a maioria dos clientes novos: indicação, anúncio ou boca a boca?
+- Em média, quantos clientes novos entram por mês?
+- Já tentaram anúncio antes? Como foi a experiência?
+- Qual a área de atuação principal do escritório (trabalhista, cível, família...)?
+- Quem costuma decidir sobre investir em marketing aí no escritório?</div>
+        <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+      </div>
+
+      <div class="approach-card">
+        <div class="approach-card-label">Conectando a dor com a solução</div>
+        <div class="approach-text">Entendi. O que a gente faz na FlowSales é estruturar esse processo: colocamos o escritório rodando anúncios pra pessoas que já estão buscando um advogado da área de vocês, e organizamos isso num funil pra não perder nenhum lead — boa parte dos escritórios perde cliente simplesmente porque demora pra responder ou não tem um processo de acompanhamento.</div>
+        <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+      </div>
+
+      <div class="approach-card">
+        <div class="approach-card-label">Fechamento (marcar próximo passo)</div>
+        <div class="approach-text">Faz sentido eu te mostrar como isso funcionaria pro escritório de vocês? Consigo separar uns 20 minutinhos essa semana — terça ou quinta, o que funciona melhor pra você?</div>
+        <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+      </div>
+
+      <div class="approach-card">
+        <div class="approach-card-label">Principais objeções e como responder</div>
+        <div class="approach-text">"Já tentei anúncio e não funcionou" → Entendo, isso é bem comum quando o anúncio não vem junto com um processo de atendimento. Posso te mostrar como estruturamos isso pra não acontecer de novo.
+
+"Não tenho orçamento agora" → Sem problema, dá pra eu te mostrar os números com calma pra você decidir quando fizer sentido — a conversa não tem compromisso nenhum.
+
+"Prefiro só indicação" → Faz todo sentido, indicação é ótimo. A ideia não é substituir, é ter uma segunda fonte previsível de clientes além da indicação.</div>
+        <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+      </div>
+    </div>
+
+    <div class="approach-section">
+      <h3 class="serif">Follow-up de leads que não respondem</h3>
+      <p class="approach-hint">Sequência pra quem viu a mensagem e não respondeu, ou não atendeu a ligação.</p>
+
+      <div class="approach-card">
+        <div class="approach-card-label">1 dia depois</div>
+        <div class="approach-text">Oi {{nome}}, passando aqui de novo — sei que a rotina de advogado é corrida! Fica à vontade pra me chamar quando puder, é rapidinho.</div>
+        <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+      </div>
+
+      <div class="approach-card">
+        <div class="approach-card-label">3 dias depois</div>
+        <div class="approach-text">Oi {{nome}}, tudo bem? Separei um resultado de um escritório parecido com o de vocês que aumentou os clientes novos com a gente — quer que eu te mande rapidinho?</div>
+        <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+      </div>
+
+      <div class="approach-card">
+        <div class="approach-card-label">7 dias depois (última tentativa)</div>
+        <div class="approach-text">Oi {{nome}}, imagino que não seja prioridade agora, sem problema! Vou parar de te incomodar por aqui. Se um dia fizer sentido conversar sobre atrair mais clientes pro escritório, é só me chamar. Sucesso aí! 🙌</div>
+        <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+      </div>
+    </div>
+
+    <div class="approach-section">
+      <h3 class="serif">Reunião marcada e pós-reunião</h3>
+
+      <div class="approach-card">
+        <div class="approach-card-label">Confirmação de reunião</div>
+        <div class="approach-text">Perfeito, {{nome}}! Ficou marcado então. Vou te mandar o convite do Google Agenda agora — qualquer imprevisto, só me avisar por aqui. Até lá!</div>
+        <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+      </div>
+
+      <div class="approach-card">
+        <div class="approach-card-label">Sumiu depois da reunião</div>
+        <div class="approach-text">Oi {{nome}}, tudo bem? Ficou alguma dúvida da nossa conversa que eu possa esclarecer? Fico à disposição pra fechar os próximos passos quando fizer sentido pra você.</div>
+        <button class="btn-secondary btn-sm copy-btn">Copiar</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -760,6 +890,7 @@ let dateFromFilter = '', dateToFilter = '';
 let contactsTagFilters = new Set();
 let contactsDateFrom = '', contactsDateTo = '';
 let kpiPeriod = 'all';
+let kpiCustomFrom = '', kpiCustomTo = '';
 let activeTab = 'opp';
 let currentUser = null; // { baseEmail, firstName, lastName, photo, loginEmail }
 let _leadTagsSelected = [];
@@ -791,9 +922,11 @@ function switchTab(tab){
   document.getElementById('tab-opp').classList.toggle('active', tab==='opp');
   document.getElementById('tab-contacts').classList.toggle('active', tab==='contacts');
   document.getElementById('tab-kpis').classList.toggle('active', tab==='kpis');
+  document.getElementById('tab-approach').classList.toggle('active', tab==='approach');
   document.getElementById('view-opp').style.display = tab==='opp' ? 'block' : 'none';
   document.getElementById('view-contacts').style.display = tab==='contacts' ? 'block' : 'none';
   document.getElementById('view-kpis').style.display = tab==='kpis' ? 'block' : 'none';
+  document.getElementById('view-approach').style.display = tab==='approach' ? 'block' : 'none';
   document.getElementById('stats-row').style.display = tab==='opp' ? 'grid' : 'none';
   render();
 }
@@ -801,7 +934,8 @@ function switchTab(tab){
 function render(){
   if(activeTab === 'opp') renderOpp();
   else if(activeTab === 'contacts') renderContacts();
-  else renderKpis();
+  else if(activeTab === 'kpis') renderKpis();
+  // 'approach' e conteudo estatico, nao precisa de render
 }
 
 function formatDate(iso){
@@ -811,17 +945,28 @@ function formatDate(iso){
   return d.toLocaleDateString('pt-BR');
 }
 
-function periodCutoff(period){
+function kpiPeriodRange(){
   const now = new Date();
-  if(period === 'today'){ const d = new Date(now); d.setHours(0,0,0,0); return d; }
-  if(period === '7d') return new Date(now.getTime() - 7*24*3600*1000);
-  if(period === '30d') return new Date(now.getTime() - 30*24*3600*1000);
-  return null;
+  if(kpiPeriod === 'today'){ const d = new Date(now); d.setHours(0,0,0,0); return { start: d, end: null }; }
+  if(kpiPeriod === '7d') return { start: new Date(now.getTime() - 7*24*3600*1000), end: null };
+  if(kpiPeriod === '30d') return { start: new Date(now.getTime() - 30*24*3600*1000), end: null };
+  if(kpiPeriod === 'custom'){
+    const start = kpiCustomFrom ? new Date(kpiCustomFrom+'T00:00:00') : null;
+    const end = kpiCustomTo ? new Date(kpiCustomTo+'T23:59:59.999') : null;
+    return { start, end };
+  }
+  return { start: null, end: null };
 }
 
 function renderKpis(){
-  const cutoff = periodCutoff(kpiPeriod);
-  const inPeriod = iso => !cutoff || (iso && new Date(iso) >= cutoff);
+  const { start, end } = kpiPeriodRange();
+  const inPeriod = iso => {
+    if(!iso) return false;
+    const d = new Date(iso);
+    if(start && d < start) return false;
+    if(end && d > end) return false;
+    return true;
+  };
   const calls = activities.filter(a => a.type === 'call' && inPeriod(a.createdAt));
   const whats = activities.filter(a => a.type === 'whatsapp' && inPeriod(a.createdAt));
   const meets = activities.filter(a => a.type === 'meeting' && inPeriod(a.createdAt));
@@ -878,9 +1023,10 @@ function renderOpp(){
   });
 
   // o quadro fica sempre visivel (as etapas precisam aparecer mesmo com a pipeline
-  // vazia, senao some tudo assim que voce cria uma etapa numa pipeline sem leads ainda);
-  // a mensagem de "vazio" some só quando ja tem oportunidade em alguma etapa.
-  document.getElementById('empty-state').style.display = oppsInPipeline.length===0 ? 'block' : 'none';
+  // vazia, senao some tudo assim que voce cria uma etapa numa pipeline sem leads ainda).
+  // cada coluna vazia ja avisa "Nenhuma oportunidade aqui" sozinha, entao nao precisa
+  // mais de uma mensagem geral substituindo o quadro.
+  document.getElementById('empty-state').style.display = 'none';
   document.getElementById('board').style.display = 'flex';
 
   const board = document.getElementById('board');
@@ -1077,7 +1223,35 @@ function bindStaticEvents(){
   document.getElementById('tab-opp').addEventListener('click', () => switchTab('opp'));
   document.getElementById('tab-contacts').addEventListener('click', () => switchTab('contacts'));
   document.getElementById('tab-kpis').addEventListener('click', () => switchTab('kpis'));
-  document.getElementById('kpi-period').addEventListener('change', (e) => { kpiPeriod = e.target.value; render(); });
+  document.getElementById('tab-approach').addEventListener('click', () => switchTab('approach'));
+  document.querySelectorAll('.copy-btn').forEach(btn => btn.addEventListener('click', () => {
+    const text = btn.previousElementSibling.textContent;
+    const original = btn.textContent;
+    const flash = (label) => { btn.textContent = label; setTimeout(() => { btn.textContent = original; }, 1500); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(() => flash('Copiado!')).catch(() => flash('Selecione e copie manualmente'));
+    } else {
+      flash('Selecione e copie manualmente');
+    }
+  }));
+  document.getElementById('kpi-period').addEventListener('change', (e) => {
+    kpiPeriod = e.target.value;
+    document.getElementById('kpi-custom-range').classList.toggle('show', kpiPeriod === 'custom');
+    if(kpiPeriod === 'custom'){
+      if(!document.getElementById('kpi-date-from').value){
+        const today = new Date().toISOString().slice(0,10);
+        document.getElementById('kpi-date-from').value = today;
+        document.getElementById('kpi-date-to').value = today;
+        kpiCustomFrom = today; kpiCustomTo = today;
+      }
+    }
+    render();
+  });
+  document.getElementById('kpi-apply-btn').addEventListener('click', () => {
+    kpiCustomFrom = document.getElementById('kpi-date-from').value;
+    kpiCustomTo = document.getElementById('kpi-date-to').value;
+    render();
+  });
 
   document.getElementById('pipeline-select').addEventListener('change', (e) => { currentPipelineId = e.target.value; render(); });
 
