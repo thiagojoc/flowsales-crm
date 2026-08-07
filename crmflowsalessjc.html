@@ -1165,12 +1165,12 @@ function renderKpis(){
   const whats = activities.filter(a => a.type === 'whatsapp' && inPeriod(a.createdAt));
   const meets = activities.filter(a => a.type === 'meeting' && inPeriod(a.createdAt));
   const abordadosManual = activities.filter(a => a.type === 'abordado' && inPeriod(a.createdAt)).length;
-  const interacaoManual = activities.filter(a => a.type === 'interacao' && inPeriod(a.createdAt)).length;
+  const interacoes = activities.filter(a => a.type === 'interacao' && inPeriod(a.createdAt));
   const ganhosManual = activities.filter(a => a.type === 'ganho' && inPeriod(a.createdAt)).length;
   const abordadosSet = new Set(activities.filter(a => inPeriod(a.createdAt) && a.contactId).map(a => a.contactId));
   const ganhas = opportunities.filter(o => o.outcome === 'ganho' && inPeriod(o.updatedAt || o.createdAt));
   document.getElementById('kpi-abordados').textContent = abordadosSet.size + abordadosManual;
-  document.getElementById('kpi-interacao').textContent = calls.length + whats.length + meets.length + interacaoManual;
+  document.getElementById('kpi-interacao').textContent = interacoes.length;
   document.getElementById('kpi-calls').textContent = calls.length;
   document.getElementById('kpi-wa').textContent = whats.length;
   document.getElementById('kpi-meetings').textContent = meets.length;
