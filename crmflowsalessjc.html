@@ -12,8 +12,8 @@
 
   header.top { display: flex; align-items: center; gap: 10px; padding: 14px 24px; background: #0a0b0d; border-bottom: 1px solid rgba(217,169,77,0.14); flex-wrap: wrap; }
   header.top span.brand { font-weight: 700; letter-spacing: .04em; font-size: 14px; }
-  header.top .user-badge { font-size: 12.5px; color: #aeb0b6; }
-  header.top .user-badge b { color: #f5f3ee; }
+  .header-user { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: #aeb0b6; }
+  .header-user b { color: #f5f3ee; }
 
   .tabs { display: flex; gap: 4px; padding: 10px 20px 0; border-bottom: 1px solid rgba(217,169,77,0.10); }
   .tab-btn { background: none; border: none; color: #7c7e85; font-size: 13.5px; font-weight: 700; padding: 10px 16px; cursor: pointer; border-bottom: 2px solid transparent; font-family: inherit; }
@@ -29,6 +29,7 @@
   .toolbar input[type=text] { min-width: 200px; }
   .toolbar input[type=text]:focus, .toolbar select:focus { outline: none; border-color: #d9a94d; }
   button { border: none; border-radius: 8px; padding: 9px 16px; font-size: 13.5px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  button:disabled { opacity: .55; cursor: default; }
   .btn-primary { background: #d9a94d; color: #0a0b0d; }
   .btn-secondary { background: #14161a; color: #aeb0b6; border: 1px solid rgba(217,169,77,0.18); }
   .btn-danger { background: rgba(217,97,74,0.14); color: #d9614a; }
@@ -36,6 +37,8 @@
   .btn-outline { background: none; border: 1px solid rgba(217,169,77,0.2); color: #aeb0b6; }
   .btn-outline.has-active { color: #d9a94d; border-color: rgba(217,169,77,0.5); }
   .btn-sm { padding: 5px 9px; font-size: 11.5px; }
+  .btn-link { background: none; border: none; color: #d9a94d; font-weight: 600; font-size: 13px; cursor: pointer; padding: 0; text-decoration: none; }
+  .btn-link:hover { text-decoration: underline; }
   .spacer { flex: 1; }
 
   .tag-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 2px 8px; border-radius: 10px; margin-right: 4px; margin-top: 4px; }
@@ -93,11 +96,18 @@
   .modal-actions { display: flex; justify-content: space-between; margin-top: 20px; }
   .modal-actions .right { display: flex; gap: 8px; }
   .modal hr { border: none; border-top: 1px solid rgba(217,169,77,0.14); margin: 18px 0; }
+  .field-group-title { font-size: 12px; font-weight: 700; color: #d9a94d; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 4px; }
 
   .import-area textarea { width: 100%; min-height: 160px; background: #1c1f24; border: 1px solid rgba(217,169,77,0.18); border-radius: 7px; color: #f5f3ee; padding: 10px; font-size: 13px; font-family: ui-monospace, monospace; }
   .hint-block { font-size: 11.5px; color: #7c7e85; margin-top: 6px; line-height: 1.5; }
   a.link { color: #d9a94d; text-decoration: none; }
   a.link:hover { text-decoration: underline; }
+
+  /* mostrar/ocultar senha */
+  .pass-wrap { position: relative; }
+  .pass-wrap input { padding-right: 40px; }
+  .pass-eye { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #7c7e85; padding: 6px; display: flex; align-items: center; }
+  .pass-eye:hover { color: #d9a94d; }
 
   /* filtros (popover) */
   .filter-wrap { position: relative; }
@@ -110,36 +120,81 @@
   .filter-check input { accent-color: #d9a94d; width: 14px; height: 14px; cursor: pointer; }
   .filter-empty { font-size: 12px; color: #5c5e64; }
 
+  /* avatar */
+  .avatar-circle { border-radius: 50%; background: #1c1f24; border: 1px solid rgba(217,169,77,0.28); display: flex; align-items: center; justify-content: center; font-weight: 700; color: #d9a94d; overflow: hidden; flex-shrink: 0; }
+  .avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
+  .avatar-sm { width: 26px; height: 26px; font-size: 11px; }
+  .avatar-lg { width: 78px; height: 78px; font-size: 22px; margin: 0 auto; }
+  .avatar-edit { position: relative; width: 78px; height: 78px; margin: 0 auto; cursor: pointer; }
+  .avatar-edit-overlay { position: absolute; inset: 0; border-radius: 50%; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .15s; color: #fff; }
+  .avatar-edit:hover .avatar-edit-overlay { opacity: 1; }
+
   /* login */
   #login-screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse 90% 70% at 15% 50%,rgba(217,169,77,.06) 0%,transparent 55%), #0a0b0d; z-index: 50; }
-  .login-card { width: 340px; max-width: 90vw; background: rgba(20,22,26,.95); border: 1px solid rgba(217,169,77,0.18); border-radius: 14px; padding: 36px 32px; }
-  .login-card .brand-row { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; }
-  .login-card h1 { font-size: 17px; margin: 0 0 4px; }
-  .login-card p.sub { font-size: 13px; color: #7c7e85; margin: 0 0 20px; }
+  .login-card { width: 340px; max-width: 90vw; background: rgba(20,22,26,.95); border: 1px solid rgba(217,169,77,0.18); border-radius: 14px; padding: 40px 32px 34px; }
+  .login-card .brand-col { display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 30px; }
+  .login-card .brand-col svg { margin-bottom: 12px; }
+  .login-card .brand-word { font-size: 23px; font-weight: 700; letter-spacing: .01em; }
+  .login-card .brand-sub { font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: #7c7e85; margin-top: 5px; }
+  .login-card .field label { color: #f5f3ee; font-weight: 700; }
+  .login-card .field-email-display { font-size: 13.5px; color: #aeb0b6; margin-bottom: 16px; }
+  .login-card .field-email-display b { color: #f5f3ee; }
+  .login-card .field-email-display button { margin-left: 6px; }
   .login-err { font-size: 12.5px; color: #d9614a; margin-top: 8px; min-height: 16px; }
-  #login-form button { width: 100%; margin-top: 6px; }
+  .login-msg { font-size: 12.5px; color: #3fae81; margin-top: 8px; min-height: 16px; }
+  #login-form button[type=submit] { width: 100%; margin-top: 6px; }
+  .login-forgot { text-align: center; margin-top: 16px; }
 </style>
 </head>
 <body>
 
 <div id="login-screen">
   <div class="login-card">
-    <div class="brand-row">
-      <svg viewBox="0 0 36 28" fill="none" xmlns="http://www.w3.org/2000/svg" width="22" height="17">
+    <div class="brand-col">
+      <svg viewBox="0 0 36 28" fill="none" xmlns="http://www.w3.org/2000/svg" width="30" height="23">
         <rect x="0" y="0" width="36" height="8" rx="2.5" fill="#d9a94d"></rect>
         <rect x="0" y="10" width="24" height="8" rx="2.5" fill="#d9a94d"></rect>
         <rect x="0" y="20" width="13" height="8" rx="2.5" fill="#d9a94d"></rect>
       </svg>
-      <span class="brand serif" style="font-weight:700;font-size:15px;">FlowSales CRM</span>
+      <div class="brand-word serif"><span style="color:#d9a94d">FLOW</span><span style="color:#fff">SALES</span></div>
+      <div class="brand-sub">CRM de prospecção</div>
     </div>
-    <h1 class="serif">Entrar</h1>
-    <p class="sub">Acesse com o mesmo e-mail e senha do painel FlowSales.</p>
-    <form id="login-form">
+
+    <form id="login-step-email">
       <div class="field"><label>E-mail</label><input type="email" id="login-email" autocomplete="username" required></div>
-      <div class="field"><label>Senha</label><input type="password" id="login-pass" autocomplete="current-password" required></div>
-      <button type="submit" class="btn-primary">Entrar</button>
-      <div class="login-err" id="login-err"></div>
+      <button type="submit" class="btn-primary">Continuar</button>
+      <div class="login-err" id="login-email-err"></div>
     </form>
+
+    <form id="login-step-pass" style="display:none;">
+      <div class="field-email-display">E-mail: <b id="login-step-pass-email"></b> <button type="button" class="btn-link" id="login-change-email-btn">trocar</button></div>
+      <div class="field" id="login-pass-field">
+        <label id="login-pass-label">Senha</label>
+        <div class="pass-wrap">
+          <input type="password" id="login-pass" autocomplete="current-password">
+          <button type="button" class="pass-eye" id="login-pass-eye" title="Mostrar/ocultar senha"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg></button>
+        </div>
+      </div>
+      <div class="field" id="login-pass2-field" style="display:none;">
+        <label>Confirmar senha</label>
+        <div class="pass-wrap">
+          <input type="password" id="login-pass2" autocomplete="new-password">
+          <button type="button" class="pass-eye" id="login-pass2-eye" title="Mostrar/ocultar senha"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg></button>
+        </div>
+      </div>
+      <button type="submit" class="btn-primary" id="login-pass-submit-btn">Entrar</button>
+      <div class="login-err" id="login-pass-err"></div>
+      <div class="login-msg" id="login-pass-msg"></div>
+      <div class="login-forgot" id="login-forgot-wrap"><button type="button" class="btn-link" id="forgot-pass-btn">Esqueci minha senha</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-bg" id="forgot-modal-bg">
+  <div class="modal" style="text-align:center;">
+    <h3 class="serif">Esqueci minha senha</h3>
+    <div style="font-size:13.5px;color:#aeb0b6;line-height:1.6;margin-bottom:20px;">Entre em contato com o administrador:<br><strong style="color:#d9a94d">Thiago Caetano</strong><br>E-mail: comercialflowsales@gmail.com</div>
+    <button class="btn-primary" id="forgot-close-btn" style="width:100%;">Entendi</button>
   </div>
 </div>
 
@@ -153,7 +208,11 @@
   </svg>
   <span class="brand">FlowSales CRM</span>
   <div class="spacer"></div>
-  <span class="user-badge">Logado como <b id="user-name"></b></span>
+  <div class="header-user">
+    <div class="avatar-circle avatar-sm" id="header-avatar">?</div>
+    Logado como <b id="user-name"></b>
+  </div>
+  <button class="btn-outline btn-sm" id="profile-btn">Perfil</button>
   <button class="btn-outline btn-sm" id="logout-btn">Sair</button>
 </header>
 
@@ -297,6 +356,34 @@
   </div>
 </div>
 
+<div class="modal-bg" id="profile-modal-bg">
+  <div class="modal">
+    <h3 class="serif">Meu perfil</h3>
+    <div style="margin-bottom:20px;">
+      <div class="avatar-edit" id="profile-avatar-edit">
+        <div class="avatar-circle avatar-lg" id="profile-avatar-preview">?</div>
+        <div class="avatar-edit-overlay"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+      </div>
+      <div class="hint" style="text-align:center;margin-top:8px;">Clique na foto para trocar</div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Nome</label><input type="text" id="pf-first"></div>
+      <div class="field"><label>Sobrenome</label><input type="text" id="pf-last"></div>
+    </div>
+    <hr>
+    <div class="field-group-title">Alterar credenciais de acesso</div>
+    <div class="field" style="margin-top:10px;"><label>E-mail atual</label><div id="pf-current-email" style="font-size:13.5px;color:#f5f3ee;padding:4px 0 8px;"></div></div>
+    <div class="field"><label>Novo e-mail</label><input type="email" id="pf-new-email" placeholder="Deixe vazio para manter o atual"></div>
+    <div class="field"><label>Nova senha</label><div class="pass-wrap"><input type="password" id="pf-new-pass" placeholder="Deixe vazio para manter a atual"><button type="button" class="pass-eye" id="pf-new-pass-eye"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg></button></div><div class="hint">Mínimo de 6 caracteres.</div></div>
+    <div class="field"><label>Confirmar nova senha</label><div class="pass-wrap"><input type="password" id="pf-new-pass2" placeholder="Repita a nova senha"><button type="button" class="pass-eye" id="pf-new-pass2-eye"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg></button></div></div>
+    <div class="login-err" id="pf-err"></div>
+    <div class="modal-actions"><div></div><div class="right">
+      <button class="btn-secondary" id="pf-cancel-btn">Cancelar</button>
+      <button class="btn-primary" id="pf-save-btn">Salvar</button>
+    </div></div>
+  </div>
+</div>
+
 </div>
 
 <script type="module">
@@ -307,27 +394,40 @@ import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/1
 /*
   Camada de dados. Sincroniza via Firestore (mesmo projeto Firebase do painel
   flowsales-crm), num documento unico 'crm_sjc/main' com contacts, pipelines,
-  opportunities e waTemplate. Toda a interface chama as funcoes DB.*, que
-  continuam assincronas como antes -- so o backend por tras delas mudou de
-  localStorage para Firestore, o resto do arquivo nao precisou mudar.
+  opportunities, waTemplate e profiles. Toda a interface chama as funcoes
+  DB.*, que continuam assincronas como antes -- so o backend por tras delas
+  mudou de localStorage para Firestore, o resto do arquivo nao precisou mudar.
 
-  Login: e-mail/senha simples (mesmo par usado no painel flowsales-crm),
-  conferido aqui no cliente. Depois de validar, entra no Firestore como
-  usuario anonimo (signInAnonymously) so pra satisfazer as regras de
-  seguranca -- o controle de quem acessa e feito pela tela de login.
+  Login: e-mail primeiro, depois senha (dois passos). CRM_USERS e so a lista
+  de quem pode entrar (allowlist) -- a senha de cada um fica em
+  profiles[email].pass no Firestore, criada por ela mesma no primeiro acesso
+  (nao existe senha padrao pra decorar). Depois de validar, entra no
+  Firestore como usuario anonimo (signInAnonymously) so pra satisfazer as
+  regras de seguranca -- o controle de quem acessa e feito aqui no cliente.
 
   Modelo de dados:
   - Contact: a pessoa (nome, telefone, email, instagram, endereco, tags). Fica em Contatos.
   - Pipeline: um funil nomeado (ex.: SDR, Closer), com suas proprias etapas (stages).
   - Opportunity: um cartao dentro de uma pipeline, ligado a um Contact, numa etapa,
     com uma situacao (outcome): aberto, ganho ou perdido.
+  - profiles[email]: { firstName, lastName, photo, email (override), pass }.
 */
 
 const CRM_USERS = [
-  { email: 'tcaetano1706@gmail.com', pass: 'flow2024', name: 'Thiago' },
-  { email: 'carlos@flowsales.com',   pass: 'flow2024', name: 'Carlos' }
+  { email: 'tcaetano1706@gmail.com', name: 'Thiago', lastName: 'Caetano' },
+  { email: 'carlos@flowsales.com',   name: 'Carlos', lastName: '' }
 ];
 const SESSION_KEY = 'crm_sjc_session';
+const EYE_ICON = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+const EYE_OFF_ICON = '<path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.77 21.77 0 0 1 5.06-6.06M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.77 21.77 0 0 1-3.22 4.53"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+function togglePassVisibility(inputId, btn){
+  const input = document.getElementById(inputId);
+  if(!input) return;
+  const isPass = input.type === 'password';
+  input.type = isPass ? 'text' : 'password';
+  btn.querySelector('svg').innerHTML = isPass ? EYE_OFF_ICON : EYE_ICON;
+}
+document.querySelectorAll('.pass-eye svg').forEach(svg => { svg.innerHTML = EYE_ICON; });
 
 const _fbConfig = {
   apiKey: "AIzaSyBTqzj-9-AOI181sPCKvRsVGDujkWogIGI",
@@ -367,10 +467,12 @@ function digitsOnly(str){ return String(str||'').replace(/\D/g,''); }
 function escapeHtml(str){ return String(str||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function tagClass(tag){ if(tag==='alta') return 'tag-alta'; if(tag==='media') return 'tag-media'; if(tag==='baixa') return 'tag-baixa'; return 'tag-default'; }
 function waLink(contact){ let number = contact.waNumber || digitsOnly(contact.phone); if(number && !number.startsWith('55')) number = '55' + number; return number; }
+function initialsOf(first, last){ return ((first||'?')[0] + (last||'')[0]).toUpperCase(); }
 
 // ---- camada Firestore -----------------------------------------------------
 let _fbData = null;
 let _fbReady = false;
+let _fbReadyPromise = null;
 let _onFbUpdate = null;
 
 function _seedData(){
@@ -381,27 +483,33 @@ function _seedData(){
     createdAt: new Date().toISOString()
   }));
   const opportunities = contacts.map(c => ({ id: uid('o'), contactId: c.id, pipelineId: 'pl-sdr', stageId: 'novo', outcome: 'aberto', createdAt: new Date().toISOString() }));
-  return { contacts, pipelines: JSON.parse(JSON.stringify(DEFAULT_PIPELINES)), opportunities, waTemplate: DEFAULT_WA_TEMPLATE };
+  return { contacts, pipelines: JSON.parse(JSON.stringify(DEFAULT_PIPELINES)), opportunities, waTemplate: DEFAULT_WA_TEMPLATE, profiles: {} };
 }
 
 async function _fbInit(){
-  if(_fbReady) return;
-  await signInAnonymously(_fbAuth);
-  const snap = await getDoc(CRM_DOC);
-  if(snap.exists()){
-    _fbData = snap.data();
-    if(!_fbData.pipelines || !_fbData.pipelines.length) _fbData.pipelines = JSON.parse(JSON.stringify(DEFAULT_PIPELINES));
-  } else {
-    _fbData = _seedData();
-    await setDoc(CRM_DOC, _fbData);
-  }
-  onSnapshot(CRM_DOC, (snap) => {
-    if(!snap.exists()) return;
-    _fbData = snap.data();
-    if(_onFbUpdate) _onFbUpdate();
-  });
-  _fbReady = true;
+  if(_fbReadyPromise) return _fbReadyPromise;
+  _fbReadyPromise = (async () => {
+    await signInAnonymously(_fbAuth);
+    const snap = await getDoc(CRM_DOC);
+    if(snap.exists()){
+      _fbData = snap.data();
+      if(!_fbData.pipelines || !_fbData.pipelines.length) _fbData.pipelines = JSON.parse(JSON.stringify(DEFAULT_PIPELINES));
+      if(!_fbData.profiles) _fbData.profiles = {};
+    } else {
+      _fbData = _seedData();
+      await setDoc(CRM_DOC, _fbData);
+    }
+    onSnapshot(CRM_DOC, (snap) => {
+      if(!snap.exists()) return;
+      _fbData = snap.data();
+      if(!_fbData.profiles) _fbData.profiles = {};
+      if(_onFbUpdate) _onFbUpdate();
+    });
+    _fbReady = true;
+  })();
+  return _fbReadyPromise;
 }
+_fbInit(); // conecta em segundo plano assim que a pagina carrega, antes do login
 
 const DB = {
   onUpdate(cb){ _onFbUpdate = cb; },
@@ -412,7 +520,14 @@ const DB = {
   async getOpportunities(){ await _fbInit(); return _fbData.opportunities || []; },
   async saveOpportunities(list){ await _fbInit(); _fbData.opportunities = list; await setDoc(CRM_DOC, { opportunities: list }, { merge: true }); },
   async getWaTemplate(){ await _fbInit(); return _fbData.waTemplate || DEFAULT_WA_TEMPLATE; },
-  async saveWaTemplate(text){ await _fbInit(); _fbData.waTemplate = text; await setDoc(CRM_DOC, { waTemplate: text }, { merge: true }); }
+  async saveWaTemplate(text){ await _fbInit(); _fbData.waTemplate = text; await setDoc(CRM_DOC, { waTemplate: text }, { merge: true }); },
+  async getProfile(email){ await _fbInit(); return (_fbData.profiles && _fbData.profiles[email]) || {}; },
+  async saveProfile(email, data){
+    await _fbInit();
+    _fbData.profiles = _fbData.profiles || {};
+    _fbData.profiles[email] = Object.assign({}, _fbData.profiles[email]||{}, data);
+    await setDoc(CRM_DOC, { profiles: _fbData.profiles }, { merge: true });
+  }
 };
 
 let contacts = [], pipelines = [], opportunities = [];
@@ -421,6 +536,7 @@ let searchOpp = '', searchContacts = '';
 let tagFilters = new Set(), outcomeFilters = new Set();
 let draggedOppId = null;
 let activeTab = 'opp';
+let currentUser = null; // { baseEmail, firstName, lastName, photo, loginEmail }
 
 function contactById(id){ return contacts.find(c => c.id === id); }
 function pipelineById(id){ return pipelines.find(p => p.id === id); }
@@ -718,6 +834,75 @@ function bindStaticEvents(){
     localStorage.removeItem(SESSION_KEY);
     location.reload();
   });
+
+  document.getElementById('profile-btn').addEventListener('click', openProfileModal);
+  document.getElementById('pf-cancel-btn').addEventListener('click', () => document.getElementById('profile-modal-bg').classList.remove('show'));
+  document.getElementById('pf-save-btn').addEventListener('click', saveProfileModal);
+  document.getElementById('profile-avatar-edit').addEventListener('click', pickProfilePhoto);
+  document.getElementById('pf-new-pass-eye').addEventListener('click', function(){ togglePassVisibility('pf-new-pass', this); });
+  document.getElementById('pf-new-pass2-eye').addEventListener('click', function(){ togglePassVisibility('pf-new-pass2', this); });
+}
+
+let _pendingPhoto = null;
+function pickProfilePhoto(){
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*';
+  inp.onchange = (e) => {
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      _pendingPhoto = ev.target.result;
+      document.getElementById('profile-avatar-preview').innerHTML = '<img src="'+ev.target.result+'" alt="">';
+    };
+    reader.readAsDataURL(file);
+  };
+  inp.click();
+}
+async function openProfileModal(){
+  _pendingPhoto = null;
+  const profile = await DB.getProfile(currentUser.baseEmail);
+  document.getElementById('pf-first').value = profile.firstName || currentUser.firstName;
+  document.getElementById('pf-last').value = profile.lastName || currentUser.lastName || '';
+  document.getElementById('pf-current-email').textContent = profile.email || currentUser.baseEmail;
+  document.getElementById('pf-new-email').value = '';
+  document.getElementById('pf-new-pass').value = '';
+  document.getElementById('pf-new-pass2').value = '';
+  document.getElementById('pf-err').textContent = '';
+  const av = document.getElementById('profile-avatar-preview');
+  av.innerHTML = profile.photo ? ('<img src="'+profile.photo+'" alt="">') : initialsOf(profile.firstName||currentUser.firstName, profile.lastName||currentUser.lastName);
+  document.getElementById('profile-modal-bg').classList.add('show');
+}
+async function saveProfileModal(){
+  const firstName = document.getElementById('pf-first').value.trim();
+  const lastName = document.getElementById('pf-last').value.trim();
+  const newEmail = document.getElementById('pf-new-email').value.trim().toLowerCase();
+  const newPass = document.getElementById('pf-new-pass').value;
+  const newPass2 = document.getElementById('pf-new-pass2').value;
+  const errEl = document.getElementById('pf-err');
+  errEl.textContent = '';
+  if(!firstName){ errEl.textContent = 'Informe seu nome.'; return; }
+  if(newPass && newPass.length < 6){ errEl.textContent = 'A nova senha precisa ter pelo menos 6 caracteres.'; return; }
+  if(newPass && newPass !== newPass2){ errEl.textContent = 'As senhas não coincidem.'; return; }
+
+  const profile = await DB.getProfile(currentUser.baseEmail);
+  const data = { firstName, lastName };
+  if(_pendingPhoto) data.photo = _pendingPhoto;
+  if(newEmail) data.email = newEmail;
+  if(newPass) data.pass = newPass;
+  await DB.saveProfile(currentUser.baseEmail, data);
+
+  currentUser.firstName = firstName;
+  currentUser.lastName = lastName;
+  if(_pendingPhoto) currentUser.photo = _pendingPhoto;
+  if(newEmail) currentUser.loginEmail = newEmail;
+  localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
+  updateHeaderUser();
+  document.getElementById('profile-modal-bg').classList.remove('show');
+}
+function updateHeaderUser(){
+  document.getElementById('user-name').textContent = (currentUser.firstName+' '+(currentUser.lastName||'')).trim();
+  const av = document.getElementById('header-avatar');
+  av.innerHTML = currentUser.photo ? ('<img src="'+currentUser.photo+'" alt="">') : initialsOf(currentUser.firstName, currentUser.lastName);
 }
 
 let editingIsOpp = true;
@@ -852,32 +1037,116 @@ async function importLeads(){
   render();
 }
 
-// ---- login gate -------------------------------------------------------
-function showApp(name){
+// ---- login (dois passos: e-mail, depois senha / criar senha) ----------
+let _loginEmail = '';
+let _loginBaseUser = null; // entrada correspondente em CRM_USERS
+let _loginIsNewPass = false;
+
+function findUserByAnyEmail(email){
+  // acha o usuario base cujo e-mail original OU e-mail trocado no perfil bate
+  for(const u of CRM_USERS){
+    const ov = (_fbData && _fbData.profiles && _fbData.profiles[u.email]) || {};
+    const effEmail = (ov.email || u.email).toLowerCase();
+    if(effEmail === email) return u;
+  }
+  return null;
+}
+
+function showApp(user){
+  currentUser = user;
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app-root').style.display = 'block';
-  document.getElementById('user-name').textContent = name;
+  updateHeaderUser();
   boot();
 }
 
-document.getElementById('login-form').addEventListener('submit', (e) => {
+document.getElementById('login-step-email').addEventListener('submit', async (e) => {
   e.preventDefault();
+  const errEl = document.getElementById('login-email-err');
+  errEl.textContent = '';
   const email = document.getElementById('login-email').value.trim().toLowerCase();
-  const pass = document.getElementById('login-pass').value;
-  const user = CRM_USERS.find(u => u.email.toLowerCase() === email && u.pass === pass);
-  if(!user){
-    document.getElementById('login-err').textContent = 'E-mail ou senha incorretos.';
-    return;
+  const btn = e.target.querySelector('button[type=submit]');
+  btn.disabled = true; btn.textContent = 'Carregando...';
+  await _fbInit();
+  btn.disabled = false; btn.textContent = 'Continuar';
+
+  const baseUser = findUserByAnyEmail(email);
+  if(!baseUser){ errEl.textContent = 'Esse e-mail não tem acesso a este CRM.'; return; }
+
+  _loginEmail = email;
+  _loginBaseUser = baseUser;
+  const profile = (_fbData.profiles && _fbData.profiles[baseUser.email]) || {};
+  _loginIsNewPass = !profile.pass;
+
+  document.getElementById('login-step-email').style.display = 'none';
+  document.getElementById('login-step-pass').style.display = 'block';
+  document.getElementById('login-step-pass-email').textContent = email;
+  document.getElementById('login-pass').value = '';
+  document.getElementById('login-pass2').value = '';
+  document.getElementById('login-pass-err').textContent = '';
+  document.getElementById('login-pass-msg').textContent = '';
+
+  if(_loginIsNewPass){
+    document.getElementById('login-pass-label').textContent = 'Crie uma senha';
+    document.getElementById('login-pass2-field').style.display = 'block';
+    document.getElementById('login-pass-submit-btn').textContent = 'Criar senha e entrar';
+    document.getElementById('login-forgot-wrap').style.display = 'none';
+    document.getElementById('login-pass-msg').textContent = 'Primeiro acesso: escolha a senha que vai usar daqui pra frente.';
+  } else {
+    document.getElementById('login-pass-label').textContent = 'Senha';
+    document.getElementById('login-pass2-field').style.display = 'none';
+    document.getElementById('login-pass-submit-btn').textContent = 'Entrar';
+    document.getElementById('login-forgot-wrap').style.display = 'block';
   }
-  localStorage.setItem(SESSION_KEY, JSON.stringify({ email: user.email, name: user.name }));
-  showApp(user.name);
+  document.getElementById('login-pass').focus();
 });
 
-(function initSession(){
+document.getElementById('login-change-email-btn').addEventListener('click', () => {
+  document.getElementById('login-step-pass').style.display = 'none';
+  document.getElementById('login-step-email').style.display = 'block';
+  document.getElementById('login-email').focus();
+});
+
+document.getElementById('login-pass-eye').addEventListener('click', function(){ togglePassVisibility('login-pass', this); });
+document.getElementById('login-pass2-eye').addEventListener('click', function(){ togglePassVisibility('login-pass2', this); });
+
+document.getElementById('login-step-pass').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const errEl = document.getElementById('login-pass-err');
+  errEl.textContent = '';
+  const pass = document.getElementById('login-pass').value;
+
+  if(_loginIsNewPass){
+    const pass2 = document.getElementById('login-pass2').value;
+    if(pass.length < 6){ errEl.textContent = 'A senha precisa ter pelo menos 6 caracteres.'; return; }
+    if(pass !== pass2){ errEl.textContent = 'As senhas não coincidem.'; return; }
+    await DB.saveProfile(_loginBaseUser.email, { pass });
+  } else {
+    const profile = (_fbData.profiles && _fbData.profiles[_loginBaseUser.email]) || {};
+    if(profile.pass !== pass){ errEl.textContent = 'Senha incorreta.'; return; }
+  }
+
+  const profile = (_fbData.profiles && _fbData.profiles[_loginBaseUser.email]) || {};
+  const user = {
+    baseEmail: _loginBaseUser.email,
+    loginEmail: _loginEmail,
+    firstName: profile.firstName || _loginBaseUser.name,
+    lastName: profile.lastName || _loginBaseUser.lastName || '',
+    photo: profile.photo || ''
+  };
+  localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+  showApp(user);
+});
+
+document.getElementById('forgot-pass-btn').addEventListener('click', () => document.getElementById('forgot-modal-bg').classList.add('show'));
+document.getElementById('forgot-close-btn').addEventListener('click', () => document.getElementById('forgot-modal-bg').classList.remove('show'));
+
+(async function initSession(){
   try {
     const saved = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
-    if(saved && CRM_USERS.find(u => u.email === saved.email)){
-      showApp(saved.name);
+    if(saved && CRM_USERS.find(u => u.email === saved.baseEmail)){
+      await _fbInit();
+      showApp(saved);
       return;
     }
   } catch(e){}
