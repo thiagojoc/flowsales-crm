@@ -83,6 +83,14 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
 
+    // App pessoal de gestão de atividades (atividades.html), ferramenta
+    // separada do painel principal, mas no mesmo projeto Firebase. Documento
+    // único com colunas/tarefas, sem login (uso pessoal, só quem tem o link
+    // acessa). Mesmo padrão de workshopfs/users acima.
+    match /atividades_app/{docId} {
+      allow read, write: if true;
+    }
+
     // Qualquer outra coisa fora do previsto acima: negado por padrão.
     match /{document=**} {
       allow read, write: if false;

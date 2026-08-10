@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#16233F">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Atividades">
+<title>Atividades</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><rect width=%2224%22 height=%2224%22 rx=%226%22 fill=%22%2316233F%22/><path d=%22M7 12l3 3 7-7%22 stroke=%22%236FA8DC%22 stroke-width=%222.5%22 fill=%22none%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/></svg>">
+<style>
+  :root {
+    --navy: #16233F;
+    --navy-2: #24345A;
+    --navy-soft: rgba(22,35,63,0.06);
+    --blue: #4F8FE0;
+    --blue-light: #EAF2FB;
+    --brown: #8C6449;
+    --brown-light: #F3E9E0;
+    --white: #FFFFFF;
+    --paper: #F6F7FA;
+    --ink: #16233F;
+    --muted: rgba(22,35,63,0.56);
+    --border: rgba(22,35,63,0.12);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 0; background: var(--paper); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; -webkit-tap-highlight-color: transparent; }
+  .serif { font-family: ui-serif, Georgia, serif; }
+
+  header.top { display: flex; align-items: center; gap: 12px; padding: 14px 20px; background: var(--navy); color: var(--white); flex-wrap: wrap; }
+  header.top .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; letter-spacing: .01em; }
+  header.top .brand svg { flex-shrink: 0; }
+  header.top .today { font-size: 12.5px; color: rgba(255,255,255,0.65); }
+  .spacer { flex: 1; }
+  .overdue-flag { font-size: 12px; font-weight: 700; color: #E8C9B4; background: rgba(140,100,73,0.35); padding: 4px 10px; border-radius: 20px; display: none; align-items: center; gap: 5px; }
+  .overdue-flag.show { display: inline-flex; }
+
+  .icon-btn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16); color: var(--white); width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; flex-shrink: 0; }
+  .icon-btn:hover { background: rgba(255,255,255,0.16); }
+  .icon-btn.on { background: var(--blue); border-color: var(--blue); }
+
+  button { border: none; border-radius: 9px; padding: 9px 16px; font-size: 13.5px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  button:disabled { opacity: .5; cursor: default; }
+  .btn-primary { background: var(--navy); color: var(--white); }
+  .btn-primary:hover { background: var(--navy-2); }
+  .btn-accent { background: var(--blue); color: var(--white); }
+  .btn-accent:hover { filter: brightness(1.08); }
+  .btn-secondary { background: var(--white); color: var(--ink); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--navy-soft); }
+  .btn-danger { background: var(--brown-light); color: var(--brown); }
+  .btn-danger:hover { filter: brightness(0.97); }
+  .btn-sm { padding: 6px 11px; font-size: 12.5px; }
+  .btn-link { background: none; border: none; color: var(--blue); font-weight: 700; font-size: 13px; cursor: pointer; padding: 0; }
+  .btn-link:hover { text-decoration: underline; }
+
+  .capture-wrap { padding: 16px 20px 4px; }
+  .capture-bar { display: flex; gap: 10px; background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 6px 6px 6px 16px; box-shadow: 0 2px 10px -4px rgba(22,35,63,0.12); max-width: 720px; margin: 0 auto; align-items: center; }
+  .capture-bar svg { color: var(--blue); flex-shrink: 0; }
+  .capture-bar input { flex: 1; border: none; outline: none; font-size: 15px; padding: 10px 0; background: none; color: var(--ink); font-family: inherit; }
+  .capture-bar input::placeholder { color: var(--muted); }
+  .capture-hint { text-align: center; font-size: 11.5px; color: var(--muted); margin-top: 8px; }
+
+  .board-wrap { padding: 18px 20px 24px; }
+  .board { display: flex; gap: 14px; overflow-x: auto; overflow-y: hidden; align-items: stretch; height: calc(100vh - 220px); min-height: 320px; cursor: grab; scrollbar-width: thin; scrollbar-color: rgba(22,35,63,0.2) transparent; }
+  .board.panning { cursor: grabbing; user-select: none; }
+  .board::-webkit-scrollbar { height: 8px; }
+  .board::-webkit-scrollbar-track { background: transparent; }
+  .board::-webkit-scrollbar-thumb { background: rgba(22,35,63,0.18); border-radius: 4px; }
+  .board::-webkit-scrollbar-thumb:hover { background: rgba(22,35,63,0.3); }
+
+  .col { min-width: 270px; max-width: 270px; background: var(--white); border: 1px solid var(--border); border-radius: 14px; flex-shrink: 0; display: flex; flex-direction: column; }
+  .col.dragover { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-light) inset; }
+  .col-head { padding: 12px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 6px; border-radius: 14px 14px 0 0; }
+  .col-head.done { background: var(--blue-light); }
+  .col-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: var(--muted); }
+  .col-head.done .col-dot { background: var(--blue); }
+  .col-title { font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; background: none; border: none; color: var(--ink); padding: 3px 4px; width: 100%; font-family: inherit; }
+  .col-title:focus { outline: 1px solid var(--blue); border-radius: 4px; }
+  .col-count { font-size: 11.5px; color: var(--muted); font-weight: 700; flex-shrink: 0; }
+  .col-del { background: none; border: none; color: rgba(22,35,63,0.35); cursor: pointer; font-size: 14px; padding: 2px 4px; }
+  .col-del:hover { color: var(--brown); }
+  .col-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex: 1; min-height: 60px; scrollbar-width: thin; scrollbar-color: rgba(22,35,63,0.16) transparent; }
+  .col-body::-webkit-scrollbar { width: 6px; }
+  .col-body::-webkit-scrollbar-thumb { background: rgba(22,35,63,0.16); border-radius: 3px; }
+  .empty-col { font-size: 11.5px; color: var(--muted); text-align: center; padding: 16px 6px; }
+  .add-col { min-width: 220px; max-width: 220px; flex-shrink: 0; display: flex; align-items: flex-start; padding-top: 4px; }
+  .add-col button { width: 100%; background: var(--white); border: 1.5px dashed var(--border); color: var(--muted); padding: 12px; border-radius: 12px; font-size: 13px; }
+  .add-col button:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-light); }
+
+  .task { background: var(--white); border: 1px solid var(--border); border-left: 3px solid var(--border); border-radius: 10px; padding: 11px 12px; cursor: pointer; font-size: 13.5px; touch-action: pan-y; user-select: none; transition: box-shadow .12s; }
+  .task:hover { box-shadow: 0 2px 8px -3px rgba(22,35,63,0.18); }
+  .task.dragging-source { opacity: .35; }
+  .task.overdue { border-left-color: var(--brown); }
+  .task.due-today { border-left-color: var(--blue); }
+  .task .title { font-weight: 600; color: var(--ink); margin-bottom: 4px; line-height: 1.35; }
+  .task.done-task .title { text-decoration: line-through; color: var(--muted); }
+  .task .note-preview { color: var(--muted); font-size: 12px; margin-bottom: 6px; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .due-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 700; padding: 3px 8px; border-radius: 20px; background: var(--navy-soft); color: var(--muted); }
+  .due-chip.overdue { background: var(--brown-light); color: var(--brown); }
+  .due-chip.today { background: var(--blue-light); color: var(--blue); }
+  .drag-ghost { position: fixed; z-index: 100; pointer-events: none; opacity: .95; box-shadow: 0 18px 40px -10px rgba(22,35,63,0.35); transform: rotate(-1.5deg); }
+
+  .modal-bg { position: fixed; inset: 0; background: rgba(22,35,63,0.35); display: none; align-items: center; justify-content: center; z-index: 40; overflow-y: auto; padding: 30px 0; }
+  .modal-bg.show { display: flex; }
+  .modal { background: var(--white); border-radius: 16px; padding: 26px; width: 440px; max-width: 92vw; box-shadow: 0 30px 60px -15px rgba(22,35,63,0.3); }
+  .modal h3 { margin: 0 0 18px; font-size: 18px; color: var(--ink); }
+  .field { margin-bottom: 14px; }
+  .field-row { display: flex; gap: 10px; }
+  .field-row .field { flex: 1; min-width: 0; }
+  .field label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 6px; }
+  .field input, .field select, .field textarea { width: 100%; background: var(--paper); border: 1px solid var(--border); border-radius: 8px; color: var(--ink); padding: 10px 11px; font-size: 14px; font-family: inherit; }
+  .field textarea { min-height: 90px; resize: vertical; }
+  .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--blue); background: var(--white); }
+  .field .hint { font-size: 11.5px; color: var(--muted); margin-top: 5px; }
+  .modal-actions { display: flex; justify-content: space-between; margin-top: 20px; align-items: center; }
+  .modal-actions .right { display: flex; gap: 8px; }
+  .field-check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink); cursor: pointer; }
+  .field-check input { width: 15px; height: 15px; accent-color: var(--blue); cursor: pointer; }
+
+  .notif-banner { display: none; align-items: center; gap: 10px; background: var(--navy); color: var(--white); padding: 10px 20px; font-size: 13px; }
+  .notif-banner.show { display: flex; }
+  .notif-banner .spacer { flex: 1; }
+
+  @media (max-width: 640px) {
+    .board { height: calc(100vh - 240px); }
+    .col { min-width: 82vw; max-width: 82vw; }
+  }
+</style>
+</head>
+<body>
+
+<div class="notif-banner" id="notif-banner">
+  <span>Ative as notificações pra saber quando uma tarefa vencer ou atrasar.</span>
+  <div class="spacer"></div>
+  <button class="btn-accent btn-sm" id="notif-enable-btn">Ativar</button>
+  <button class="btn-link" id="notif-dismiss-btn" style="color:rgba(255,255,255,0.7);">agora não</button>
+</div>
+
+<header class="top">
+  <div class="brand">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="6" fill="#4F8FE0"/><path d="M7 12l3 3 7-7" stroke="#16233F" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Atividades
+  </div>
+  <span class="today" id="today-label"></span>
+  <div class="overdue-flag" id="overdue-flag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="7" x2="12" y2="13"/><line x1="12" y1="16.5" x2="12" y2="16.5"/></svg><span id="overdue-count">0</span> atrasada(s)</div>
+  <div class="spacer"></div>
+  <button class="icon-btn" id="notif-toggle-btn" title="Notificações">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+  </button>
+</header>
+
+<div class="capture-wrap">
+  <div class="capture-bar">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <input type="text" id="capture-input" placeholder="O que você precisa lembrar de fazer? Escreva e aperte Enter...">
+    <button class="btn-accent" id="capture-btn">Adicionar</button>
+  </div>
+  <div class="capture-hint">Cai direto na primeira coluna. Depois é só abrir o card pra dar prazo, nota e mover.</div>
+</div>
+
+<div class="board-wrap">
+  <div class="board" id="board"></div>
+</div>
+
+<div class="modal-bg" id="task-modal-bg">
+  <div class="modal">
+    <h3 id="task-modal-title">Nova tarefa</h3>
+    <input type="hidden" id="task-id">
+    <div class="field"><label>Título</label><input type="text" id="task-title" placeholder="O que precisa ser feito"></div>
+    <div class="field"><label>Nota</label><textarea id="task-note" placeholder="Detalhes, contexto, o que veio na demanda..."></textarea></div>
+    <div class="field-row">
+      <div class="field"><label>Vencimento</label><input type="date" id="task-due-date"></div>
+      <div class="field"><label>Hora</label><input type="time" id="task-due-time"></div>
+    </div>
+    <div class="field"><label>Coluna</label><select id="task-column"></select></div>
+    <div class="modal-actions">
+      <button class="btn-danger" id="task-delete-btn" style="display:none;">Excluir</button>
+      <div class="right">
+        <button class="btn-secondary" id="task-cancel-btn">Cancelar</button>
+        <button class="btn-primary" id="task-save-btn">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="col-modal-bg">
+  <div class="modal" style="width:360px;">
+    <h3 id="col-modal-title">Nova coluna</h3>
+    <div class="field"><label>Nome</label><input type="text" id="col-name-input" placeholder="Ex.: Aguardando resposta"></div>
+    <div class="field"><label class="field-check"><input type="checkbox" id="col-done-check"> Tarefas aqui contam como concluídas</label></div>
+    <div class="modal-actions"><div></div><div class="right">
+      <button class="btn-secondary" id="col-cancel-btn">Cancelar</button>
+      <button class="btn-primary" id="col-save-btn">Salvar</button>
+    </div></div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+/*
+  App pessoal de gestão de atividades. Kanban simples: colunas configuráveis,
+  tarefas com nota e vencimento opcional, captura rápida no topo. Sincroniza
+  via Firestore (mesmo projeto Firebase do painel FlowSales), sem login —
+  quem tem o link acessa. Documento único em atividades_app/main.
+*/
+
+const _fbConfig = {
+  apiKey: "AIzaSyBTqzj-9-AOI181sPCKvRsVGDujkWogIGI",
+  authDomain: "flowbody-30162.firebaseapp.com",
+  projectId: "flowbody-30162",
+  storageBucket: "flowbody-30162.firebasestorage.app",
+  messagingSenderId: "440511544358",
+  appId: "1:440511544358:web:00dc29d16295ed23f3fae7"
+};
+const _fbApp = initializeApp(_fbConfig);
+const _fbDB = getFirestore(_fbApp);
+const DOC_REF = doc(_fbDB, 'atividades_app', 'main');
+
+function uid(prefix){ return (prefix||'x') + Date.now() + Math.floor(Math.random()*100000); }
+function escapeHtml(str){ return String(str||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+const DEFAULT_COLUMNS = [
+  { id: 'col-inbox', label: 'Inbox', done: false },
+  { id: 'col-todo', label: 'A Fazer', done: false },
+  { id: 'col-doing', label: 'Em Andamento', done: false },
+  { id: 'col-done', label: 'Concluído', done: true }
+];
+
+let _fbData = null;
+let _fbReady = false;
+let _fbReadyPromise = null;
+let _onFbUpdate = null;
+
+async function _fbInit(){
+  if(_fbReady) return;
+  if(_fbReadyPromise) return _fbReadyPromise;
+  _fbReadyPromise = (async () => {
+    try {
+      const snap = await getDoc(DOC_REF);
+      if(snap.exists()){
+        _fbData = snap.data();
+        if(!_fbData.columns || !_fbData.columns.length) _fbData.columns = JSON.parse(JSON.stringify(DEFAULT_COLUMNS));
+        if(!_fbData.tasks) _fbData.tasks = [];
+      } else {
+        _fbData = { columns: JSON.parse(JSON.stringify(DEFAULT_COLUMNS)), tasks: [] };
+        await setDoc(DOC_REF, _fbData);
+      }
+      onSnapshot(DOC_REF, (snap) => {
+        if(!snap.exists()) return;
+        _fbData = snap.data();
+        if(!_fbData.tasks) _fbData.tasks = [];
+        if(_onFbUpdate) _onFbUpdate();
+      });
+      _fbReady = true;
+    } catch(err){
+      console.error('[Atividades] Falha ao conectar no Firestore:', err && (err.code || err.message) || err);
+      _fbReadyPromise = null;
+      throw err;
+    }
+  })();
+  return _fbReadyPromise;
+}
+_fbInit().catch(() => {});
+
+const DB = {
+  onUpdate(cb){ _onFbUpdate = cb; },
+  async getColumns(){ await _fbInit(); return _fbData.columns || []; },
+  async getTasks(){ await _fbInit(); return _fbData.tasks || []; },
+  async saveColumns(list){ await _fbInit(); _fbData.columns = list; await setDoc(DOC_REF, { columns: list }, { merge: true }); },
+  async saveTasks(list){ await _fbInit(); _fbData.tasks = list; await setDoc(DOC_REF, { tasks: list }, { merge: true }); }
+};
+
+let columns = [], tasks = [];
+let editingColumnId = null; // null = criando coluna nova
+
+function columnById(id){ return columns.find(c => c.id === id); }
+function taskById(id){ return tasks.find(t => t.id === id); }
+
+async function boot(){
+  columns = await DB.getColumns();
+  tasks = await DB.getTasks();
+  bindStaticEvents();
+  updateTodayLabel();
+  render();
+  initNotifications();
+  DB.onUpdate(() => {
+    columns = (_fbData.columns && _fbData.columns.length) ? _fbData.columns : columns;
+    tasks = _fbData.tasks || [];
+    render();
+  });
+  setInterval(() => { render(); checkDueNotifications(); }, 30000);
+}
+
+function updateTodayLabel(){
+  const now = new Date();
+  const label = now.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+  document.getElementById('today-label').textContent = label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+function dueState(task){
+  if(!task.dueAt) return null;
+  const col = columnById(task.columnId);
+  if(col && col.done) return null;
+  const due = new Date(task.dueAt);
+  const now = new Date();
+  if(due < now) return 'overdue';
+  const isToday = due.toDateString() === now.toDateString();
+  if(isToday) return 'today';
+  return 'future';
+}
+
+function formatDue(iso){
+  const d = new Date(iso);
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  const time = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  if(isToday) return 'Hoje ' + time;
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' + time;
+}
+
+function render(){
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+
+  let overdueCount = 0;
+
+  columns.forEach(col => {
+    const colEl = document.createElement('div');
+    colEl.className = 'col';
+    colEl.dataset.colId = col.id;
+
+    const items = tasks.filter(t => t.columnId === col.id)
+      .sort((a, b) => new Date(b.movedAt || b.createdAt) - new Date(a.movedAt || a.createdAt));
+
+    const head = document.createElement('div');
+    head.className = 'col-head' + (col.done ? ' done' : '');
+    head.innerHTML =
+      '<span class="col-dot"></span>' +
+      '<input class="col-title" data-id="' + col.id + '" value="' + escapeHtml(col.label) + '">' +
+      '<span class="col-count">' + items.length + '</span>' +
+      '<button class="col-del" data-id="' + col.id + '" title="Excluir coluna">&times;</button>';
+    colEl.appendChild(head);
+
+    const body = document.createElement('div');
+    body.className = 'col-body';
+    if(items.length === 0){
+      const empty = document.createElement('div');
+      empty.className = 'empty-col'; empty.textContent = 'Nada por aqui';
+      body.appendChild(empty);
+    }
+    items.forEach(task => {
+      const state = dueState(task);
+      if(state === 'overdue') overdueCount++;
+      const el = document.createElement('div');
+      el.className = 'task' + (state === 'overdue' ? ' overdue' : '') + (state === 'today' ? ' due-today' : '') + (col.done ? ' done-task' : '');
+      el.dataset.id = task.id;
+      el.innerHTML =
+        '<div class="title">' + escapeHtml(task.title) + '</div>' +
+        (task.note ? '<div class="note-preview">' + escapeHtml(task.note) + '</div>' : '') +
+        (task.dueAt ? '<span class="due-chip' + (state === 'overdue' ? ' overdue' : '') + (state === 'today' ? ' today' : '') + '">' +
+          '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
+          escapeHtml(formatDue(task.dueAt)) + '</span>' : '');
+      initTaskDrag(el, task);
+      body.appendChild(el);
+    });
+    colEl.appendChild(body);
+    board.appendChild(colEl);
+  });
+
+  const addColWrap = document.createElement('div');
+  addColWrap.className = 'add-col';
+  addColWrap.innerHTML = '<button id="add-col-btn">+ Nova coluna</button>';
+  board.appendChild(addColWrap);
+  document.getElementById('add-col-btn').addEventListener('click', () => openColumnModal(null));
+
+  board.querySelectorAll('.col-del').forEach(btn => btn.addEventListener('click', () => deleteColumn(btn.dataset.id)));
+  board.querySelectorAll('.col-title').forEach(inp => {
+    inp.addEventListener('click', (e) => { e.stopPropagation(); });
+    inp.addEventListener('dblclick', () => openColumnModal(inp.dataset.id));
+    inp.addEventListener('change', () => renameColumn(inp.dataset.id, inp.value));
+  });
+
+  const flag = document.getElementById('overdue-flag');
+  document.getElementById('overdue-count').textContent = overdueCount;
+  flag.classList.toggle('show', overdueCount > 0);
+}
+
+// ---- drag (mouse + toque) e clique no card ---------------------------
+function initTaskDrag(card, task){
+  card.addEventListener('pointerdown', (e) => {
+    if(e.target.closest('a,button')) return;
+    if(e.button !== undefined && e.button !== 0) return;
+    const startX = e.clientX, startY = e.clientY;
+    let dragging = false, ghost = null;
+
+    const onMove = (ev) => {
+      const dx = ev.clientX - startX, dy = ev.clientY - startY;
+      if(!dragging){
+        if(Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+        dragging = true;
+        card.classList.add('dragging-source');
+        try { card.setPointerCapture(e.pointerId); } catch(err){}
+        ghost = card.cloneNode(true);
+        ghost.classList.add('drag-ghost');
+        ghost.style.width = card.offsetWidth + 'px';
+        ghost.style.left = (ev.clientX - card.offsetWidth/2) + 'px';
+        ghost.style.top = (ev.clientY - 24) + 'px';
+        document.body.appendChild(ghost);
+      }
+      if(ghost){
+        ghost.style.left = (ev.clientX - card.offsetWidth/2) + 'px';
+        ghost.style.top = (ev.clientY - 24) + 'px';
+      }
+      document.querySelectorAll('.col').forEach(c => c.classList.remove('dragover'));
+      const under = document.elementFromPoint(ev.clientX, ev.clientY);
+      const col = under && under.closest('.col');
+      if(col) col.classList.add('dragover');
+    };
+
+    const onUp = async (ev) => {
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      document.querySelectorAll('.col').forEach(c => c.classList.remove('dragover'));
+      if(dragging){
+        card.classList.remove('dragging-source');
+        if(ghost) ghost.remove();
+        const under = document.elementFromPoint(ev.clientX, ev.clientY);
+        const col = under && under.closest('.col');
+        if(col && col.dataset.colId){
+          const colId = col.dataset.colId;
+          const liveTask = tasks.find(t => t.id === task.id);
+          if(liveTask && liveTask.columnId !== colId){
+            liveTask.columnId = colId;
+            liveTask.movedAt = new Date().toISOString();
+            await DB.saveTasks(tasks);
+            render();
+          }
+        }
+      } else {
+        openTaskModal(task.id);
+      }
+    };
+
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp, { once: true });
+  });
+}
+
+// segurar o mouse em area vazia do quadro e arrastar rola horizontalmente
+function initBoardPan(board){
+  board.addEventListener('pointerdown', (e) => {
+    if(e.target.closest('.task, button, a, input, select, textarea')) return;
+    if(e.button !== undefined && e.button !== 0) return;
+    const startX = e.clientX;
+    const startScrollLeft = board.scrollLeft;
+    let dragging = false;
+    const onMove = (ev) => {
+      const dx = ev.clientX - startX;
+      if(!dragging){
+        if(Math.abs(dx) < 6) return;
+        dragging = true;
+        board.classList.add('panning');
+        try { board.setPointerCapture(e.pointerId); } catch(err){}
+      }
+      board.scrollLeft = startScrollLeft - dx;
+    };
+    const onUp = () => {
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      board.classList.remove('panning');
+    };
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp, { once: true });
+  });
+}
+
+// ---- tarefas -----------------------------------------------------------
+function fillColumnOptions(selectedId){
+  const sel = document.getElementById('task-column');
+  sel.innerHTML = columns.map(c => '<option value="' + c.id + '">' + escapeHtml(c.label) + '</option>').join('');
+  sel.value = selectedId || columns[0].id;
+}
+
+function openTaskModal(taskId){
+  const task = taskId ? taskById(taskId) : null;
+  document.getElementById('task-modal-title').textContent = task ? 'Editar tarefa' : 'Nova tarefa';
+  document.getElementById('task-id').value = task ? task.id : '';
+  document.getElementById('task-title').value = task ? task.title : '';
+  document.getElementById('task-note').value = task ? (task.note || '') : '';
+  if(task && task.dueAt){
+    const d = new Date(task.dueAt);
+    document.getElementById('task-due-date').value = d.toISOString().slice(0,10);
+    document.getElementById('task-due-time').value = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  } else {
+    document.getElementById('task-due-date').value = '';
+    document.getElementById('task-due-time').value = '';
+  }
+  fillColumnOptions(task ? task.columnId : columns[0].id);
+  document.getElementById('task-delete-btn').style.display = task ? 'inline-block' : 'none';
+  document.getElementById('task-modal-bg').classList.add('show');
+  setTimeout(() => document.getElementById('task-title').focus(), 50);
+}
+function closeTaskModal(){ document.getElementById('task-modal-bg').classList.remove('show'); }
+
+async function saveTask(){
+  const id = document.getElementById('task-id').value;
+  const title = document.getElementById('task-title').value.trim();
+  if(!title){ document.getElementById('task-title').focus(); return; }
+  const note = document.getElementById('task-note').value.trim();
+  const dateVal = document.getElementById('task-due-date').value;
+  const timeVal = document.getElementById('task-due-time').value;
+  const columnId = document.getElementById('task-column').value;
+  let dueAt = null;
+  if(dateVal){
+    dueAt = new Date(dateVal + 'T' + (timeVal || '00:00') + ':00').toISOString();
+  }
+
+  if(id){
+    const task = taskById(id);
+    const columnChanged = task.columnId !== columnId;
+    Object.assign(task, { title, note, columnId, dueAt, updatedAt: new Date().toISOString() });
+    if(columnChanged) task.movedAt = new Date().toISOString();
+    if(dueAt !== task.dueAt){ task.notifiedDue = false; task.notifiedOverdue = false; }
+  } else {
+    const now = new Date().toISOString();
+    tasks.push({ id: uid('t'), title, note, columnId, dueAt, createdAt: now, movedAt: now, notifiedDue: false, notifiedOverdue: false });
+  }
+  await DB.saveTasks(tasks);
+  closeTaskModal();
+  render();
+}
+
+async function deleteTask(){
+  const id = document.getElementById('task-id').value;
+  tasks = tasks.filter(t => t.id !== id);
+  await DB.saveTasks(tasks);
+  closeTaskModal();
+  render();
+}
+
+async function quickCapture(){
+  const input = document.getElementById('capture-input');
+  const title = input.value.trim();
+  if(!title) return;
+  const now = new Date().toISOString();
+  tasks.push({ id: uid('t'), title, note: '', columnId: columns[0].id, dueAt: null, createdAt: now, movedAt: now, notifiedDue: false, notifiedOverdue: false });
+  await DB.saveTasks(tasks);
+  input.value = '';
+  render();
+}
+
+// ---- colunas -------------------------------------------------------------
+function openColumnModal(colId){
+  editingColumnId = colId;
+  const col = colId ? columnById(colId) : null;
+  document.getElementById('col-modal-title').textContent = col ? 'Editar coluna' : 'Nova coluna';
+  document.getElementById('col-name-input').value = col ? col.label : '';
+  document.getElementById('col-done-check').checked = col ? !!col.done : false;
+  document.getElementById('col-modal-bg').classList.add('show');
+  setTimeout(() => document.getElementById('col-name-input').focus(), 50);
+}
+function closeColumnModal(){ document.getElementById('col-modal-bg').classList.remove('show'); }
+
+async function saveColumn(){
+  const name = document.getElementById('col-name-input').value.trim();
+  if(!name) return;
+  const done = document.getElementById('col-done-check').checked;
+  if(editingColumnId){
+    const col = columnById(editingColumnId);
+    col.label = name; col.done = done;
+  } else {
+    columns.push({ id: uid('col'), label: name, done });
+  }
+  await DB.saveColumns(columns);
+  closeColumnModal();
+  render();
+}
+
+async function renameColumn(colId, newLabel){
+  newLabel = newLabel.trim();
+  if(!newLabel){ render(); return; }
+  const col = columnById(colId);
+  if(col && col.label !== newLabel){ col.label = newLabel; await DB.saveColumns(columns); }
+}
+
+async function deleteColumn(colId){
+  if(columns.length <= 1){ alert('Precisa ter pelo menos uma coluna.'); return; }
+  const hasTasks = tasks.some(t => t.columnId === colId);
+  if(hasTasks && !confirm('Essa coluna tem tarefas. Elas vão pra primeira coluna. Continuar?')) return;
+  const fallback = columns.find(c => c.id !== colId);
+  tasks.forEach(t => { if(t.columnId === colId) t.columnId = fallback.id; });
+  columns = columns.filter(c => c.id !== colId);
+  await DB.saveColumns(columns);
+  await DB.saveTasks(tasks);
+  render();
+}
+
+// ---- notificações ---------------------------------------------------------
+function initNotifications(){
+  if(!('Notification' in window)) return;
+  if(Notification.permission === 'default'){
+    const dismissed = localStorage.getItem('atividades_notif_dismissed');
+    if(!dismissed) document.getElementById('notif-banner').classList.add('show');
+  }
+  updateNotifIcon();
+}
+function updateNotifIcon(){
+  const btn = document.getElementById('notif-toggle-btn');
+  btn.classList.toggle('on', 'Notification' in window && Notification.permission === 'granted');
+}
+async function requestNotifPermission(){
+  if(!('Notification' in window)) { alert('Seu navegador não suporta notificações.'); return; }
+  const perm = await Notification.requestPermission();
+  updateNotifIcon();
+  document.getElementById('notif-banner').classList.remove('show');
+  if(perm === 'granted'){
+    new Notification('Notificações ativadas', { body: 'Vamos te avisar quando uma tarefa vencer ou atrasar.' });
+  }
+}
+function notify(title, body){
+  if(!('Notification' in window) || Notification.permission !== 'granted') return;
+  try { new Notification(title, { body, icon: 'icon-192.png' }); } catch(err){}
+}
+async function checkDueNotifications(){
+  if(!('Notification' in window) || Notification.permission !== 'granted') return;
+  const now = Date.now();
+  let changed = false;
+  tasks.forEach(t => {
+    if(!t.dueAt) return;
+    const col = columnById(t.columnId);
+    if(col && col.done) return;
+    const due = new Date(t.dueAt).getTime();
+    if(!t.notifiedDue && now >= due){
+      notify('Chegou a hora: ' + t.title, t.note || 'Essa tarefa venceu agora.');
+      t.notifiedDue = true; changed = true;
+    }
+    if(!t.notifiedOverdue && now >= due + 5*60*1000){
+      notify('Tarefa atrasada: ' + t.title, t.note || 'Já passou do prazo.');
+      t.notifiedOverdue = true; changed = true;
+    }
+  });
+  if(changed) await DB.saveTasks(tasks);
+}
+
+// ---- eventos estaticos -----------------------------------------------------
+function bindStaticEvents(){
+  initBoardPan(document.getElementById('board'));
+
+  document.getElementById('capture-btn').addEventListener('click', quickCapture);
+  document.getElementById('capture-input').addEventListener('keydown', (e) => { if(e.key === 'Enter'){ e.preventDefault(); quickCapture(); } });
+
+  document.getElementById('task-cancel-btn').addEventListener('click', closeTaskModal);
+  document.getElementById('task-save-btn').addEventListener('click', saveTask);
+  document.getElementById('task-delete-btn').addEventListener('click', deleteTask);
+
+  document.getElementById('col-cancel-btn').addEventListener('click', closeColumnModal);
+  document.getElementById('col-save-btn').addEventListener('click', saveColumn);
+
+  document.getElementById('notif-toggle-btn').addEventListener('click', requestNotifPermission);
+  document.getElementById('notif-enable-btn').addEventListener('click', requestNotifPermission);
+  document.getElementById('notif-dismiss-btn').addEventListener('click', () => {
+    document.getElementById('notif-banner').classList.remove('show');
+    localStorage.setItem('atividades_notif_dismissed', '1');
+  });
+
+  document.querySelectorAll('.modal-bg').forEach(bg => {
+    bg.addEventListener('click', (e) => { if(e.target === bg) bg.classList.remove('show'); });
+  });
+
+  document.addEventListener('visibilitychange', () => { if(!document.hidden) checkDueNotifications(); });
+}
+
+boot();
+</script>
+</body>
+</html>
