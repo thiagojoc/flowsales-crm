@@ -111,8 +111,50 @@
   .card { position: relative; background: #1c1f24; border: 1px solid rgba(217,169,77,0.14); border-radius: 9px; padding: 10px 12px 10px 30px; cursor: pointer; font-size: 15.5px; touch-action: pan-y; user-select: none; }
   .card.dragging-source { opacity: .35; }
   .card.selected { border-color: #d9a94d; box-shadow: 0 0 0 1px #d9a94d inset; }
-  .card-select { position: absolute; top: 11px; left: 10px; width: 16px; height: 16px; cursor: pointer; accent-color: #d9a94d; }
-  .col-select-all { width: 15px; height: 15px; cursor: pointer; accent-color: #d9a94d; flex-shrink: 0; }
+  /* checkbox discreto: some por padrao, so aparece no hover do card, quando
+     marcado, ou quando ja existe alguma selecao ativa no quadro (assim da
+     pra continuar marcando outros cards sem precisar passar o mouse em
+     cada um). Desenhado do zero (appearance:none) pra nao usar o quadrado
+     cinza padrao do navegador. */
+  .card-select {
+    -webkit-appearance: none; appearance: none;
+    position: absolute; top: 10px; left: 8px;
+    width: 17px; height: 17px; border-radius: 5px;
+    border: 1.5px solid rgba(217,169,77,0.45);
+    background: #14161a;
+    cursor: pointer; opacity: 0;
+    transition: opacity .15s, background .15s, border-color .15s;
+  }
+  .card:hover .card-select,
+  .board.has-selection .card-select,
+  .card-select:checked { opacity: 1; }
+  .card-select:checked { background: #d9a94d; border-color: #d9a94d; }
+  .card-select:checked::after {
+    content: ''; position: absolute; left: 5px; top: 2px;
+    width: 4px; height: 8px;
+    border: solid #14161a; border-width: 0 2px 2px 0;
+    transform: rotate(40deg);
+  }
+  .col-select-all {
+    -webkit-appearance: none; appearance: none;
+    position: relative;
+    width: 15px; height: 15px; border-radius: 4px;
+    border: 1.5px solid rgba(217,169,77,0.45);
+    background: #14161a;
+    cursor: pointer; flex-shrink: 0;
+    transition: background .15s, border-color .15s;
+  }
+  .col-select-all:checked, .col-select-all:indeterminate { background: #d9a94d; border-color: #d9a94d; }
+  .col-select-all:checked::after {
+    content: ''; position: absolute; left: 4px; top: 1px;
+    width: 3.5px; height: 7px;
+    border: solid #14161a; border-width: 0 2px 2px 0;
+    transform: rotate(40deg);
+  }
+  .col-select-all:indeterminate::after {
+    content: ''; position: absolute; left: 2.5px; top: 6px;
+    width: 8px; height: 2px; background: #14161a; border-radius: 1px;
+  }
   .drag-ghost { position: fixed; z-index: 100; pointer-events: none; opacity: .95; box-shadow: 0 18px 40px -10px rgba(0,0,0,.7); transform: rotate(-1.5deg); }
   .card .name { font-weight: 700; color: #f5f3ee; margin-bottom: 3px; }
   .card .office { color: #aeb0b6; font-size: 14px; margin-bottom: 4px; }
@@ -2027,6 +2069,10 @@ function updateBulkBar(){
   const n = selectedOppIds.size;
   bar.classList.toggle('show', n > 0);
   document.getElementById('bulk-count').textContent = n === 1 ? '1 selecionado' : n+' selecionados';
+  // com alguma selecao ativa, os checkboxes de todos os cards ficam visiveis
+  // (sem isso, so o card em hover mostraria o quadradinho)
+  const board = document.getElementById('board');
+  if(board) board.classList.toggle('has-selection', n > 0);
 }
 
 function renderBulkAddTagsChips(){
