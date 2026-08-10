@@ -960,7 +960,7 @@ Quem costuma decidir sobre investir em marketing aí no escritório?</div>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, signInAnonymously, signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 /*
   Camada de dados. Sincroniza via Firestore (mesmo projeto Firebase do painel
@@ -1162,7 +1162,10 @@ async function _fbInit(){
   if(_fbReadyPromise) return _fbReadyPromise;
   _fbReadyPromise = (async () => {
     try {
-      await signInAnonymously(_fbAuth);
+      // so entra anonimo se ainda nao tiver ninguem logado; se o Thiago ja
+      // autenticou com e-mail/senha de verdade (ver login migrado abaixo),
+      // nao substitui essa sessao real por uma anonima.
+      if(!_fbAuth.currentUser) await signInAnonymously(_fbAuth);
       const snap = await getDoc(CRM_DOC);
       if(snap.exists()){
         _fbData = snap.data();
@@ -2661,9 +2664,15 @@ async function importLeads(){
 }
 
 // ---- login (dois passos: e-mail, depois senha / criar senha) ----------
+// migracao parcial: o Thiago (REAL_AUTH_EMAIL) usa Firebase Auth de
+// verdade (conta criada no Console, com esqueci-minha-senha funcional);
+// o Carlos continua no sistema antigo (senha guardada no Firestore) ate
+// serem migrados tambem.
+const REAL_AUTH_EMAIL = 'tcaetano1706@gmail.com';
 let _loginEmail = '';
 let _loginBaseUser = null; // entrada correspondente em CRM_USERS
 let _loginIsNewPass = false;
+let _loginUseRealAuth = false;
 
 function findUserByAnyEmail(email){
   // acha o usuario base cujo e-mail original OU e-mail trocado no perfil bate
@@ -2705,8 +2714,9 @@ document.getElementById('login-step-email').addEventListener('submit', async (e)
 
   _loginEmail = email;
   _loginBaseUser = baseUser;
+  _loginUseRealAuth = (baseUser.email === REAL_AUTH_EMAIL);
   const profile = (_fbData.profiles && _fbData.profiles[baseUser.email]) || {};
-  _loginIsNewPass = !profile.pass;
+  _loginIsNewPass = !_loginUseRealAuth && !profile.pass;
 
   document.getElementById('login-step-email').style.display = 'none';
   document.getElementById('login-step-pass').style.display = 'block';
@@ -2716,7 +2726,12 @@ document.getElementById('login-step-email').addEventListener('submit', async (e)
   document.getElementById('login-pass-err').textContent = '';
   document.getElementById('login-pass-msg').textContent = '';
 
-  if(_loginIsNewPass){
+  if(_loginUseRealAuth){
+    document.getElementById('login-pass-label').textContent = 'Senha';
+    document.getElementById('login-pass2-field').style.display = 'none';
+    document.getElementById('login-pass-submit-btn').textContent = 'Entrar';
+    document.getElementById('login-forgot-wrap').style.display = 'block';
+  } else if(_loginIsNewPass){
     document.getElementById('login-pass-label').textContent = 'Crie uma senha';
     document.getElementById('login-pass2-field').style.display = 'block';
     document.getElementById('login-pass-submit-btn').textContent = 'Criar senha e entrar';
@@ -2746,7 +2761,20 @@ document.getElementById('login-step-pass').addEventListener('submit', async (e) 
   errEl.textContent = '';
   const pass = document.getElementById('login-pass').value;
 
-  if(_loginIsNewPass){
+  if(_loginUseRealAuth){
+    try {
+      await signInWithEmailAndPassword(_fbAuth, _loginBaseUser.email, pass);
+    } catch(err){
+      console.error('[CRM] falha no login com Firebase Auth:', err);
+      const code = err && err.code;
+      if(code === 'auth/user-not-found' || code === 'auth/invalid-credential' || code === 'auth/wrong-password'){
+        errEl.textContent = 'E-mail ou senha incorretos. Se essa conta ainda não foi criada no Firebase, crie ela no Console (Authentication) antes de entrar.';
+      } else {
+        errEl.textContent = 'Não deu pra entrar agora. Tente de novo em instantes.';
+      }
+      return;
+    }
+  } else if(_loginIsNewPass){
     const pass2 = document.getElementById('login-pass2').value;
     if(pass.length < 6){ errEl.textContent = 'A senha precisa ter pelo menos 6 caracteres.'; return; }
     if(pass !== pass2){ errEl.textContent = 'As senhas não coincidem.'; return; }
@@ -2768,7 +2796,22 @@ document.getElementById('login-step-pass').addEventListener('submit', async (e) 
   showApp(user);
 });
 
-document.getElementById('forgot-pass-btn').addEventListener('click', () => document.getElementById('forgot-modal-bg').classList.add('show'));
+document.getElementById('forgot-pass-btn').addEventListener('click', async () => {
+  if(_loginUseRealAuth){
+    const errEl = document.getElementById('login-pass-err');
+    const msgEl = document.getElementById('login-pass-msg');
+    errEl.textContent = '';
+    try {
+      await sendPasswordResetEmail(_fbAuth, _loginBaseUser.email);
+      msgEl.textContent = 'Enviamos um link pra esse e-mail. Abra e cadastre uma senha nova.';
+    } catch(err){
+      console.error('[CRM] falha ao enviar e-mail de redefinição:', err);
+      errEl.textContent = 'Não deu pra enviar o e-mail agora.';
+    }
+    return;
+  }
+  document.getElementById('forgot-modal-bg').classList.add('show');
+});
 document.getElementById('forgot-close-btn').addEventListener('click', () => document.getElementById('forgot-modal-bg').classList.remove('show'));
 
 (async function initSession(){
