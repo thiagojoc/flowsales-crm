@@ -157,6 +157,22 @@
 
   .import-area textarea { width: 100%; min-height: 160px; background: #1c1f24; border: 1px solid rgba(217,169,77,0.18); border-radius: 7px; color: #f5f3ee; padding: 10px; font-size: 13px; font-family: ui-monospace, monospace; }
   .hint-block { font-size: 11.5px; color: #9a9da6; margin-top: 6px; line-height: 1.5; }
+
+  .import-dropzone { border: 1.5px dashed rgba(217,169,77,0.32); border-radius: 9px; padding: 26px 16px; text-align: center; color: #9a9da6; font-size: 13px; cursor: pointer; transition: border-color .15s, background .15s, color .15s; }
+  .import-dropzone:hover, .import-dropzone.dragover { border-color: #d9a94d; color: #d9a94d; background: rgba(217,169,77,0.06); }
+  .import-dropzone input[type=file] { display: none; }
+  .import-dropzone .import-icon { color: #d9a94d; margin-bottom: 8px; }
+  .import-filename { margin-top: 10px; font-size: 12.5px; color: #d9a94d; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .import-filename button { background: none; border: none; color: #9a9da6; cursor: pointer; font-size: 12px; text-decoration: underline; padding: 0; }
+  .import-error { color: #d9614a; font-size: 12.5px; margin-top: 10px; }
+  .import-preview-wrap { max-height: 260px; overflow-y: auto; margin-top: 12px; border: 1px solid rgba(217,169,77,0.14); border-radius: 8px; }
+  .import-preview-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .import-preview-table th, .import-preview-table td { padding: 7px 10px; border-bottom: 1px solid rgba(217,169,77,0.1); text-align: left; color: #f5f3ee; white-space: nowrap; }
+  .import-preview-table th { color: #9a9da6; font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: .05em; position: sticky; top: 0; background: #1c1f24; }
+  .import-preview-table td.import-fallback { color: #9a9da6; font-style: italic; }
+  .import-summary { font-size: 12.5px; color: #d9a94d; margin-top: 12px; font-weight: 700; }
+  .import-toggle-text { text-align: center; margin-top: 12px; }
+  .import-toggle-text button { background: none; border: none; color: #9a9da6; font-size: 12px; text-decoration: underline; cursor: pointer; padding: 0; }
   a.link { color: #d9a94d; text-decoration: none; }
   a.link:hover { text-decoration: underline; }
 
@@ -704,15 +720,39 @@ Quem costuma decidir sobre investir em marketing aí no escritório?</div>
 </div>
 
 <div class="modal-bg" id="import-modal-bg">
-  <div class="modal" style="width:520px;">
+  <div class="modal" style="width:620px;">
     <h3 class="serif">Importar leads</h3>
-    <div class="import-area">
+
+    <div id="import-file-area">
+      <label class="import-dropzone" id="import-dropzone" for="import-file-input">
+        <svg class="import-icon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <div>Clique pra escolher uma planilha, ou arraste ela aqui</div>
+        <div class="hint-block" style="margin-top:2px;">.xlsx, .xls ou .csv</div>
+        <input type="file" id="import-file-input" accept=".xlsx,.xls,.csv">
+      </label>
+      <div id="import-filename-wrap"></div>
+      <div class="hint-block">
+        Cabeçalho esperado: <strong>Nome</strong>, <strong>Telefone</strong>, Pipeline, Etapa, Tags (as quatro últimas são opcionais).
+        Cada linha vira um lead, entrando direto na pipeline e etapa indicadas. Se a pipeline ou etapa da planilha não existir ainda no CRM, o lead entra na pipeline selecionada agora, na primeira etapa dela.
+      </div>
+      <div class="import-error" id="import-error" style="display:none;"></div>
+      <div id="import-preview-area"></div>
+      <div class="import-toggle-text">
+        <button type="button" id="import-switch-text-btn">prefiro colar o texto manualmente</button>
+      </div>
+    </div>
+
+    <div class="import-area" id="import-text-area" style="display:none;">
       <textarea id="import-text" placeholder="Nome, Telefone, Escritorio, Email&#10;Um lead por linha"></textarea>
       <div class="hint-block">Uma linha por lead: nome, telefone, escritório (opcional), e-mail (opcional). Entram na pipeline selecionada, na primeira etapa, como "Aberto".</div>
+      <div class="import-toggle-text">
+        <button type="button" id="import-switch-file-btn">prefiro anexar uma planilha</button>
+      </div>
     </div>
+
     <div class="modal-actions"><div></div><div class="right">
       <button class="btn-secondary" id="cancel-import-btn">Cancelar</button>
-      <button class="btn-primary" id="confirm-import-btn">Importar</button>
+      <button class="btn-primary" id="confirm-import-btn" disabled>Importar</button>
     </div></div>
   </div>
 </div>
@@ -785,6 +825,9 @@ Quem costuma decidir sobre investir em marketing aí no escritório?</div>
 </div>
 
 </div>
+
+<!-- leitura de planilhas (.xlsx, .xls, .csv) pro importador de leads -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -1028,6 +1071,26 @@ const DB = {
   async savePipelines(list){ await _fbInit(); _fbData.pipelines = list; await setDoc(CRM_DOC, { pipelines: list }, { merge: true }); },
   async getOpportunities(){ await _fbInit(); return _fbData.opportunities || []; },
   async saveOpportunities(list){ await _fbInit(); _fbData.opportunities = list; await setDoc(CRM_DOC, { opportunities: list }, { merge: true }); },
+  // salva contatos e oportunidades juntos, numa unica escrita: salvar em duas
+  // chamadas separadas abre uma janela onde o snapshot que chega entre uma e
+  // outra tem os contatos novos mas as oportunidades ainda antigas, e o
+  // listener sobrescreve a variavel local com esse estado intermediario,
+  // fazendo a segunda chamada salvar as oportunidades novas por cima das
+  // antigas (perdendo o que acabou de ser criado). Usar isto sempre que os
+  // dois precisarem mudar juntos (importar leads, excluir lead, etc.).
+  async saveContactsAndOpportunities(contactsList, opportunitiesList){
+    await _fbInit();
+    _fbData.contacts = contactsList;
+    _fbData.opportunities = opportunitiesList;
+    await setDoc(CRM_DOC, { contacts: contactsList, opportunities: opportunitiesList }, { merge: true });
+  },
+  // mesma logica: excluir uma etapa mexe em pipelines e opportunities juntos
+  async savePipelinesAndOpportunities(pipelinesList, opportunitiesList){
+    await _fbInit();
+    _fbData.pipelines = pipelinesList;
+    _fbData.opportunities = opportunitiesList;
+    await setDoc(CRM_DOC, { pipelines: pipelinesList, opportunities: opportunitiesList }, { merge: true });
+  },
   async getWaTemplate(){ await _fbInit(); return _fbData.waTemplate || DEFAULT_WA_TEMPLATE; },
   async saveWaTemplate(text){ await _fbInit(); _fbData.waTemplate = text; await setDoc(CRM_DOC, { waTemplate: text }, { merge: true }); },
   async getProfile(email){ await _fbInit(); return (_fbData.profiles && _fbData.profiles[email]) || {}; },
@@ -1395,8 +1458,7 @@ async function deleteStage(stageId){
   if(!confirm('Excluir esta etapa? As oportunidades dela vão para a primeira etapa da pipeline.')) return;
   pipeline.stages = pipeline.stages.filter(s => s.id !== stageId);
   opportunities.forEach(o => { if(o.pipelineId === pipeline.id && o.stageId === stageId) o.stageId = pipeline.stages[0].id; });
-  await DB.savePipelines(pipelines);
-  await DB.saveOpportunities(opportunities);
+  await DB.savePipelinesAndOpportunities(pipelines, opportunities);
   render();
 }
 
@@ -1605,9 +1667,25 @@ function bindStaticEvents(){
   document.getElementById('delete-lead-btn').addEventListener('click', deleteLead);
 
   document.getElementById('export-btn').addEventListener('click', exportCsv);
-  document.getElementById('import-btn').addEventListener('click', () => { document.getElementById('import-text').value=''; document.getElementById('import-modal-bg').classList.add('show'); });
+  document.getElementById('import-btn').addEventListener('click', () => { resetImportModal(); document.getElementById('import-modal-bg').classList.add('show'); });
   document.getElementById('cancel-import-btn').addEventListener('click', () => document.getElementById('import-modal-bg').classList.remove('show'));
   document.getElementById('confirm-import-btn').addEventListener('click', importLeads);
+
+  document.getElementById('import-file-input').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(file) handleImportFile(file);
+  });
+  const importDropzone = document.getElementById('import-dropzone');
+  importDropzone.addEventListener('dragover', (e) => { e.preventDefault(); importDropzone.classList.add('dragover'); });
+  importDropzone.addEventListener('dragleave', () => importDropzone.classList.remove('dragover'));
+  importDropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    importDropzone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if(file) handleImportFile(file);
+  });
+  document.getElementById('import-switch-text-btn').addEventListener('click', () => switchImportMode('text'));
+  document.getElementById('import-switch-file-btn').addEventListener('click', () => switchImportMode('file'));
 
   document.getElementById('wa-template-btn').addEventListener('click', async () => {
     document.getElementById('wa-template-text').value = await DB.getWaTemplate();
@@ -1978,11 +2056,10 @@ async function saveLead(){
     contact = { id: uid('c'), firstName, lastName, office, phone, instagram, email, address, tags, note, waNumber, createdAt };
     contacts.push(contact);
   }
-  await DB.saveContacts(contacts);
-
+  let pipelineId, stageId;
   if(editingIsOpp){
-    const pipelineId = document.getElementById('lead-pipeline').value;
-    const stageId = document.getElementById('lead-stage').value;
+    pipelineId = document.getElementById('lead-pipeline').value;
+    stageId = document.getElementById('lead-stage').value;
     const outcome = document.getElementById('lead-outcome').value;
     if(oppId){
       const opp = opportunities.find(o => o.id === oppId);
@@ -1993,7 +2070,13 @@ async function saveLead(){
       const now = new Date().toISOString();
       opportunities.push({ id: uid('o'), contactId: contact.id, pipelineId, stageId, outcome, createdAt: now, stageChangedAt: now });
     }
-    await DB.saveOpportunities(opportunities);
+  }
+  // contatos e oportunidades salvos juntos numa unica escrita (ver comentario
+  // em DB.saveContactsAndOpportunities): salvar em duas chamadas separadas
+  // arriscava a segunda sobrescrever com um estado desatualizado.
+  await DB.saveContactsAndOpportunities(contacts, opportunities);
+
+  if(editingIsOpp){
     // pula direto pro pipeline/etapa escolhidos no modal, pra sempre ver onde o lead foi parar
     currentPipelineId = pipelineId;
     closeLeadModal();
@@ -2011,8 +2094,7 @@ async function deleteLead(){
   if(!confirm('Excluir este contato e todas as oportunidades ligadas a ele?')) return;
   contacts = contacts.filter(c => c.id !== id);
   opportunities = opportunities.filter(o => o.contactId !== id);
-  await DB.saveContacts(contacts);
-  await DB.saveOpportunities(opportunities);
+  await DB.saveContactsAndOpportunities(contacts, opportunities);
   closeLeadModal();
   render();
 }
@@ -2032,7 +2114,205 @@ function exportCsv(){
   URL.revokeObjectURL(url);
 }
 
+// ---- importar leads de planilha (.xlsx, .xls, .csv) ------------------------
+let _importMode = 'file'; // 'file' ou 'text' (o antigo modo de colar texto)
+let _importRows = []; // linhas ja lidas da planilha, prontas pra conferir e importar
+
+function normalizeImportText(str){
+  return String(str||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+const IMPORT_FIELD_ALIASES = {
+  nome: ['nome', 'nome completo', 'lead', 'contato', 'cliente'],
+  telefone: ['telefone', 'celular', 'whatsapp', 'fone', 'numero', 'numero de telefone'],
+  pipeline: ['pipeline', 'funil'],
+  etapa: ['etapa', 'estagio', 'stage', 'fase', 'coluna'],
+  tags: ['tags', 'tag', 'etiquetas', 'etiqueta']
+};
+
+function matchImportField(header){
+  const norm = normalizeImportText(header);
+  for(const field in IMPORT_FIELD_ALIASES){
+    if(IMPORT_FIELD_ALIASES[field].includes(norm)) return field;
+  }
+  return null;
+}
+
+function findPipelineByName(name){
+  if(!name) return null;
+  const norm = normalizeImportText(name);
+  return pipelines.find(p => normalizeImportText(p.name) === norm) || null;
+}
+function findStageByName(pipeline, name){
+  if(!pipeline || !name) return null;
+  const norm = normalizeImportText(name);
+  return pipeline.stages.find(s => normalizeImportText(s.label) === norm) || null;
+}
+
+// tags de prioridade (alta/media/baixa) entram no formato canonico usado no
+// resto do CRM, sem acento e minusculo, pra herdar cor e rotulo certos;
+// qualquer outra tag da planilha entra do jeito que foi escrita.
+function normalizeTagValue(raw){
+  const trimmed = String(raw||'').trim();
+  if(!trimmed) return null;
+  const bare = normalizeImportText(trimmed);
+  if(bare === 'alta' || bare === 'media' || bare === 'baixa') return bare;
+  return trimmed;
+}
+function parseTagsCell(str){
+  return String(str||'').split(/[,;]+/).map(normalizeTagValue).filter(Boolean);
+}
+function dedupeTags(list){
+  const seen = new Set(); const out = [];
+  list.forEach(t => { const k = t.toLowerCase(); if(!seen.has(k)){ seen.add(k); out.push(t); } });
+  return out;
+}
+
+function showImportError(msg){
+  const el = document.getElementById('import-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function processImportRows(rows){
+  document.getElementById('import-error').style.display = 'none';
+  if(!rows.length){ showImportError('Essa planilha está vazia.'); return; }
+  const headers = Object.keys(rows[0]);
+  const fieldByHeader = {};
+  headers.forEach(h => { const f = matchImportField(h); if(f && !Object.values(fieldByHeader).includes(f)) fieldByHeader[h] = f; });
+
+  if(!Object.values(fieldByHeader).includes('nome')){
+    showImportError('Não encontrei uma coluna de Nome no cabeçalho da planilha. Confira se a primeira linha tem os títulos das colunas.');
+    return;
+  }
+
+  _importRows = rows.map(row => {
+    const rec = { nome: '', telefone: '', pipelineRaw: '', etapaRaw: '', tagsRaw: '' };
+    headers.forEach(h => {
+      const field = fieldByHeader[h];
+      if(!field) return;
+      const val = String(row[h] ?? '').trim();
+      if(field === 'nome') rec.nome = val;
+      else if(field === 'telefone') rec.telefone = val;
+      else if(field === 'pipeline') rec.pipelineRaw = val;
+      else if(field === 'etapa') rec.etapaRaw = val;
+      else if(field === 'tags') rec.tagsRaw = val;
+    });
+    return rec;
+  }).filter(r => r.nome);
+
+  if(!_importRows.length){
+    showImportError('Nenhuma linha com o campo Nome preenchido foi encontrada.');
+    return;
+  }
+
+  renderImportPreview();
+}
+
+function handleImportFile(file){
+  document.getElementById('import-error').style.display = 'none';
+  document.getElementById('import-preview-area').innerHTML = '';
+  document.getElementById('confirm-import-btn').disabled = true;
+  _importRows = [];
+
+  const nameWrap = document.getElementById('import-filename-wrap');
+  nameWrap.innerHTML = '<div class="import-filename">' + escapeHtml(file.name) + ' <button type="button" id="import-remove-file-btn">trocar arquivo</button></div>';
+  document.getElementById('import-remove-file-btn').addEventListener('click', () => {
+    document.getElementById('import-file-input').value = '';
+    nameWrap.innerHTML = '';
+    document.getElementById('import-preview-area').innerHTML = '';
+    document.getElementById('confirm-import-btn').disabled = true;
+  });
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, { type: 'array' });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+      processImportRows(rows);
+    } catch(err){
+      console.error('[CRM] falha ao ler planilha:', err);
+      showImportError('Não consegui ler esse arquivo. Confira se é uma planilha válida (.xlsx, .xls ou .csv).');
+    }
+  };
+  reader.onerror = () => showImportError('Não consegui ler esse arquivo.');
+  reader.readAsArrayBuffer(file);
+}
+
+function renderImportPreview(){
+  const fallbackPipeline = pipelineById(currentPipelineId);
+  const rowsHtml = _importRows.slice(0, 12).map(r => {
+    const targetPipeline = findPipelineByName(r.pipelineRaw) || fallbackPipeline;
+    const targetStage = findStageByName(targetPipeline, r.etapaRaw) || (targetPipeline ? targetPipeline.stages[0] : null);
+    const pipelineFallback = r.pipelineRaw && !findPipelineByName(r.pipelineRaw);
+    const stageFallback = r.etapaRaw && !findStageByName(targetPipeline, r.etapaRaw);
+    return '<tr>' +
+      '<td>' + escapeHtml(r.nome) + '</td>' +
+      '<td>' + escapeHtml(r.telefone) + '</td>' +
+      '<td class="' + (pipelineFallback ? 'import-fallback' : '') + '">' + escapeHtml(targetPipeline ? targetPipeline.name : 'nenhuma pipeline disponível') + '</td>' +
+      '<td class="' + (stageFallback ? 'import-fallback' : '') + '">' + escapeHtml(targetStage ? targetStage.label : 'nenhuma etapa disponível') + '</td>' +
+      '<td>' + escapeHtml(r.tagsRaw) + '</td>' +
+    '</tr>';
+  }).join('');
+  const moreCount = _importRows.length - 12;
+  document.getElementById('import-preview-area').innerHTML =
+    '<div class="import-summary">' + _importRows.length + ' lead(s) encontrado(s) na planilha.</div>' +
+    '<div class="import-preview-wrap"><table class="import-preview-table"><thead><tr><th>Nome</th><th>Telefone</th><th>Pipeline</th><th>Etapa</th><th>Tags</th></tr></thead><tbody>' + rowsHtml + '</tbody></table></div>' +
+    (moreCount > 0 ? '<div class="hint-block">e mais ' + moreCount + ' lead(s), que também vão ser importados.</div>' : '') +
+    '<div class="hint-block">Em itálico: a pipeline ou etapa escrita na planilha não foi encontrada no CRM, então esse lead vai entrar no valor mostrado (o padrão da pipeline selecionada agora).</div>';
+  document.getElementById('confirm-import-btn').disabled = false;
+}
+
+function resetImportModal(){
+  _importMode = 'file';
+  _importRows = [];
+  document.getElementById('import-file-input').value = '';
+  document.getElementById('import-filename-wrap').innerHTML = '';
+  document.getElementById('import-preview-area').innerHTML = '';
+  document.getElementById('import-error').style.display = 'none';
+  document.getElementById('import-text').value = '';
+  document.getElementById('import-file-area').style.display = 'block';
+  document.getElementById('import-text-area').style.display = 'none';
+  document.getElementById('confirm-import-btn').disabled = true;
+}
+
+function switchImportMode(mode){
+  _importMode = mode;
+  document.getElementById('import-file-area').style.display = mode === 'file' ? 'block' : 'none';
+  document.getElementById('import-text-area').style.display = mode === 'text' ? 'block' : 'none';
+  document.getElementById('confirm-import-btn').disabled = mode === 'file' ? !_importRows.length : false;
+}
+
+async function runFileImport(){
+  const fallbackPipeline = pipelineById(currentPipelineId);
+  _importRows.forEach(r => {
+    const nameParts = r.nome.split(' ').filter(Boolean);
+    const firstName = nameParts[0] || r.nome;
+    const lastName = nameParts.slice(1).join(' ');
+    const targetPipeline = findPipelineByName(r.pipelineRaw) || fallbackPipeline;
+    if(!targetPipeline) return;
+    const targetStage = findStageByName(targetPipeline, r.etapaRaw) || targetPipeline.stages[0];
+    if(!targetStage) return;
+    const tags = dedupeTags(parseTagsCell(r.tagsRaw));
+    const contact = { id: uid('c'), firstName, lastName, office: '', phone: r.telefone, instagram: '', email: '', address: '', tags, note: '', waNumber: digitsOnly(r.telefone) ? '55'+digitsOnly(r.telefone) : '', createdAt: new Date().toISOString() };
+    contacts.push(contact);
+    opportunities.push({ id: uid('o'), contactId: contact.id, pipelineId: targetPipeline.id, stageId: targetStage.id, outcome: 'aberto', createdAt: new Date().toISOString() });
+  });
+  await DB.saveContactsAndOpportunities(contacts, opportunities);
+}
+
 async function importLeads(){
+  if(_importMode === 'file'){
+    if(!_importRows.length) return;
+    document.getElementById('import-modal-bg').classList.remove('show');
+    await runFileImport();
+    render();
+    return;
+  }
+
+  // modo antigo: colar texto, um lead por linha, sempre na pipeline atual
   const text = document.getElementById('import-text').value.trim();
   document.getElementById('import-modal-bg').classList.remove('show');
   if(!text) return;
@@ -2051,8 +2331,7 @@ async function importLeads(){
     contacts.push(contact);
     opportunities.push({ id: uid('o'), contactId: contact.id, pipelineId: pipeline.id, stageId: pipeline.stages[0].id, outcome: 'aberto', createdAt: new Date().toISOString() });
   });
-  await DB.saveContacts(contacts);
-  await DB.saveOpportunities(opportunities);
+  await DB.saveContactsAndOpportunities(contacts, opportunities);
   render();
 }
 
