@@ -83,12 +83,14 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
 
-    // App pessoal de gestão de atividades (atividades.html), ferramenta
-    // separada do painel principal, mas no mesmo projeto Firebase. Documento
-    // único com colunas/tarefas, sem login (uso pessoal, só quem tem o link
-    // acessa). Mesmo padrão de workshopfs/users acima.
+    // App pessoal de gestão de atividades (thiagojoc/produtividade, repo
+    // separado, mesmo projeto Firebase). Documento único com colunas/
+    // tarefas. Login com e-mail e senha (Firebase Auth de verdade): só
+    // libera leitura/escrita pro e-mail do Thiago, então mesmo quem
+    // descobrir a config do Firebase (sempre pública em app client-side)
+    // não consegue ler nem gravar nada sem saber a senha dessa conta.
     match /atividades_app/{docId} {
-      allow read, write: if true;
+      allow read, write: if request.auth != null && request.auth.token.email == 'tcaetano1706@gmail.com';
     }
 
     // Qualquer outra coisa fora do previsto acima: negado por padrão.
