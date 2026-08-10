@@ -57,6 +57,11 @@
   .toolbar input[type=text]:focus, .toolbar input[type=date]:focus, .toolbar select:focus { outline: none; border-color: #d9a94d; }
   .kpi-custom-range { display: none; gap: 8px; align-items: center; }
   .kpi-custom-range.show { display: flex; }
+
+  .bulk-bar { display: none; align-items: center; gap: 14px; position: sticky; bottom: 0; z-index: 30; background: #1c1f24; border-top: 1px solid rgba(217,169,77,0.25); padding: 12px 20px; box-shadow: 0 -8px 24px -10px rgba(0,0,0,.5); font-size: 15px; color: #f5f3ee; }
+  .bulk-bar.show { display: flex; }
+  .field label.bulk-remove-tag-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 14.5px; font-weight: 400; color: #f5f3ee; cursor: pointer; text-transform: none; letter-spacing: normal; margin-bottom: 0; }
+  .bulk-remove-tag-row input { accent-color: #d9a94d; cursor: pointer; }
   button { border: none; border-radius: 8px; padding: 9px 16px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; }
   button:disabled { opacity: .55; cursor: default; }
   .btn-primary { background: #d9a94d; color: #0a0b0d; }
@@ -103,8 +108,11 @@
   .col-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 60px; overflow-y: auto; flex: 1; }
   .empty-col { font-size: 14px; color: #5c5e64; text-align: center; padding: 14px 6px; }
 
-  .card { background: #1c1f24; border: 1px solid rgba(217,169,77,0.14); border-radius: 9px; padding: 10px 12px; cursor: pointer; font-size: 15.5px; touch-action: pan-y; user-select: none; }
+  .card { position: relative; background: #1c1f24; border: 1px solid rgba(217,169,77,0.14); border-radius: 9px; padding: 10px 12px 10px 30px; cursor: pointer; font-size: 15.5px; touch-action: pan-y; user-select: none; }
   .card.dragging-source { opacity: .35; }
+  .card.selected { border-color: #d9a94d; box-shadow: 0 0 0 1px #d9a94d inset; }
+  .card-select { position: absolute; top: 11px; left: 10px; width: 16px; height: 16px; cursor: pointer; accent-color: #d9a94d; }
+  .col-select-all { width: 15px; height: 15px; cursor: pointer; accent-color: #d9a94d; flex-shrink: 0; }
   .drag-ghost { position: fixed; z-index: 100; pointer-events: none; opacity: .95; box-shadow: 0 18px 40px -10px rgba(0,0,0,.7); transform: rotate(-1.5deg); }
   .card .name { font-weight: 700; color: #f5f3ee; margin-bottom: 3px; }
   .card .office { color: #aeb0b6; font-size: 14px; margin-bottom: 4px; }
@@ -158,10 +166,10 @@
   .import-area textarea { width: 100%; min-height: 160px; background: #1c1f24; border: 1px solid rgba(217,169,77,0.18); border-radius: 7px; color: #f5f3ee; padding: 10px; font-size: 15.5px; font-family: ui-monospace, monospace; }
   .hint-block { font-size: 14px; color: #9a9da6; margin-top: 6px; line-height: 1.5; }
 
-  .import-dropzone { border: 1.5px dashed rgba(217,169,77,0.32); border-radius: 9px; padding: 26px 16px; text-align: center; color: #9a9da6; font-size: 15.5px; cursor: pointer; transition: border-color .15s, background .15s, color .15s; }
+  .import-dropzone { display: flex; flex-direction: column; align-items: center; border: 1.5px dashed rgba(217,169,77,0.32); border-radius: 9px; padding: 26px 16px; text-align: center; color: #9a9da6; font-size: 15.5px; cursor: pointer; transition: border-color .15s, background .15s, color .15s; }
   .import-dropzone:hover, .import-dropzone.dragover { border-color: #d9a94d; color: #d9a94d; background: rgba(217,169,77,0.06); }
   .import-dropzone input[type=file] { display: none; }
-  .import-dropzone .import-icon { color: #d9a94d; margin-bottom: 8px; }
+  .import-dropzone .import-icon { display: block; color: #d9a94d; margin-bottom: 8px; flex-shrink: 0; }
   .import-filename { margin-top: 10px; font-size: 15px; color: #d9a94d; display: flex; align-items: center; justify-content: center; gap: 8px; }
   .import-filename button { background: none; border: none; color: #9a9da6; cursor: pointer; font-size: 14.5px; text-decoration: underline; padding: 0; }
   .import-error { color: #d9614a; font-size: 15px; margin-top: 10px; }
@@ -194,6 +202,10 @@
   .filter-check { display: flex; align-items: center; gap: 8px; font-size: 15.5px; color: #f5f3ee; padding: 4px 0; cursor: pointer; }
   .filter-check input { accent-color: #d9a94d; width: 14px; height: 14px; cursor: pointer; }
   .filter-empty { font-size: 14.5px; color: #5c5e64; }
+  .filter-tag-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+  .filter-tag-row .filter-check { flex: 1; min-width: 0; }
+  .tag-del-btn { background: none; border: none; color: #5c5e64; cursor: pointer; font-size: 16px; padding: 2px 4px; flex-shrink: 0; }
+  .tag-del-btn:hover { color: #d9614a; }
 
   /* menu suspenso (Mais acoes) */
   .menu-panel { width: 200px; padding: 6px; }
@@ -355,6 +367,13 @@
     <p>Importe uma lista ou cadastre o primeiro lead manualmente.</p>
   </div>
   <div class="board" id="board"></div>
+</div>
+
+<div class="bulk-bar" id="bulk-bar">
+  <span id="bulk-count">0 selecionados</span>
+  <div style="flex:1;"></div>
+  <button class="btn-accent btn-sm" id="bulk-edit-btn">Editar selecionados</button>
+  <button class="btn-link" id="bulk-clear-btn">Limpar seleção</button>
 </div>
 
 <div id="view-contacts" style="display:none;">
@@ -703,7 +722,7 @@ Quem costuma decidir sobre investir em marketing aí no escritório?</div>
       <div class="field"><label>Quantidade</label><input type="number" id="act-new-qty" min="1" value="1"></div>
     </div>
     <div class="field-row">
-      <div class="field"><label>Contato (opcional)</label><select id="act-new-contact"><option value="">— avulso —</option></select></div>
+      <div class="field"><label>Contato (opcional)</label><select id="act-new-contact"><option value="">(avulso)</option></select></div>
       <div class="field"><label>Data</label><input type="date" id="act-new-date"></div>
     </div>
     <button class="btn-primary" id="act-add-btn" style="width:100%;">Adicionar</button>
@@ -753,6 +772,44 @@ Quem costuma decidir sobre investir em marketing aí no escritório?</div>
     <div class="modal-actions"><div></div><div class="right">
       <button class="btn-secondary" id="cancel-import-btn">Cancelar</button>
       <button class="btn-primary" id="confirm-import-btn" disabled>Importar</button>
+    </div></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="bulk-modal-bg">
+  <div class="modal" style="width:480px;">
+    <h3 class="serif">Editar leads selecionados</h3>
+    <p class="hint-block" id="bulk-modal-count" style="margin-bottom:16px;"></p>
+
+    <div class="field-row">
+      <div class="field"><label>Pipeline</label><select id="bulk-pipeline"><option value="">Não alterar</option></select></div>
+      <div class="field"><label>Etapa</label><select id="bulk-stage"><option value="">Não alterar</option></select></div>
+    </div>
+    <div class="field"><label>Situação</label><select id="bulk-outcome">
+      <option value="">Não alterar</option>
+      <option value="aberto">Aberto</option>
+      <option value="ganho">Ganho</option>
+      <option value="perdido">Perdido</option>
+    </select></div>
+
+    <div class="field">
+      <label>Adicionar tags</label>
+      <div class="tag-picker-chips" id="bulk-add-tags-chips"></div>
+      <div class="tag-picker-wrap">
+        <input type="text" id="bulk-add-tags-input" placeholder="Digite pra buscar ou criar uma tag">
+        <div class="tag-picker-dropdown" id="bulk-add-tags-dropdown"></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Remover tags</label>
+      <div id="bulk-remove-tags-list"></div>
+      <div class="hint-block" id="bulk-remove-tags-empty" style="display:none;">Nenhuma tag pra remover entre os leads selecionados.</div>
+    </div>
+
+    <div class="modal-actions"><div></div><div class="right">
+      <button class="btn-secondary" id="bulk-cancel-btn">Cancelar</button>
+      <button class="btn-primary" id="bulk-apply-btn">Aplicar</button>
     </div></div>
   </div>
 </div>
@@ -954,7 +1011,7 @@ function initBoardPan(board){
 
 function initCardDrag(card, opp){
   card.addEventListener('pointerdown', (e) => {
-    if(e.target.closest('a,button')) return; // deixa botoes/links do card agirem normalmente
+    if(e.target.closest('a,button,input')) return; // deixa botoes/links/checkbox do card agirem normalmente
     if(e.button !== undefined && e.button !== 0) return;
     const startX = e.clientX, startY = e.clientY;
     let dragging = false, ghost = null;
@@ -1125,6 +1182,10 @@ let dateFromFilter = '', dateToFilter = '';
 let contactsTagFilters = new Set();
 let contactsDateFrom = '', contactsDateTo = '';
 let kpiPeriod = 'today';
+
+// selecao em massa de leads no quadro, pra editar varios de uma vez
+let selectedOppIds = new Set();
+let _bulkAddTags = [];
 let kpiCustomFrom = '', kpiCustomTo = '';
 let activeTab = 'opp';
 let currentUser = null; // { baseEmail, firstName, lastName, photo, loginEmail }
@@ -1194,9 +1255,9 @@ function render(){
 }
 
 function formatDate(iso){
-  if(!iso) return '—';
+  if(!iso) return '';
   const d = new Date(iso);
-  if(isNaN(d.getTime())) return '—';
+  if(isNaN(d.getTime())) return '';
   return d.toLocaleDateString('pt-BR');
 }
 
@@ -1257,12 +1318,16 @@ function renderFilterPanel(allTags){
     list.innerHTML = '<div class="filter-empty">Nenhuma tag ainda.</div>';
   } else {
     list.innerHTML = allTags.map(t =>
-      '<label class="filter-check"><input type="checkbox" class="tag-check" value="'+escapeHtml(t)+'"'+(tagFilters.has(t)?' checked':'')+'> '+escapeHtml(tagLabel(t))+'</label>'
+      '<div class="filter-tag-row">' +
+        '<label class="filter-check"><input type="checkbox" class="tag-check" value="'+escapeHtml(t)+'"'+(tagFilters.has(t)?' checked':'')+'> '+escapeHtml(tagLabel(t))+'</label>' +
+        '<button type="button" class="tag-del-btn" data-tag="'+escapeHtml(t)+'" title="Excluir esta tag de todos os contatos">&times;</button>' +
+      '</div>'
     ).join('');
     list.querySelectorAll('.tag-check').forEach(chk => chk.addEventListener('change', () => {
       if(chk.checked) tagFilters.add(chk.value); else tagFilters.delete(chk.value);
       render();
     }));
+    list.querySelectorAll('.tag-del-btn').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); deleteTagEverywhere(btn.dataset.tag); }));
   }
   document.querySelectorAll('.outcome-check').forEach(chk => { chk.checked = outcomeFilters.has(chk.value); });
   document.getElementById('filter-date-from').value = dateFromFilter;
@@ -1314,12 +1379,19 @@ function renderOpp(){
       .sort((a, b) => new Date(b.stageChangedAt || b.createdAt) - new Date(a.stageChangedAt || a.createdAt));
     const head = document.createElement('div');
     head.className = 'col-head';
+    const selectedInCol = items.filter(o => selectedOppIds.has(o.id)).length;
     head.innerHTML =
+      (items.length ? '<input type="checkbox" class="col-select-all" data-stage-id="'+st.id+'" title="Selecionar todos os leads desta etapa">' : '') +
       '<span class="col-dot" style="background:'+st.color+'"></span>' +
       '<input class="col-title" data-id="'+st.id+'" value="'+escapeHtml(st.label)+'">' +
       '<span class="col-count">'+items.length+'</span>' +
       '<button class="col-del" data-id="'+st.id+'" title="Excluir etapa">&times;</button>';
     col.appendChild(head);
+    if(items.length){
+      const colSelectAll = head.querySelector('.col-select-all');
+      colSelectAll.checked = selectedInCol === items.length;
+      colSelectAll.indeterminate = selectedInCol > 0 && selectedInCol < items.length;
+    }
 
     const body = document.createElement('div');
     body.className = 'col-body';
@@ -1332,10 +1404,11 @@ function renderOpp(){
       const c = contactById(opp.contactId);
       if(!c) return;
       const card = document.createElement('div');
-      card.className = 'card'; card.dataset.id = opp.id;
+      card.className = 'card' + (selectedOppIds.has(opp.id) ? ' selected' : ''); card.dataset.id = opp.id;
       const fullName = (c.firstName+' '+c.lastName).trim();
       const wa = waLink(c);
       card.innerHTML =
+        '<input type="checkbox" class="card-select" data-id="'+opp.id+'"'+(selectedOppIds.has(opp.id) ? ' checked' : '')+'>' +
         '<div class="name">'+escapeHtml(fullName)+'</div>' +
         (c.office ? '<div class="office">'+escapeHtml(c.office)+'</div>' : '') +
         '<div class="phone">'+escapeHtml(c.phone||'')+'</div>' +
@@ -1366,6 +1439,18 @@ function renderOpp(){
     const msg = template.replace(/\{\{nome\}\}/g, c.firstName || '');
     window.open('https://wa.me/'+waLink(c)+'?text='+encodeURIComponent(msg), '_blank');
   }));
+
+  board.querySelectorAll('.card-select').forEach(chk => chk.addEventListener('change', () => {
+    if(chk.checked) selectedOppIds.add(chk.dataset.id); else selectedOppIds.delete(chk.dataset.id);
+    render();
+  }));
+  board.querySelectorAll('.col-select-all').forEach(chk => chk.addEventListener('change', () => {
+    const idsInCol = filtered.filter(o => o.stageId === chk.dataset.stageId).map(o => o.id);
+    if(chk.checked) idsInCol.forEach(id => selectedOppIds.add(id));
+    else idsInCol.forEach(id => selectedOppIds.delete(id));
+    render();
+  }));
+  updateBulkBar();
 }
 
 function renderContactsFilterPanel(allTags){
@@ -1374,12 +1459,16 @@ function renderContactsFilterPanel(allTags){
     list.innerHTML = '<div class="filter-empty">Nenhuma tag ainda.</div>';
   } else {
     list.innerHTML = allTags.map(t =>
-      '<label class="filter-check"><input type="checkbox" class="contacts-tag-check" value="'+escapeHtml(t)+'"'+(contactsTagFilters.has(t)?' checked':'')+'> '+escapeHtml(tagLabel(t))+'</label>'
+      '<div class="filter-tag-row">' +
+        '<label class="filter-check"><input type="checkbox" class="contacts-tag-check" value="'+escapeHtml(t)+'"'+(contactsTagFilters.has(t)?' checked':'')+'> '+escapeHtml(tagLabel(t))+'</label>' +
+        '<button type="button" class="tag-del-btn" data-tag="'+escapeHtml(t)+'" title="Excluir esta tag de todos os contatos">&times;</button>' +
+      '</div>'
     ).join('');
     list.querySelectorAll('.contacts-tag-check').forEach(chk => chk.addEventListener('change', () => {
       if(chk.checked) contactsTagFilters.add(chk.value); else contactsTagFilters.delete(chk.value);
       render();
     }));
+    list.querySelectorAll('.tag-del-btn').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); deleteTagEverywhere(btn.dataset.tag); }));
   }
   document.getElementById('contacts-filter-date-from').value = contactsDateFrom;
   document.getElementById('contacts-filter-date-to').value = contactsDateTo;
@@ -1558,7 +1647,7 @@ function bindStaticEvents(){
     render();
   });
 
-  document.getElementById('pipeline-select').addEventListener('change', (e) => { currentPipelineId = e.target.value; render(); });
+  document.getElementById('pipeline-select').addEventListener('change', (e) => { currentPipelineId = e.target.value; selectedOppIds.clear(); render(); });
 
   document.getElementById('edit-pipeline-name-btn').addEventListener('click', () => {
     const pipeline = pipelineById(currentPipelineId);
@@ -1729,6 +1818,32 @@ function bindStaticEvents(){
     if(dd.style.display === 'block' && !e.target.closest('.tag-picker-wrap')) dd.style.display = 'none';
   });
 
+  document.getElementById('bulk-edit-btn').addEventListener('click', openBulkModal);
+  document.getElementById('bulk-clear-btn').addEventListener('click', () => { selectedOppIds.clear(); render(); });
+  document.getElementById('bulk-cancel-btn').addEventListener('click', closeBulkModal);
+  document.getElementById('bulk-apply-btn').addEventListener('click', applyBulkEdit);
+  document.getElementById('bulk-pipeline').addEventListener('change', (e) => fillBulkStageOptions(e.target.value));
+
+  const bulkTagsInput = document.getElementById('bulk-add-tags-input');
+  bulkTagsInput.addEventListener('focus', renderBulkAddTagsDropdown);
+  bulkTagsInput.addEventListener('input', renderBulkAddTagsDropdown);
+  bulkTagsInput.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      const val = bulkTagsInput.value.trim();
+      if(val && !_bulkAddTags.some(t => t.toLowerCase() === val.toLowerCase())){
+        _bulkAddTags.push(val);
+        bulkTagsInput.value = '';
+        renderBulkAddTagsChips();
+        renderBulkAddTagsDropdown();
+      }
+    }
+  });
+  document.addEventListener('click', (e) => {
+    const dd = document.getElementById('bulk-add-tags-dropdown');
+    if(dd.style.display === 'block' && !e.target.closest('.tag-picker-wrap')) dd.style.display = 'none';
+  });
+
   document.getElementById('schedule-cancel-btn').addEventListener('click', () => document.getElementById('schedule-modal-bg').classList.remove('show'));
   document.getElementById('schedule-confirm-btn').addEventListener('click', confirmSchedule);
   document.getElementById('schedule-from-lead-btn').addEventListener('click', () => {
@@ -1861,6 +1976,17 @@ function closeLeadModal(){ document.getElementById('lead-modal-bg').classList.re
 
 function allKnownTags(){ return Array.from(new Set(contacts.flatMap(c => c.tags || []))).sort(); }
 
+// remove uma tag de TODOS os contatos que a tem, de uma vez (excluir a tag
+// do sistema, nao so de um lead). Usado a partir dos paineis de filtro.
+async function deleteTagEverywhere(tag){
+  if(!confirm('Excluir a tag "'+tagLabel(tag)+'" de todos os contatos? Essa ação não pode ser desfeita.')) return;
+  contacts.forEach(c => { if(c.tags && c.tags.includes(tag)) c.tags = c.tags.filter(t => t !== tag); });
+  tagFilters.delete(tag);
+  contactsTagFilters.delete(tag);
+  await DB.saveContacts(contacts);
+  render();
+}
+
 function renderLeadTagsChips(){
   const wrap = document.getElementById('lead-tags-chips');
   wrap.innerHTML = _leadTagsSelected.length ? _leadTagsSelected.map(t =>
@@ -1893,6 +2019,130 @@ function renderLeadTagsDropdown(){
     _leadTagsSelected.push(el.dataset.createTag);
     input.value = ''; renderLeadTagsChips(); renderLeadTagsDropdown(); input.focus();
   }));
+}
+
+// ---- edicao em massa (selecionar varios leads no quadro e editar juntos) --
+function updateBulkBar(){
+  const bar = document.getElementById('bulk-bar');
+  const n = selectedOppIds.size;
+  bar.classList.toggle('show', n > 0);
+  document.getElementById('bulk-count').textContent = n === 1 ? '1 selecionado' : n+' selecionados';
+}
+
+function renderBulkAddTagsChips(){
+  const wrap = document.getElementById('bulk-add-tags-chips');
+  wrap.innerHTML = _bulkAddTags.length ? _bulkAddTags.map(t =>
+    '<span class="tag-pill '+tagClass(t)+'">'+escapeHtml(tagLabel(t))+' <span class="tag-remove" data-remove-tag="'+escapeHtml(t)+'">&times;</span></span>'
+  ).join('') : '<span class="hint">Nenhuma tag selecionada</span>';
+  wrap.querySelectorAll('[data-remove-tag]').forEach(x => x.addEventListener('click', () => {
+    _bulkAddTags = _bulkAddTags.filter(t => t !== x.dataset.removeTag);
+    renderBulkAddTagsChips();
+  }));
+}
+
+function renderBulkAddTagsDropdown(){
+  const input = document.getElementById('bulk-add-tags-input');
+  const q = input.value.trim().toLowerCase();
+  const dd = document.getElementById('bulk-add-tags-dropdown');
+  const options = allKnownTags().filter(t => !_bulkAddTags.includes(t) && (!q || t.toLowerCase().includes(q)));
+  let html = options.map(t => '<div class="tag-picker-option" data-add-tag="'+escapeHtml(t)+'">'+escapeHtml(tagLabel(t))+'</div>').join('');
+  const typed = input.value.trim();
+  const exists = typed && (allKnownTags().some(t => t.toLowerCase() === typed.toLowerCase()) || _bulkAddTags.some(t => t.toLowerCase() === typed.toLowerCase()));
+  if(typed && !exists){
+    html += '<div class="tag-picker-option tag-picker-create" data-create-tag="'+escapeHtml(typed)+'">+ Criar tag "'+escapeHtml(typed)+'"</div>';
+  }
+  dd.innerHTML = html || '<div class="filter-empty" style="padding:8px 12px;">Nenhuma tag encontrada</div>';
+  dd.style.display = 'block';
+  dd.querySelectorAll('[data-add-tag]').forEach(el => el.addEventListener('click', () => {
+    _bulkAddTags.push(el.dataset.addTag);
+    input.value = ''; renderBulkAddTagsChips(); renderBulkAddTagsDropdown(); input.focus();
+  }));
+  dd.querySelectorAll('[data-create-tag]').forEach(el => el.addEventListener('click', () => {
+    _bulkAddTags.push(el.dataset.createTag);
+    input.value = ''; renderBulkAddTagsChips(); renderBulkAddTagsDropdown(); input.focus();
+  }));
+}
+
+// remover tags so oferece as que ja existem entre os leads selecionados
+// (nao faz sentido "remover" uma tag que ninguem ali tem).
+function renderBulkRemoveTagsList(){
+  const selectedContacts = Array.from(selectedOppIds)
+    .map(id => opportunities.find(o => o.id === id))
+    .filter(Boolean)
+    .map(o => contactById(o.contactId))
+    .filter(Boolean);
+  const tagsAmongSelected = Array.from(new Set(selectedContacts.flatMap(c => c.tags || []))).sort();
+  const list = document.getElementById('bulk-remove-tags-list');
+  document.getElementById('bulk-remove-tags-empty').style.display = tagsAmongSelected.length ? 'none' : 'block';
+  list.innerHTML = tagsAmongSelected.map(t =>
+    '<label class="bulk-remove-tag-row"><input type="checkbox" class="bulk-remove-tag-check" value="'+escapeHtml(t)+'"> '+escapeHtml(tagLabel(t))+'</label>'
+  ).join('');
+}
+
+function openBulkModal(){
+  if(!selectedOppIds.size) return;
+  _bulkAddTags = [];
+  document.getElementById('bulk-modal-count').textContent =
+    'Alterações vão ser aplicadas a '+selectedOppIds.size+' lead(s) selecionado(s). Deixe um campo em "Não alterar" pra não mexer nele.';
+
+  const pipeSel = document.getElementById('bulk-pipeline');
+  pipeSel.innerHTML = '<option value="">Não alterar</option>' +
+    pipelines.map(p => '<option value="'+p.id+'">'+escapeHtml(p.name)+'</option>').join('');
+  pipeSel.value = '';
+  fillBulkStageOptions('');
+
+  document.getElementById('bulk-outcome').value = '';
+  document.getElementById('bulk-add-tags-input').value = '';
+  document.getElementById('bulk-add-tags-dropdown').style.display = 'none';
+  renderBulkAddTagsChips();
+  renderBulkRemoveTagsList();
+
+  document.getElementById('bulk-modal-bg').classList.add('show');
+}
+function closeBulkModal(){ document.getElementById('bulk-modal-bg').classList.remove('show'); }
+
+function fillBulkStageOptions(pipelineId){
+  const stageSel = document.getElementById('bulk-stage');
+  const pipeline = pipelineId ? pipelineById(pipelineId) : (pipelineById(currentPipelineId) || pipelines[0]);
+  stageSel.innerHTML = '<option value="">Não alterar</option>' +
+    pipeline.stages.map(st => '<option value="'+st.id+'">'+escapeHtml(st.label)+'</option>').join('');
+}
+
+async function applyBulkEdit(){
+  const pipelineId = document.getElementById('bulk-pipeline').value;
+  const stageId = document.getElementById('bulk-stage').value;
+  const outcome = document.getElementById('bulk-outcome').value;
+  const tagsToAdd = _bulkAddTags.slice();
+  const tagsToRemove = Array.from(document.querySelectorAll('.bulk-remove-tag-check:checked')).map(c => c.value);
+
+  const ids = Array.from(selectedOppIds);
+  ids.forEach(oppId => {
+    const opp = opportunities.find(o => o.id === oppId);
+    if(!opp) return;
+    const targetPipelineId = pipelineId || opp.pipelineId;
+    let targetStageId = stageId;
+    if(!targetStageId){
+      // mudou de pipeline mas nao escolheu etapa: cai na primeira etapa da pipeline nova
+      targetStageId = (pipelineId && pipelineId !== opp.pipelineId) ? pipelineById(pipelineId).stages[0].id : opp.stageId;
+    }
+    const changed = targetPipelineId !== opp.pipelineId || targetStageId !== opp.stageId;
+    opp.pipelineId = targetPipelineId;
+    opp.stageId = targetStageId;
+    if(changed) opp.stageChangedAt = new Date().toISOString();
+    if(outcome) opp.outcome = outcome;
+
+    const contact = contactById(opp.contactId);
+    if(contact){
+      contact.tags = contact.tags || [];
+      tagsToAdd.forEach(t => { if(!contact.tags.includes(t)) contact.tags.push(t); });
+      if(tagsToRemove.length) contact.tags = contact.tags.filter(t => !tagsToRemove.includes(t));
+    }
+  });
+
+  await DB.saveContactsAndOpportunities(contacts, opportunities);
+  selectedOppIds.clear();
+  closeBulkModal();
+  render();
 }
 
 function gcalDateFmt(d){ return d.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z'; }
@@ -1944,7 +2194,7 @@ const ACT_TYPE_LABEL = { call: 'Ligação', whatsapp: 'WhatsApp', meeting: 'Reun
 
 function openActivitiesModal(){
   const contactSel = document.getElementById('act-new-contact');
-  contactSel.innerHTML = '<option value="">— avulso —</option>' + contacts
+  contactSel.innerHTML = '<option value="">(avulso)</option>' + contacts
     .slice()
     .sort((a,b) => (a.firstName||'').localeCompare(b.firstName||''))
     .map(c => '<option value="'+c.id+'">'+escapeHtml((c.firstName+' '+c.lastName).trim())+'</option>').join('');
@@ -1964,9 +2214,9 @@ function renderActivitiesList(){
   }
   list.innerHTML = sorted.map(a => {
     const c = a.contactId ? contactById(a.contactId) : null;
-    const name = c ? (c.firstName+' '+c.lastName).trim() : (a.manual ? 'Avulso' : '—');
+    const name = c ? (c.firstName+' '+c.lastName).trim() : (a.manual ? 'Avulso' : 'Sem contato');
     return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid rgba(217,169,77,0.08);font-size: 15px;">'
-      + '<span>'+formatDate(a.createdAt)+' — <b>'+(ACT_TYPE_LABEL[a.type]||a.type)+'</b> — '+escapeHtml(name)+(a.manual ? ' <span class="hint" style="display:inline;">(manual)</span>' : '')+'</span>'
+      + '<span>'+formatDate(a.createdAt)+' · <b>'+(ACT_TYPE_LABEL[a.type]||a.type)+'</b> · '+escapeHtml(name)+(a.manual ? ' <span class="hint" style="display:inline;">(manual)</span>' : '')+'</span>'
       + '<span data-del-act="'+a.id+'" title="Remover" style="cursor:pointer;color:#d9614a;font-size: 18px;line-height:1;padding:0 4px;flex-shrink:0;">&times;</span>'
       + '</div>';
   }).join('');
