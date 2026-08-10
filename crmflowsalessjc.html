@@ -47,11 +47,11 @@
   .approach-text { font-size: 16px; color: #f5f3ee; line-height: 1.6; white-space: pre-line; margin-bottom: 10px; }
   .approach-textarea { width: 100%; min-height: 100px; background: #1c1f24; border: 1px solid rgba(217,169,77,0.3); border-radius: 7px; color: #f5f3ee; padding: 9px 11px; font-size: 16px; line-height: 1.6; font-family: inherit; margin-bottom: 10px; resize: vertical; }
   .approach-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-  .approach-subtabs { display: flex; gap: 4px; padding: 14px 20px 0; border-bottom: 1px solid rgba(217,169,77,0.10); }
+  .approach-subtabs { display: flex; gap: 4px; padding: 14px 20px 0; border-bottom: 1px solid rgba(217,169,77,0.10); background: #0a0b0d; }
   .subtab-btn { background: none; border: none; color: #9a9da6; font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 8px 14px; cursor: pointer; border-bottom: 2px solid transparent; font-family: inherit; }
   .subtab-btn.active { color: #d9a94d; border-bottom-color: #d9a94d; }
 
-  .toolbar { display: flex; gap: 10px; align-items: center; padding: 14px 20px; flex-wrap: wrap; border-bottom: 1px solid rgba(217,169,77,0.10); }
+  .toolbar { display: flex; gap: 10px; align-items: center; padding: 14px 20px; flex-wrap: wrap; border-bottom: 1px solid rgba(217,169,77,0.10); background: #0a0b0d; }
   .toolbar input[type=text], .toolbar input[type=date], .toolbar select { background: #14161a; border: 1px solid rgba(217,169,77,0.18); border-radius: 8px; color: #f5f3ee; padding: 9px 12px; font-size: 16px; }
   .toolbar input[type=text] { min-width: 200px; }
   .toolbar input[type=text]:focus, .toolbar input[type=date]:focus, .toolbar select:focus { outline: none; border-color: #d9a94d; }
@@ -278,6 +278,35 @@
   .login-msg { font-size: 15px; color: #3fae81; margin-top: 8px; min-height: 16px; }
   #login-form button[type=submit] { width: 100%; margin-top: 6px; }
   .login-forgot { text-align: center; margin-top: 16px; }
+
+  /* conteudo em tema claro (fundo branco), com cabecalho/abas/barra de
+     ferramentas continuando escuros como moldura por cima. */
+  #view-opp, #view-contacts, #view-kpis, #view-approach { background: #FFFFFF; color: #1E2024; min-height: calc(100vh - 108px); }
+  .col { background: #F7F6F2; border-color: rgba(217,169,77,0.22); }
+  .col-title { color: #1E2024; }
+  .col-count { color: #7A7C82; }
+  .col-del { color: #9A9CA3; }
+  .empty-col { color: #9A9CA3; }
+  .card { background: #FFFFFF; border-color: rgba(217,169,77,0.28); box-shadow: 0 1px 3px rgba(30,32,36,0.06); }
+  .card .name { color: #1E2024; }
+  .card .office, .card .phone { color: #5B5D63; }
+  .card .card-label { color: #7A7C82; }
+  .card-icon-btn { background: #F2F1EC; border-color: rgba(217,169,77,0.25); color: #5B5D63; }
+  .card-select, .col-select-all { background: #FFFFFF; }
+  .empty-state { color: #7A7C82; }
+  .empty-state h2 { color: #1E2024; }
+  table.contacts-table th { color: #7A7C82; border-bottom-color: rgba(217,169,77,0.2); }
+  table.contacts-table td { border-bottom-color: rgba(30,32,36,0.08); color: #1E2024; }
+  table.contacts-table tr:hover td { background: rgba(217,169,77,0.06); }
+  .kpi-card { background: #F7F6F2; border-color: rgba(217,169,77,0.22); }
+  .kpi-lbl { color: #5B5D63; }
+  .kpi-adjust-btn { background: #FFFFFF; border-color: rgba(217,169,77,0.3); }
+  .stat-box { background: #FFFFFF; }
+  .stat-box .num { color: #1E2024; }
+  .approach-card { background: #F7F6F2; border-color: rgba(217,169,77,0.22); }
+  .approach-text { color: #1E2024; }
+  .approach-textarea { background: #FFFFFF; border-color: rgba(217,169,77,0.3); color: #1E2024; }
+  .approach-hint { color: #7A7C82; }
 </style>
 </head>
 <body>
