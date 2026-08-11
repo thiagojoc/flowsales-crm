@@ -506,13 +506,23 @@ window._fbCreateEmail = async (email,pass)=>{
     await deleteApp(_tmpApp).catch(()=>{});
   }
 };
+// so cai pro login anonimo se o Firebase confirmar que nao tem ninguem
+// logado ainda (espera o primeiro onAuthStateChanged, que reflete a sessao
+// persistida de verdade). Chamar signInAnonymously sem esperar isso corria
+// contra a restauracao de uma sessao real ja logada (Thiago/Carlos): quem
+// respondesse primeiro "ganhava", as vezes derrubando silenciosamente o
+// login de verdade pra uma sessao anonima por baixo dos panos.
+let _authInitChecked=false;
 window._fbAuthReady = new Promise(res=>{
   let _resolved=false;
   const unsub = onAuthStateChanged(_auth, (user)=>{
+    if(!_authInitChecked){
+      _authInitChecked=true;
+      if(!user) signInAnonymously(_auth).catch(e=>console.error('[FB Auth] signInAnonymously falhou:',e.code||e.message));
+    }
     if(user&&!_resolved){_resolved=true;unsub();res(user);}
   });
 });
-signInAnonymously(_auth).catch(e=>console.error('[FB Auth] signInAnonymously falhou:',e.code||e.message));
 (window._fbResolvers||[]).forEach(r=>r()); window._fbResolvers=[];
 </script>
 </head>
