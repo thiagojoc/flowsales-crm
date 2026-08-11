@@ -488,6 +488,7 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="datetime-local
 import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, updateDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getStorage, ref as _storageRef, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 const _fbConfig = {
   apiKey:"AIzaSyBTqzj-9-AOI181sPCKvRsVGDujkWogIGI",
   authDomain:"flowbody-30162.firebaseapp.com",
@@ -499,12 +500,17 @@ const _fbConfig = {
 const _app = initializeApp(_fbConfig);
 const _db = getFirestore(_app);
 const _auth = getAuth(_app);
+const _storage = getStorage(_app);
 window._fbReady = true;
 window._fbDB = _db;
 window._fbDoc = doc;
 window._fbSetDoc = setDoc; window._fbUpdateDoc = updateDoc;
 window._fbGetDoc = getDoc;
 window._fbOnSnapshot = onSnapshot;
+window._fbStorage = _storage;
+window._stRef = _storageRef;
+window._stUploadString = uploadString;
+window._stGetDownloadURL = getDownloadURL;
 window._fbAuth = _auth;
 window._fbSignInEmail = signInWithEmailAndPassword;
 window._fbUpdatePassword = updatePassword;
@@ -1156,15 +1162,20 @@ let _fbProfiles = {}; // fotos/nomes sincronizados via Firebase
 
 function _waitFB(){if(window._fbReady)return Promise.resolve();return new Promise(r=>{if(!window._fbResolvers)window._fbResolvers=[];window._fbResolvers.push(r);});}
 
-// Tamanho máximo por arquivo guardado no Firestore (documento tem limite de 1MiB;
-// base64 engorda ~33% o tamanho original, então ficamos com folga).
-const MAX_FILE_BYTES = 700*1024;
+// Tamanho máximo por arquivo. Não existe mais limite técnico real (o conteúdo
+// vai pro Firebase Storage, não pro documento do Firestore), esse teto aqui é
+// só um freio de segurança pra não estourar sem querer a cota gratuita do
+// plano (5GB guardados, 1GB baixado por dia): folgado o bastante pra qualquer
+// contrato ou comprovante em PDF/foto.
+const MAX_FILE_BYTES = 20*1024*1024;
 function _b64Size(dataUrl){ return dataUrl ? Math.ceil(dataUrl.length*0.75) : 0; }
 function _fileTooBig(dataUrl){ return _b64Size(dataUrl) > MAX_FILE_BYTES; }
 
-// Guarda o conteúdo (base64) de UM arquivo numa subcoleção própria do escritório,
-// separado do documento principal — assim ele sobrevive trocando de navegador/
-// aparelho, sem esbarrar no limite de 1MiB do documento principal.
+// Guarda o conteúdo de UM arquivo no Firebase Storage, separado do documento
+// principal — assim ele sobrevive trocando de navegador/aparelho, sem
+// esbarrar no limite de 1MiB por documento que o Firestore tem (era o que
+// limitava arquivo a ~700KB antes). Só um ponteiro leve (a URL de download)
+// fica salvo na subcoleção 'files' do escritório, no Firestore.
 const _fbBlobUploaded = new Set(); // evita re-subir o mesmo arquivo sem necessidade
 async function _fbSaveFileBlob(eid, fileId, dataUrl, meta){
   if(!dataUrl) return;
@@ -1172,8 +1183,11 @@ async function _fbSaveFileBlob(eid, fileId, dataUrl, meta){
   if(_fbBlobUploaded.has(cacheKey)) return;
   try{
     await _waitFB();
+    const objRef=window._stRef(window._fbStorage,'flowsales_crm/'+eid+'/files/'+fileId);
+    await window._stUploadString(objRef,dataUrl,'data_url');
+    const url=await window._stGetDownloadURL(objRef);
     const ref=window._fbDoc(window._fbDB,'flowsales_crm',eid,'files',fileId);
-    await window._fbSetDoc(ref,Object.assign({data:dataUrl},meta||{}));
+    await window._fbSetDoc(ref,Object.assign({data:url},meta||{}));
     _fbBlobUploaded.add(cacheKey);
   }catch(e){ console.error('[FB] ❌ Salvar arquivo '+fileId+':',e.code||e.message); }
 }
@@ -1182,6 +1196,9 @@ async function _fbLoadFileBlob(eid, fileId){
     await _waitFB();
     const ref=window._fbDoc(window._fbDB,'flowsales_crm',eid,'files',fileId);
     const snap=await window._fbGetDoc(ref);
+    // 'data' pode ser uma URL do Storage (arquivos novos) ou ainda um base64
+    // direto (arquivos salvos antes dessa migração) — os dois funcionam do
+    // mesmo jeito em src/href, então não precisa converter nada.
     return snap.exists() ? snap.data().data : null;
   }catch(e){ console.error('[FB] ❌ Carregar arquivo '+fileId+':',e.code||e.message); return null; }
 }
@@ -3499,7 +3516,7 @@ async function viewReplyFile(taskId,replyId){
 async function downloadReplyFile(taskId,replyId,fileName){
   const data=await _getReplyFileData(taskId,replyId);
   if(!data){_showToast('Arquivo não encontrado','var(--red)');return;}
-  const a=document.createElement('a');a.href=data;a.download=fileName||'arquivo';document.body.appendChild(a);a.click();a.remove();
+  const a=document.createElement('a');a.href=data;a.download=fileName||'arquivo';a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
 }
 // Anexo principal da demanda: mesmo padrão de busca na nuvem quando falta local
 // (acessando de outro navegador/dispositivo que não fez o upload original).
@@ -3520,7 +3537,7 @@ async function viewTaskFile(taskId){
 async function downloadTaskFile(taskId,fileName){
   const data=await _getTaskFileData(taskId);
   if(!data){_showToast('Arquivo não encontrado','var(--red)');return;}
-  const a=document.createElement('a');a.href=data;a.download=fileName||'arquivo';document.body.appendChild(a);a.click();a.remove();
+  const a=document.createElement('a');a.href=data;a.download=fileName||'arquivo';a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
 }
 // Comprovante de gasto: mesmo padrão de busca na nuvem quando falta local.
 async function _getGastoFileData(gastoId){
@@ -3539,7 +3556,7 @@ async function viewGastoFile(gastoId){
 async function downloadGastoFile(gastoId,fileName){
   const data=await _getGastoFileData(gastoId);
   if(!data){_showToast('Arquivo não encontrado','var(--red)');return;}
-  const a=document.createElement('a');a.href=data;a.download=fileName||'arquivo';document.body.appendChild(a);a.click();a.remove();
+  const a=document.createElement('a');a.href=data;a.download=fileName||'arquivo';a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
 }
 // Comprovante/contrato de venda: idem.
 async function _getVendaFileData(vendaId){
@@ -3558,13 +3575,13 @@ async function viewVendaFile(vendaId){
 async function downloadVendaFile(vendaId,fileName){
   const data=await _getVendaFileData(vendaId);
   if(!data){_showToast('Arquivo não encontrado','var(--red)');return;}
-  const a=document.createElement('a');a.href=data;a.download=fileName||'arquivo';document.body.appendChild(a);a.click();a.remove();
+  const a=document.createElement('a');a.href=data;a.download=fileName||'arquivo';a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
 }
 function _showReuploadModal(id,f){
   const ov=document.getElementById('ov');const tt=document.getElementById('mott');const mb=document.getElementById('mobb');const mf=document.getElementById('moff');
   if(!ov||!tt||!mb||!mf)return;
   tt.textContent='📁 '+f.name;
-  mb.innerHTML=`<div style="padding:12px;background:var(--s2);border-radius:8px;border:0.5px solid var(--bdr);margin-bottom:14px"><div style="font-size:14px;color:var(--t2);margin-bottom:8px">O arquivo <strong>${f.name}</strong> foi salvo sem o conteúdo (o conteúdo não é sincronizado entre dispositivos por limitação de tamanho). Para visualizá-lo novamente, reenvie o arquivo abaixo.</div><div class="fg"><label>Reenviar arquivo</label><input type="file" id="reup-file" class="fi" style="padding:5px;font-size:14px"></div></div>`;
+  mb.innerHTML=`<div style="padding:12px;background:var(--s2);border-radius:8px;border:0.5px solid var(--bdr);margin-bottom:14px"><div style="font-size:14px;color:var(--t2);margin-bottom:8px">Não encontrei o conteúdo do arquivo <strong>${f.name}</strong> na nuvem (pode ter sido enviado enquanto o dispositivo estava offline, ou antes dessa área existir). Para visualizá-lo novamente, reenvie o arquivo abaixo.</div><div class="fg"><label>Reenviar arquivo</label><input type="file" id="reup-file" class="fi" style="padding:5px;font-size:14px"></div></div>`;
   mf.innerHTML=`<button class="bgh" onclick="cModal(null,1)">Cancelar</button><button class="bpr" onclick="_doReupload('${id}')">Salvar arquivo</button>`;
   _save=()=>{};
   ov.classList.add('on');
@@ -3589,7 +3606,7 @@ function _upfNext(){
   const reader=new FileReader();
   reader.onload=e=>{
     if(_fileTooBig(e.target.result)){
-      _showToast('⚠️ "'+file.name+'" é grande demais (máx. ~700KB) e não será salvo na nuvem — só neste navegador.','var(--red)');
+      _showToast('⚠️ "'+file.name+'" é grande demais (máx. '+(MAX_FILE_BYTES/1024/1024).toFixed(0)+'MB) e não será salvo na nuvem — só neste navegador.','var(--red)');
     }
     _upfCurrent={data:e.target.result,name:file.name,type,size};
     document.getElementById('upf-ttl').value=file.name.replace(/\.[^.]+$/,'');

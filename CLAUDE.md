@@ -27,3 +27,21 @@ CRM de prospecção da FlowSales (`crmflowsalessjc.html`), single file, sem
 build, com login próprio (e-mail/senha de Thiago e Carlos). Sincroniza via
 Firestore no mesmo projeto Firebase compartilhado com as outras
 ferramentas do Thiago. Publicado via GitHub Pages.
+
+Este repositório também guarda `index.html`, o painel principal (dashboard
+de escritórios, financeiro, tarefas etc.), outro single file separado do
+CRM acima, mas no mesmo projeto Firebase.
+
+**Arquivos anexados (contratos, comprovantes, anexos) em `index.html` vão
+pro Firebase Storage**, não pro Firestore. Antes iam como base64 dentro de
+um documento na subcoleção `flowsales_crm/{eid}/files/{fileId}`, limitado a
+~700KB por causa do teto de 1MiB por documento do Firestore (foi o que
+causou o contrato "Pacheco & Portela" perder o conteúdo ao trocar de
+aparelho). Agora o conteúdo sobe pro Storage e só uma URL leve fica salva
+naquele documento do Firestore, então o limite de tamanho praticamente some
+(teto de segurança de 20MB em `MAX_FILE_BYTES`, só pra não estourar sem
+querer a cota gratuita do plano Spark). Regras de acesso do Storage ficam em
+`storage.rules`, espelhando as de `firestore.rules`. Precisa habilitar o
+Storage no console do Firebase (projeto `flowbody-30162`) e publicar essas
+regras (`firebase deploy --only storage` ou colar manualmente em Storage >
+Rules) para o upload funcionar.

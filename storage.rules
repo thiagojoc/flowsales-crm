@@ -1,0 +1,21 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Conteúdo dos arquivos do painel principal (index.html): contratos,
+    // comprovantes, anexos de tarefa etc. Mesma regra de acesso do Firestore
+    // em flowsales_crm/{eid}/files (firestore.rules): só o dono do escritório
+    // (eid bate com o perfil autenticado) ou admin.
+    match /flowsales_crm/{eid}/files/{fileId} {
+      allow read, write: if request.auth != null && (
+        firestore.get(/databases/(default)/documents/userProfiles/$(request.auth.uid)).data.eid == eid ||
+        firestore.get(/databases/(default)/documents/userProfiles/$(request.auth.uid)).data.role == 'admin'
+      );
+    }
+
+    // Qualquer outro caminho fora do previsto acima: negado por padrão.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
