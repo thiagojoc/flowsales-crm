@@ -207,6 +207,9 @@
 
   .import-area textarea { width: 100%; min-height: 160px; background: #1c1f24; border: 1px solid rgba(217,169,77,0.18); border-radius: 7px; color: #f5f3ee; padding: 10px; font-size: 15.5px; font-family: ui-monospace, monospace; }
   .hint-block { font-size: 14px; color: #9a9da6; margin-top: 6px; line-height: 1.5; }
+  /* mantem fundo preto de proposito, mesmo com o resto da aba Abordagens em
+     tema claro (pedido do Thiago): funciona como uma faixa de aviso. */
+  .approach-intro { font-size: 15px; background: #0a0b0d; color: #c3c5cb; margin: 16px 20px 0; padding: 14px 18px; border-radius: 10px; }
 
   .import-dropzone { display: flex; flex-direction: column; align-items: center; border: 1.5px dashed rgba(217,169,77,0.32); border-radius: 9px; padding: 26px 16px; text-align: center; color: #9a9da6; font-size: 15.5px; cursor: pointer; transition: border-color .15s, background .15s, color .15s; }
   .import-dropzone:hover, .import-dropzone.dragover { border-color: #d9a94d; color: #d9a94d; background: rgba(217,169,77,0.06); }
@@ -302,8 +305,8 @@
   .kpi-card { background: #F7F6F2; border-color: rgba(217,169,77,0.22); }
   .kpi-lbl { color: #5B5D63; }
   .kpi-adjust-btn { background: #FFFFFF; border-color: rgba(217,169,77,0.3); }
-  .stat-box { background: #FFFFFF; }
-  .stat-box .num { color: #1E2024; }
+  /* stat-box (Oportunidades/Abertas/Ganhas/Perdidas/Conversão) fica preto de
+     propósito, mesmo com o resto da aba em tema claro (pedido do Thiago). */
   .approach-card { background: #F7F6F2; border-color: rgba(217,169,77,0.22); }
   .approach-text { color: #1E2024; }
   .approach-textarea { background: #FFFFFF; border-color: rgba(217,169,77,0.3); color: #1E2024; }
@@ -557,7 +560,7 @@
 </div>
 
 <div id="view-approach" style="display:none;">
-  <p class="hint-block" style="font-size: 15px;margin:16px 20px 0;">Sugestões de abordagem pra prospecção de escritórios de advocacia. Ajuste o tom conforme a conversa: o objetivo é sempre soar como gente falando com gente, não como script decorado. Clique em "Editar" pra ajustar um texto do seu jeito, fica salvo pra próxima vez.</p>
+  <p class="hint-block approach-intro">Sugestões de abordagem pra prospecção de escritórios de advocacia. Ajuste o tom conforme a conversa: o objetivo é sempre soar como gente falando com gente, não como script decorado. Clique em "Editar" pra ajustar um texto do seu jeito, fica salvo pra próxima vez.</p>
   <div class="approach-subtabs">
     <button class="subtab-btn active" id="subtab-wa">WhatsApp</button>
     <button class="subtab-btn" id="subtab-call">Ligação</button>
@@ -770,7 +773,7 @@ Quem costuma decidir sobre investir em marketing aí no escritório?</div>
   <div id="calls-list-wrap">
     <div id="calls-empty-state" class="empty-state" style="display:none;">
       <h2 class="serif">Nenhuma call analisada ainda</h2>
-      <p>Cole a análise de uma call gerada pela skill de IA pra começar.</p>
+      <p>Primeiro, peça a análise da transcrição da call numa conversa com o Claude (ou com a skill de análise de call). No final ela gera um bloco de JSON pronto: copie esse bloco inteiro e clique em "Colar análise de call" aqui em cima.</p>
     </div>
     <table class="contacts-table" id="calls-table" style="display:none;">
       <thead><tr>
@@ -783,21 +786,25 @@ Quem costuma decidir sobre investir em marketing aí no escritório?</div>
 </div>
 
 <div class="modal-bg" id="lead-modal-bg">
-  <div class="modal">
+  <div class="modal" style="width:640px;">
     <h3 class="serif" id="lead-modal-title">Novo lead</h3>
     <input type="hidden" id="lead-id"><input type="hidden" id="lead-opp-id">
     <div class="field-row">
       <div class="field"><label>Nome</label><input type="text" id="lead-first"></div>
       <div class="field"><label>Sobrenome</label><input type="text" id="lead-last"></div>
     </div>
-    <div class="field"><label>Escritório</label><input type="text" id="lead-office"></div>
+    <div class="field-row">
+      <div class="field"><label>Escritório</label><input type="text" id="lead-office"></div>
+      <div class="field"><label>E-mail</label><input type="text" id="lead-email"></div>
+    </div>
     <div class="field-row">
       <div class="field"><label>Telefone</label><input type="text" id="lead-phone" placeholder="(12) 90000-0000"></div>
       <div class="field"><label>Instagram</label><input type="text" id="lead-instagram" placeholder="usuario, sem @"></div>
     </div>
-    <div class="field"><label>E-mail</label><input type="text" id="lead-email"></div>
-    <div class="field"><label>Endereço</label><input type="text" id="lead-address"></div>
-    <div class="field"><label>Criado em</label><input type="date" id="lead-created-at"></div>
+    <div class="field-row">
+      <div class="field"><label>Endereço</label><input type="text" id="lead-address"></div>
+      <div class="field"><label>Criado em</label><input type="date" id="lead-created-at"></div>
+    </div>
     <div class="field-row" id="opp-fields">
       <div class="field"><label>Pipeline</label><select id="lead-pipeline"></select></div>
       <div class="field"><label>Etapa</label><select id="lead-stage"></select></div>
@@ -998,7 +1005,7 @@ Quem costuma decidir sobre investir em marketing aí no escritório?</div>
 <div class="modal-bg" id="call-paste-modal-bg">
   <div class="modal">
     <h3 class="serif">Colar análise de call</h3>
-    <div class="hint" style="margin-bottom:10px;">O navegador não deixou ler o clipboard automaticamente. Cole aqui manualmente (Ctrl+V).</div>
+    <div class="hint" style="margin-bottom:10px;">O navegador não deixou ler o clipboard automaticamente. Cole aqui manualmente (Ctrl+V) o bloco de JSON que a análise da call gerou.</div>
     <div class="field"><label>JSON da análise</label><textarea id="call-paste-textarea" style="min-height:160px;font-family:ui-monospace,monospace;font-size:13px;" placeholder="Cole o JSON gerado pela análise da call"></textarea></div>
     <div class="form-err" id="call-paste-err"></div>
     <div class="modal-actions"><div></div><div class="right">
@@ -2782,18 +2789,32 @@ function openCallPasteFallbackModal(){
   setTimeout(() => document.getElementById('call-paste-textarea').focus(), 50);
 }
 
+// quem gera a analise costuma colar o texto inteiro da resposta, as vezes
+// com as ```crases de bloco de codigo``` em volta, ou com uma frase antes/
+// depois do JSON. Tenta limpar isso antes de desistir e mostrar erro.
+function _extractCallJson(raw){
+  let text = String(raw || '').trim();
+  const fence = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if(fence) text = fence[1].trim();
+  try{ return JSON.parse(text); }catch(e){}
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  if(start !== -1 && end > start){
+    try{ return JSON.parse(text.slice(start, end + 1)); }catch(e){}
+  }
+  return null;
+}
+
 function processCallAnalysisText(text){
   const fallbackOpen = document.getElementById('call-paste-modal-bg').classList.contains('show');
   const showErr = (msg) => { if(fallbackOpen) document.getElementById('call-paste-err').textContent = msg; else alert(msg); };
-  let parsed;
-  try{
-    parsed = JSON.parse(text);
-  }catch(e){
-    showErr('Isso não parece uma análise de call válida (JSON inválido).');
+  if(!text || !text.trim()){
+    showErr('Não veio nada pra colar. Copie o JSON da análise primeiro e tente de novo.');
     return;
   }
+  const parsed = _extractCallJson(text);
   if(!parsed || typeof parsed !== 'object' || Array.isArray(parsed)){
-    showErr('Isso não parece uma análise de call válida.');
+    showErr('Isso não parece uma análise de call válida (JSON inválido). Confira se copiou o bloco JSON inteiro, gerado pela análise da call.');
     return;
   }
   document.getElementById('call-paste-modal-bg').classList.remove('show');
