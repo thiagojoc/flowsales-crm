@@ -7,6 +7,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Flow Sales</title>
 <link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 :root{
@@ -15,11 +18,37 @@
   --gold:#d9a94d;--gb:rgba(217,169,77,0.10);--gbr:rgba(217,169,77,0.30);
   --text:#f5f3ee;--t2:#aeb0b6;--t3:#7c7e85;
   --green:#3fae81;--red:#d9614a;--blue:#5b93c9;
-  --font-display:ui-serif,"Iowan Old Style","Palatino Linotype",Georgia,"Times New Roman",serif;
+  --font-sans:'Manrope',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --font-display:var(--font-sans);
   --font-mono:ui-monospace,"SF Mono","Cascadia Code","Roboto Mono",monospace;
   --sw:220px;
+  /* escala de tipografia do design system TIEE (display/title/subtitle/
+     body/caption). Cores e o resto do visual da FlowSales continuam como
+     estavam, só a fonte e os tamanhos de texto seguem essa escala. */
+  --fs-display:32px;--lh-display:40px;
+  --fs-title:24px;--lh-title:32px;
+  --fs-subtitle:20px;--lh-subtitle:28px;
+  --fs-lead:18px;--lh-lead:28px;
+  --fs-body:16px;--lh-body:24px;
+  --fs-caption:14px;--lh-caption:20px;
 }
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',sans-serif;font-size:15px;line-height:1.5;overflow:hidden;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-sans);font-size:15px;line-height:1.5;overflow:hidden;}
+h1{font-size:var(--fs-display);line-height:var(--lh-display);font-weight:600;letter-spacing:-0.01em;}
+h2{font-size:var(--fs-title);line-height:var(--lh-title);font-weight:600;letter-spacing:-0.005em;}
+h3{font-size:var(--fs-subtitle);line-height:var(--lh-subtitle);font-weight:600;}
+h4{font-size:var(--fs-body);line-height:var(--lh-body);font-weight:600;}
+p{font-size:var(--fs-body);line-height:var(--lh-body);font-weight:400;}
+small{font-size:var(--fs-caption);line-height:var(--lh-caption);}
+.t-display{font-size:var(--fs-display);line-height:var(--lh-display);font-weight:600;letter-spacing:-0.01em;}
+.t-title{font-size:var(--fs-title);line-height:var(--lh-title);font-weight:600;letter-spacing:-0.005em;}
+.t-subtitle{font-size:var(--fs-subtitle);line-height:var(--lh-subtitle);font-weight:600;}
+.t-lead{font-size:var(--fs-lead);line-height:var(--lh-lead);font-weight:400;}
+.t-body{font-size:var(--fs-body);line-height:var(--lh-body);font-weight:400;}
+.t-body-medium{font-size:var(--fs-body);line-height:var(--lh-body);font-weight:500;}
+.t-body-strong{font-size:var(--fs-body);line-height:var(--lh-body);font-weight:600;}
+.t-caption{font-size:var(--fs-caption);line-height:var(--lh-caption);font-weight:400;}
+.t-caption-medium{font-size:var(--fs-caption);line-height:var(--lh-caption);font-weight:500;}
+.t-caption-strong{font-size:var(--fs-caption);line-height:var(--lh-caption);font-weight:600;}
 ::-webkit-scrollbar{width:3px;height:3px;}
 ::-webkit-scrollbar-thumb{background:var(--s3);border-radius:2px;}
 
@@ -40,8 +69,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 .lsub{font-size:12px;color:rgba(255,255,255,0.7);}
 .lform{margin-top:28px;}
 .fg{margin-bottom:16px;}
-.fg label{display:block;font-size:13px;color:var(--text);font-weight:500;margin-bottom:6px;letter-spacing:.03em;text-transform:uppercase;}
-.fi{width:100%;background:var(--s2);border:0.5px solid var(--bdr2);border-radius:8px;padding:10px 13px;color:var(--text);font-size:13px;outline:none;transition:border-color .15s;font-family:inherit;}
+.fg label{display:block;font-size:var(--fs-caption);line-height:var(--lh-caption);color:var(--text);font-weight:500;margin-bottom:6px;letter-spacing:.03em;text-transform:uppercase;}
+.fi{width:100%;background:var(--s2);border:0.5px solid var(--bdr2);border-radius:8px;padding:10px 13px;color:var(--text);font-size:var(--fs-body);line-height:var(--lh-body);outline:none;transition:border-color .15s;font-family:inherit;}
 .fi:focus{border-color:var(--gbr);}
 input[type="date"].fi{color:var(--text);}
 input[type="date"].fi::-webkit-calendar-picker-indicator{filter:brightness(0);opacity:0.55;cursor:pointer;}
@@ -385,7 +414,7 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="datetime-local
 .ov2.on{display:flex;}
 .mo{background:var(--s1);border:0.5px solid var(--bdr2);border-radius:13px;width:520px;max-width:94vw;max-height:88vh;overflow-y:auto;}
 .moh{padding:17px 20px;border-bottom:0.5px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--s1);z-index:1;}
-.mot{font-size:14px;font-weight:500;}
+.mot{font-size:var(--fs-subtitle);line-height:var(--lh-subtitle);font-weight:600;font-family:var(--font-sans);}
 .moc{background:none;border:none;cursor:pointer;color:var(--t2);padding:5px;border-radius:5px;}
 .mob{padding:20px;}
 .mob .fg{margin-bottom:14px;}
@@ -3508,7 +3537,7 @@ async function downloadVendaFile(vendaId,fileName){
   const a=document.createElement('a');a.href=data;a.download=fileName||'arquivo';document.body.appendChild(a);a.click();a.remove();
 }
 function _showReuploadModal(id,f){
-  const ov=document.getElementById('ov');const tt=document.getElementById('m-tt');const mb=document.getElementById('m-body');const mf=document.getElementById('moff');
+  const ov=document.getElementById('ov');const tt=document.getElementById('mott');const mb=document.getElementById('mobb');const mf=document.getElementById('moff');
   if(!ov||!tt||!mb||!mf)return;
   tt.textContent='📁 '+f.name;
   mb.innerHTML=`<div style="padding:12px;background:var(--s2);border-radius:8px;border:0.5px solid var(--bdr);margin-bottom:14px"><div style="font-size:13px;color:var(--t2);margin-bottom:8px">O arquivo <strong>${f.name}</strong> foi salvo sem o conteúdo (o conteúdo não é sincronizado entre dispositivos por limitação de tamanho). Para visualizá-lo novamente, reenvie o arquivo abaixo.</div><div class="fg"><label>Reenviar arquivo</label><input type="file" id="reup-file" class="fi" style="padding:5px;font-size:12px"></div></div>`;

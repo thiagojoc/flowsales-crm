@@ -100,6 +100,9 @@
   .field label.bulk-remove-tag-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 14.5px; font-weight: 400; color: #f5f3ee; cursor: pointer; text-transform: none; letter-spacing: normal; margin-bottom: 0; }
   .bulk-remove-tag-row input { accent-color: #d9a94d; cursor: pointer; }
   button { border: none; border-radius: 8px; padding: 9px 16px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  /* pega qualquer elemento clicavel que ainda nao tinha cursor:pointer
+     definido (a maioria dos cliques no CRM usa onclick="..." inline) */
+  [onclick] { cursor: pointer; }
   button:disabled { opacity: .55; cursor: default; }
   .btn-primary { background: #d9a94d; color: #0a0b0d; }
   .btn-secondary { background: #14161a; color: #aeb0b6; border: 1px solid rgba(217,169,77,0.18); }
@@ -250,7 +253,10 @@
   .hint-block { font-size: var(--fs-caption); line-height: var(--lh-caption); color: #9a9da6; margin-top: 6px; }
   /* mantem fundo preto de proposito, mesmo com o resto da aba Abordagens em
      tema claro (pedido do Thiago): funciona como uma faixa de aviso. */
-  .approach-intro { font-size: 15px; background: #0a0b0d; color: #c3c5cb; margin: 16px 20px 0; padding: 14px 18px; border-radius: 10px; }
+  /* mesma faixa preta cheia (sem cantos arredondados nem margem) que o
+     cabeçalho e as sub-abas acima, pra não sobrar branco visível nos
+     "cantos" entre a caixa arredondada flutuante e o fundo claro atrás. */
+  .approach-intro { font-size: var(--fs-body, 15px); line-height: 1.5; background: #0a0b0d; color: #c3c5cb; padding: 16px 20px; margin: 0; }
 
   .import-dropzone { display: flex; flex-direction: column; align-items: center; border: 1.5px dashed rgba(217,169,77,0.32); border-radius: 9px; padding: 26px 16px; text-align: center; color: #9a9da6; font-size: 15.5px; cursor: pointer; transition: border-color .15s, background .15s, color .15s; }
   .import-dropzone:hover, .import-dropzone.dragover { border-color: #d9a94d; color: #d9a94d; background: rgba(217,169,77,0.06); }
