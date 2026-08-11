@@ -8,14 +8,44 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root { color-scheme: dark; --font-sans: 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+  :root {
+    color-scheme: dark;
+    --font-sans: 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    /* escala de tipografia do design system TIEE (display/title/subtitle/
+       body/caption). Cores, espaçamento e o resto do visual da FlowSales
+       continuam como estavam, só a fonte e os tamanhos de texto seguem
+       essa escala agora. */
+    --fs-display: 32px; --lh-display: 40px;
+    --fs-title: 24px; --lh-title: 32px;
+    --fs-subtitle: 20px; --lh-subtitle: 28px;
+    --fs-lead: 18px; --lh-lead: 28px;
+    --fs-body: 16px; --lh-body: 24px;
+    --fs-caption: 14px; --lh-caption: 20px;
+  }
   * { box-sizing: border-box; }
-  body { margin: 0; padding: 0; background: #0a0b0d; color: #f5f3ee; font-family: var(--font-sans); }
-  /* tipografia do design system TIEE (fonte + escala), mantendo as cores e o
-     resto do visual da FlowSales como estavam. .serif era usada pra dar
-     destaque a titulos/numeros grandes; troca a fonte serifada por Manrope
-     em peso mais forte, no lugar de aumentar so o tamanho. */
+  body { margin: 0; padding: 0; background: #0a0b0d; color: #f5f3ee; font-family: var(--font-sans); font-size: var(--fs-body); line-height: var(--lh-body); }
+  /* .serif era usada pra dar destaque a titulos/numeros grandes com uma
+     fonte serifada (tipo Georgia); troca pra Manrope em peso mais forte. */
   .serif { font-family: var(--font-sans); font-weight: 700; letter-spacing: -0.01em; }
+
+  /* Tags semanticas e classes utilitarias .t-* espelham a escala do TIEE,
+     pra qualquer texto novo (ou markup solto) já nascer no tamanho certo. */
+  h1 { font-size: var(--fs-display); line-height: var(--lh-display); font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+  h2 { font-size: var(--fs-title); line-height: var(--lh-title); font-weight: 600; letter-spacing: -0.005em; margin: 0; }
+  h3 { font-size: var(--fs-subtitle); line-height: var(--lh-subtitle); font-weight: 600; margin: 0; }
+  h4 { font-size: var(--fs-body); line-height: var(--lh-body); font-weight: 600; margin: 0; }
+  p { font-size: var(--fs-body); line-height: var(--lh-body); font-weight: 400; margin: 0; }
+  small { font-size: var(--fs-caption); line-height: var(--lh-caption); }
+  .t-display { font-size: var(--fs-display); line-height: var(--lh-display); font-weight: 600; letter-spacing: -0.01em; }
+  .t-title { font-size: var(--fs-title); line-height: var(--lh-title); font-weight: 600; letter-spacing: -0.005em; }
+  .t-subtitle { font-size: var(--fs-subtitle); line-height: var(--lh-subtitle); font-weight: 600; }
+  .t-lead { font-size: var(--fs-lead); line-height: var(--lh-lead); font-weight: 400; }
+  .t-body { font-size: var(--fs-body); line-height: var(--lh-body); font-weight: 400; }
+  .t-body-medium { font-size: var(--fs-body); line-height: var(--lh-body); font-weight: 500; }
+  .t-body-strong { font-size: var(--fs-body); line-height: var(--lh-body); font-weight: 600; }
+  .t-caption { font-size: var(--fs-caption); line-height: var(--lh-caption); font-weight: 400; }
+  .t-caption-medium { font-size: var(--fs-caption); line-height: var(--lh-caption); font-weight: 500; }
+  .t-caption-strong { font-size: var(--fs-caption); line-height: var(--lh-caption); font-weight: 600; }
 
   header.top { display: flex; align-items: center; gap: 10px; padding: 14px 24px; background: #0a0b0d; border-bottom: 1px solid rgba(217,169,77,0.14); flex-wrap: wrap; }
   header.top span.brand { font-weight: 700; letter-spacing: .04em; font-size: 16.5px; }
@@ -47,7 +77,7 @@
   /* abordagens */
   .approach-wrap { padding: 20px; max-width: 760px; }
   .approach-section { margin-bottom: 32px; }
-  .approach-section h3 { margin: 0 0 4px; font-size: 20px; color: #d9a94d; }
+  .approach-section h3 { margin: 0 0 4px; font-size: var(--fs-subtitle); line-height: var(--lh-subtitle); font-weight: 600; color: #d9a94d; }
   .approach-hint { font-size: 15px; color: #9a9da6; margin: 0 0 14px; }
   .approach-card { background: #16181c; border: 1px solid rgba(217,169,77,0.14); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
   .approach-card-label { font-size: 13.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #d9a94d; margin-bottom: 8px; }
@@ -170,7 +200,7 @@
   .schedule-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 13.5px; font-weight: 600; color: #5b93c9; background: rgba(91,147,201,0.14); border-radius: 6px; padding: 3px 8px; margin-top: 6px; }
   .schedule-badge svg { width: 12px; height: 12px; flex-shrink: 0; }
   .schedule-badge.past { color: #d9614a; background: rgba(217,97,74,0.14); }
-  .card .card-label { font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #9a9da6; margin-bottom: 4px; }
+  .card .card-label { font-size: var(--fs-caption); line-height: var(--lh-caption); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #9a9da6; margin-bottom: 4px; }
   .card .row-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
   .card-icon-btn { width: 28px; height: 28px; border-radius: 7px; display: inline-flex; align-items: center; justify-content: center; background: #14161a; border: 1px solid rgba(217,169,77,0.18); color: #aeb0b6; text-decoration: none; flex-shrink: 0; cursor: pointer; padding: 0; }
   .card-icon-btn:hover { border-color: #d9a94d; color: #d9a94d; }
@@ -192,7 +222,7 @@
   .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 60; overflow-y: auto; padding: 30px 0; }
   .modal-bg.show { display: flex; }
   .modal { background: #14161a; border: 1px solid rgba(217,169,77,0.2); border-radius: 14px; padding: 26px; width: 440px; max-width: 92vw; }
-  .modal h3 { margin: 0 0 18px; font-size: 19px; }
+  .modal h3 { margin: 0 0 18px; font-size: var(--fs-subtitle); line-height: var(--lh-subtitle); font-weight: 600; }
   .field-row { display: flex; gap: 10px; }
   .field-row .field { flex: 1; min-width: 0; }
   .field { margin-bottom: 12px; }
@@ -200,7 +230,7 @@
   .field input, .field select, .field textarea { width: 100%; background: #1c1f24; border: 1px solid rgba(217,169,77,0.18); border-radius: 7px; color: #f5f3ee; padding: 9px 11px; font-size: 16px; font-family: inherit; }
   .field textarea { min-height: 55px; resize: vertical; }
   .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: #d9a94d; }
-  .field .hint { font-size: 13.5px; color: #7c7e85; margin-top: 4px; }
+  .field .hint { font-size: var(--fs-caption); line-height: var(--lh-caption); color: #7c7e85; margin-top: 4px; }
   .modal-actions { display: flex; justify-content: space-between; margin-top: 20px; }
   .modal-actions .right { display: flex; gap: 8px; }
   .modal hr { border: none; border-top: 1px solid rgba(217,169,77,0.14); margin: 18px 0; }
@@ -217,7 +247,7 @@
   .tag-picker-create { color: #d9a94d; font-weight: 700; border-top: 1px solid rgba(217,169,77,0.14); text-transform: none; }
 
   .import-area textarea { width: 100%; min-height: 160px; background: #1c1f24; border: 1px solid rgba(217,169,77,0.18); border-radius: 7px; color: #f5f3ee; padding: 10px; font-size: 15.5px; font-family: ui-monospace, monospace; }
-  .hint-block { font-size: 14px; color: #9a9da6; margin-top: 6px; line-height: 1.5; }
+  .hint-block { font-size: var(--fs-caption); line-height: var(--lh-caption); color: #9a9da6; margin-top: 6px; }
   /* mantem fundo preto de proposito, mesmo com o resto da aba Abordagens em
      tema claro (pedido do Thiago): funciona como uma faixa de aviso. */
   .approach-intro { font-size: 15px; background: #0a0b0d; color: #c3c5cb; margin: 16px 20px 0; padding: 14px 18px; border-radius: 10px; }
@@ -340,7 +370,7 @@
   .call-summary-card-val.call-summary-card-text { font-size: 16px; font-weight: 500; font-family: inherit; line-height: 1.5; }
   .call-section { margin-bottom: 14px; border: 1px solid rgba(217,169,77,0.2); border-radius: 12px; overflow: hidden; }
   .call-section-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%; background: #F7F6F2; border: none; padding: 16px 18px; cursor: pointer; text-align: left; font-family: inherit; }
-  .call-section-toggle h3 { font-size: 21px; margin: 0; color: #1E2024; font-weight: 700; }
+  .call-section-toggle h3 { font-size: var(--fs-subtitle); line-height: var(--lh-subtitle); margin: 0; color: #1E2024; font-weight: 600; }
   .call-section-chevron { color: #5B5D63; flex-shrink: 0; transition: transform .15s; }
   .call-section-chevron.open { transform: rotate(180deg); }
   .call-section-body { padding: 20px; }
