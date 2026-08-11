@@ -3396,15 +3396,37 @@ function rFiles(d){
 }
 function ffile(f){S.ff=f;['all','doc','img','script','link'].forEach(x=>{const b=document.getElementById('at-'+x);if(b)b.classList.remove('on');});const a=document.getElementById('at-'+f);if(a)a.classList.add('on');rFiles(ld());}
 function _openFileWindow(dataUrl){const w=window.open();w.document.write(`<html><body style="margin:0;background:#000"><iframe src="${dataUrl}" style="width:100%;height:100vh;border:none"></iframe></body></html>`);}
+// Abre a aba de visualização já no clique (síncrono), antes de qualquer
+// await: o navegador só permite window.open() sem bloquear como pop-up
+// quando ele acontece direto na resposta ao clique. Como buscar o arquivo
+// na nuvem é assíncrono, abrir a aba só depois do await fazia o navegador
+// bloquear silenciosamente (sem erro, sem nada visível), então quem via o
+// "olhinho" não fazer nada era justamente quando o arquivo não estava
+// salvo no navegador local (por exemplo, admin abrindo arquivo de outro
+// escritório) e precisava desse carregamento assíncrono.
+function _openViewerWindow(){
+  const w=window.open('','_blank');
+  if(w) w.document.write('<html><body style="margin:0;background:#000;color:#fff;font-family:inherit;display:flex;align-items:center;justify-content:center;height:100vh;font-size:15px">Carregando arquivo...</body></html>');
+  else _showToast('O navegador bloqueou a aba de visualização. Permita pop-ups para este site e clique de novo.','var(--red)');
+  return w;
+}
+function _fillViewerWindow(w,dataUrl){
+  if(!w){ _openFileWindow(dataUrl); return; }
+  w.document.open();
+  w.document.write(`<html><body style="margin:0;background:#000"><iframe src="${dataUrl}" style="width:100%;height:100vh;border:none"></iframe></body></html>`);
+  w.document.close();
+}
 async function viewFile(id){
-  const d=ld();const f=d.files.find(x=>x.id===id);if(!f)return;
-  if(f.data){_openFileWindow(f.data);return;}
+  const w=_openViewerWindow();
+  const d=ld();const f=d.files.find(x=>x.id===id);if(!f){if(w)w.close();return;}
+  if(f.data){_fillViewerWindow(w,f.data);return;}
   const remote=await _fbLoadFileBlob(S.eid,id);
   if(remote){
     const d2=ld();const f2=d2.files.find(x=>x.id===id);if(f2){f2.data=remote;localStorage.setItem('fs_'+S.eid,JSON.stringify(d2));}
-    _openFileWindow(remote);
+    _fillViewerWindow(w,remote);
     return;
   }
+  if(w)w.close();
   _showReuploadModal(id,f);
 }
 async function _getReplyFileData(taskId,replyId){
@@ -3415,9 +3437,10 @@ async function _getReplyFileData(taskId,replyId){
   return remote;
 }
 async function viewReplyFile(taskId,replyId){
+  const w=_openViewerWindow();
   const data=await _getReplyFileData(taskId,replyId);
-  if(!data){_showToast('Arquivo não encontrado','var(--red)');return;}
-  _openFileWindow(data);
+  if(!data){if(w)w.close();_showToast('Arquivo não encontrado','var(--red)');return;}
+  _fillViewerWindow(w,data);
 }
 async function downloadReplyFile(taskId,replyId,fileName){
   const data=await _getReplyFileData(taskId,replyId);
@@ -3435,9 +3458,10 @@ async function _getTaskFileData(taskId){
   return remote;
 }
 async function viewTaskFile(taskId){
+  const w=_openViewerWindow();
   const data=await _getTaskFileData(taskId);
-  if(!data){_showToast('Arquivo não encontrado','var(--red)');return;}
-  _openFileWindow(data);
+  if(!data){if(w)w.close();_showToast('Arquivo não encontrado','var(--red)');return;}
+  _fillViewerWindow(w,data);
 }
 async function downloadTaskFile(taskId,fileName){
   const data=await _getTaskFileData(taskId);
@@ -3453,9 +3477,10 @@ async function _getGastoFileData(gastoId){
   return remote;
 }
 async function viewGastoFile(gastoId){
+  const w=_openViewerWindow();
   const data=await _getGastoFileData(gastoId);
-  if(!data){_showToast('Arquivo não encontrado','var(--red)');return;}
-  _openFileWindow(data);
+  if(!data){if(w)w.close();_showToast('Arquivo não encontrado','var(--red)');return;}
+  _fillViewerWindow(w,data);
 }
 async function downloadGastoFile(gastoId,fileName){
   const data=await _getGastoFileData(gastoId);
@@ -3471,9 +3496,10 @@ async function _getVendaFileData(vendaId){
   return remote;
 }
 async function viewVendaFile(vendaId){
+  const w=_openViewerWindow();
   const data=await _getVendaFileData(vendaId);
-  if(!data){_showToast('Arquivo não encontrado','var(--red)');return;}
-  _openFileWindow(data);
+  if(!data){if(w)w.close();_showToast('Arquivo não encontrado','var(--red)');return;}
+  _fillViewerWindow(w,data);
 }
 async function downloadVendaFile(vendaId,fileName){
   const data=await _getVendaFileData(vendaId);
