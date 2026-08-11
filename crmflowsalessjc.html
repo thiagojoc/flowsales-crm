@@ -4,11 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CRM FlowSales</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root { color-scheme: dark; }
+  :root { color-scheme: dark; --font-sans: 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
   * { box-sizing: border-box; }
-  body { margin: 0; padding: 0; background: #0a0b0d; color: #f5f3ee; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; }
-  .serif { font-family: ui-serif, "Iowan Old Style", "Palatino Linotype", Georgia, "Times New Roman", serif; }
+  body { margin: 0; padding: 0; background: #0a0b0d; color: #f5f3ee; font-family: var(--font-sans); }
+  /* tipografia do design system TIEE (fonte + escala), mantendo as cores e o
+     resto do visual da FlowSales como estavam. .serif era usada pra dar
+     destaque a titulos/numeros grandes; troca a fonte serifada por Manrope
+     em peso mais forte, no lugar de aumentar so o tamanho. */
+  .serif { font-family: var(--font-sans); font-weight: 700; letter-spacing: -0.01em; }
 
   header.top { display: flex; align-items: center; gap: 10px; padding: 14px 24px; background: #0a0b0d; border-bottom: 1px solid rgba(217,169,77,0.14); flex-wrap: wrap; }
   header.top span.brand { font-weight: 700; letter-spacing: .04em; font-size: 16.5px; }
@@ -26,12 +33,12 @@
 
   .stats { display: none; grid-template-columns: repeat(5, 1fr); gap: 1px; background: rgba(217,169,77,0.14); border-bottom: 1px solid rgba(217,169,77,0.14); }
   .stat-box { background: #0a0b0d; padding: 12px 18px; }
-  .stat-box .num { font-size: 22px; font-weight: 700; font-family: ui-serif, Georgia, serif; }
+  .stat-box .num { font-size: 22px; font-weight: 700; font-family: var(--font-sans); }
   .stat-box .lbl { font-size: 13px; font-weight: 700; color: #9a9da6; text-transform: uppercase; letter-spacing: .05em; margin-top: 2px; }
 
   .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; padding: 20px; }
   .kpi-card { background: #16181c; border: 1px solid rgba(217,169,77,0.14); border-radius: 12px; padding: 22px 18px; text-align: center; }
-  .kpi-num { font-size: 34px; font-weight: 700; font-family: ui-serif, Georgia, serif; color: #d9a94d; }
+  .kpi-num { font-size: 34px; font-weight: 700; font-family: var(--font-sans); color: #d9a94d; }
   .kpi-lbl { font-size: 14px; color: #c3c5cb; text-transform: uppercase; letter-spacing: .05em; margin-top: 8px; font-weight: 700; }
   .kpi-adjust { display: flex; align-items: center; justify-content: center; gap: 12px; }
   .kpi-adjust-btn { width: 26px; height: 26px; border-radius: 50%; background: #1c1f24; border: 1px solid rgba(217,169,77,0.28); color: #d9a94d; font-size: 18px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; padding: 0; flex-shrink: 0; }
@@ -320,16 +327,16 @@
   .call-row td { cursor: pointer; }
   .call-na { color: #9a9da6; font-style: italic; }
   .call-detail-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; padding: 20px 22px; background: #F7F6F2; border: 1px solid rgba(217,169,77,0.22); border-radius: 14px; margin-bottom: 22px; }
-  .call-detail-lead-name { font-family: ui-serif, Georgia, serif; font-size: 27px; font-weight: 700; color: #1E2024; }
+  .call-detail-lead-name { font-family: var(--font-sans); font-size: 27px; font-weight: 700; color: #1E2024; }
   .call-detail-meta { font-size: 15px; color: #5B5D63; margin-top: 6px; }
   .call-detail-scores { display: flex; gap: 14px; flex-wrap: wrap; }
   .call-score-pill { background: #FFFFFF; border: 1px solid rgba(217,169,77,0.3); border-radius: 12px; padding: 10px 18px; text-align: center; min-width: 92px; }
-  .call-score-pill span { display: block; font-family: ui-serif, Georgia, serif; font-size: 26px; font-weight: 700; color: #d9a94d; }
+  .call-score-pill span { display: block; font-family: var(--font-sans); font-size: 26px; font-weight: 700; color: #d9a94d; }
   .call-score-pill label { display: block; font-size: 14.5px; color: #5B5D63; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; margin-top: 4px; }
   .call-summary-cards { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; }
   .call-summary-card { flex: 1; min-width: 200px; background: #F7F6F2; border: 1px solid rgba(217,169,77,0.22); border-radius: 12px; padding: 16px 18px; }
   .call-summary-card-lbl { font-size: 14.5px; color: #5B5D63; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; margin-bottom: 8px; }
-  .call-summary-card-val { font-size: 23px; font-weight: 700; color: #1E2024; font-family: ui-serif, Georgia, serif; }
+  .call-summary-card-val { font-size: 23px; font-weight: 700; color: #1E2024; font-family: var(--font-sans); }
   .call-summary-card-val.call-summary-card-text { font-size: 16px; font-weight: 500; font-family: inherit; line-height: 1.5; }
   .call-section { margin-bottom: 14px; border: 1px solid rgba(217,169,77,0.2); border-radius: 12px; overflow: hidden; }
   .call-section-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%; background: #F7F6F2; border: none; padding: 16px 18px; cursor: pointer; text-align: left; font-family: inherit; }
