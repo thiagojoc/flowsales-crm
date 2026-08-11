@@ -19,7 +19,13 @@
   --bg:#FFFFFF;--s1:#FFFFFF;--s2:#F5F7FF;--s3:#EDEFFA;
   --bdr:rgba(196,201,218,0.5);--bdr2:rgba(196,201,218,0.8);
   --gold:#d9a94d;--gb:rgba(217,169,77,0.10);--gbr:rgba(217,169,77,0.30);
-  --text:#000000;--t2:#757C94;--t3:#9aa0b4;
+  /* t2/t3 mais escuros que o token "cinza claro" original do design
+     system: no fundo branco esse cinza claro lia como texto apagado
+     (contraste baixo demais pra escritas de verdade, tipo nomes de aba,
+     rotulos, texto de linha). Esses valores aqui têm contraste bem mais
+     alto contra o branco, mantendo a hierarquia (t2 mais escuro/legível,
+     t3 um pouco mais claro, só pra coisa bem secundária). */
+  --text:#000000;--t2:#4B5563;--t3:#6B7280;
   --green:#3fae81;--red:#d9614a;--blue:#5b93c9;
   --font-sans:'Manrope',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
   --font-display:var(--font-sans);
