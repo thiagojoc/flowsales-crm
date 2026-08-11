@@ -3395,30 +3395,31 @@ function rFiles(d){
   if(S.ff==='all'){const _el2=document.getElementById('flist');if(_el2._pendingLinks){_el2.innerHTML=_el2._pendingLinks+_el2.innerHTML;_el2._pendingLinks=null;}}
 }
 function ffile(f){S.ff=f;['all','doc','img','script','link'].forEach(x=>{const b=document.getElementById('at-'+x);if(b)b.classList.remove('on');});const a=document.getElementById('at-'+f);if(a)a.classList.add('on');rFiles(ld());}
-function _openFileWindow(dataUrl){const w=window.open();w.document.write(`<html><body style="margin:0;background:#000"><iframe src="${dataUrl}" style="width:100%;height:100vh;border:none"></iframe></body></html>`);}
-// Abre a aba de visualização já no clique (síncrono), antes de qualquer
-// await: o navegador só permite window.open() sem bloquear como pop-up
-// quando ele acontece direto na resposta ao clique. Como buscar o arquivo
-// na nuvem é assíncrono, abrir a aba só depois do await fazia o navegador
-// bloquear silenciosamente (sem erro, sem nada visível), então quem via o
-// "olhinho" não fazer nada era justamente quando o arquivo não estava
-// salvo no navegador local (por exemplo, admin abrindo arquivo de outro
-// escritório) e precisava desse carregamento assíncrono.
+// Visualização em janela nova (window.open) foi abandonada: mesmo abrindo
+// já no clique (síncrono, sem await antes), o navegador (principalmente
+// Chrome desktop) às vezes bloqueia mesmo assim e só mostra um ícone
+// pequeno na barra de endereço, sem toast nem erro nenhum pro JS detectar
+// — foi exatamente essa a causa do "clico no olhinho e não abre nada"
+// mesmo depois da primeira correção. Um overlay dentro da própria página
+// nunca esbarra em bloqueio de pop-up, porque não abre janela nenhuma.
 function _openViewerWindow(){
-  const w=window.open('','_blank');
-  if(w) w.document.write('<html><body style="margin:0;background:#000;color:#fff;font-family:inherit;display:flex;align-items:center;justify-content:center;height:100vh;font-size:15px">Carregando arquivo...</body></html>');
-  else _showToast('O navegador bloqueou a aba de visualização. Permita pop-ups para este site e clique de novo.','var(--red)');
-  return w;
+  const old=document.getElementById('file-viewer-overlay');if(old)old.remove();
+  const ov=document.createElement('div');
+  ov.id='file-viewer-overlay';
+  ov.style.cssText='position:fixed;inset:0;z-index:99999;background:#000;display:flex;flex-direction:column';
+  ov.innerHTML='<div style="display:flex;justify-content:flex-end;padding:10px;background:#111"><button id="file-viewer-close-btn" style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.12);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit">✕ Fechar</button></div><div id="file-viewer-body" style="flex:1;display:flex;align-items:center;justify-content:center;color:#fff;font-family:inherit;font-size:15px">Carregando arquivo...</div>';
+  document.body.appendChild(ov);
+  document.getElementById('file-viewer-close-btn').addEventListener('click',()=>ov.remove());
+  return ov;
 }
-function _fillViewerWindow(w,dataUrl){
-  if(!w){ _openFileWindow(dataUrl); return; }
-  w.document.open();
-  w.document.write(`<html><body style="margin:0;background:#000"><iframe src="${dataUrl}" style="width:100%;height:100vh;border:none"></iframe></body></html>`);
-  w.document.close();
+function _fillViewerWindow(ov,dataUrl){
+  if(!ov||!document.body.contains(ov))return; // usuario ja fechou o overlay antes do arquivo carregar
+  const body=document.getElementById('file-viewer-body');
+  if(body) body.outerHTML=`<iframe id="file-viewer-body" src="${dataUrl}" style="flex:1;width:100%;border:none;background:#000"></iframe>`;
 }
 async function viewFile(id){
   const w=_openViewerWindow();
-  const d=ld();const f=d.files.find(x=>x.id===id);if(!f){if(w)w.close();return;}
+  const d=ld();const f=d.files.find(x=>x.id===id);if(!f){if(w)w.remove();return;}
   if(f.data){_fillViewerWindow(w,f.data);return;}
   const remote=await _fbLoadFileBlob(S.eid,id);
   if(remote){
@@ -3426,7 +3427,7 @@ async function viewFile(id){
     _fillViewerWindow(w,remote);
     return;
   }
-  if(w)w.close();
+  if(w)w.remove();
   _showReuploadModal(id,f);
 }
 async function _getReplyFileData(taskId,replyId){
@@ -3439,7 +3440,7 @@ async function _getReplyFileData(taskId,replyId){
 async function viewReplyFile(taskId,replyId){
   const w=_openViewerWindow();
   const data=await _getReplyFileData(taskId,replyId);
-  if(!data){if(w)w.close();_showToast('Arquivo não encontrado','var(--red)');return;}
+  if(!data){if(w)w.remove();_showToast('Arquivo não encontrado','var(--red)');return;}
   _fillViewerWindow(w,data);
 }
 async function downloadReplyFile(taskId,replyId,fileName){
@@ -3460,7 +3461,7 @@ async function _getTaskFileData(taskId){
 async function viewTaskFile(taskId){
   const w=_openViewerWindow();
   const data=await _getTaskFileData(taskId);
-  if(!data){if(w)w.close();_showToast('Arquivo não encontrado','var(--red)');return;}
+  if(!data){if(w)w.remove();_showToast('Arquivo não encontrado','var(--red)');return;}
   _fillViewerWindow(w,data);
 }
 async function downloadTaskFile(taskId,fileName){
@@ -3479,7 +3480,7 @@ async function _getGastoFileData(gastoId){
 async function viewGastoFile(gastoId){
   const w=_openViewerWindow();
   const data=await _getGastoFileData(gastoId);
-  if(!data){if(w)w.close();_showToast('Arquivo não encontrado','var(--red)');return;}
+  if(!data){if(w)w.remove();_showToast('Arquivo não encontrado','var(--red)');return;}
   _fillViewerWindow(w,data);
 }
 async function downloadGastoFile(gastoId,fileName){
@@ -3498,7 +3499,7 @@ async function _getVendaFileData(vendaId){
 async function viewVendaFile(vendaId){
   const w=_openViewerWindow();
   const data=await _getVendaFileData(vendaId);
-  if(!data){if(w)w.close();_showToast('Arquivo não encontrado','var(--red)');return;}
+  if(!data){if(w)w.remove();_showToast('Arquivo não encontrado','var(--red)');return;}
   _fillViewerWindow(w,data);
 }
 async function downloadVendaFile(vendaId,fileName){
