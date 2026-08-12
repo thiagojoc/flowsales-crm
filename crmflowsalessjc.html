@@ -321,9 +321,6 @@
   .login-card .brand-word { font-size: 25px; font-weight: 700; letter-spacing: .01em; }
   .login-card .brand-sub { font-size: 13.5px; letter-spacing: .16em; text-transform: uppercase; color: #d9a94d; font-weight: 700; margin-top: 5px; }
   .login-card .field label { color: #f5f3ee; font-weight: 700; }
-  .login-card .field-email-display { font-size: 16px; color: #aeb0b6; margin-bottom: 16px; }
-  .login-card .field-email-display b { color: #f5f3ee; }
-  .login-card .field-email-display button { margin-left: 6px; }
   .login-err { font-size: 15px; color: #d9614a; margin-top: 8px; min-height: 16px; }
   .form-err { font-size: 15px; color: #d9614a; margin-top: 8px; min-height: 16px; }
   .login-msg { font-size: 15px; color: #3fae81; margin-top: 8px; min-height: 16px; }
@@ -426,18 +423,12 @@
       <div class="brand-sub">CRM</div>
     </div>
 
-    <form id="login-step-email">
+    <form id="login-form">
       <div class="field"><label>E-mail</label><input type="email" id="login-email" autocomplete="username" required></div>
-      <button type="submit" class="btn-primary">Continuar</button>
-      <div class="login-err" id="login-email-err"></div>
-    </form>
-
-    <form id="login-step-pass" style="display:none;">
-      <div class="field-email-display">E-mail: <b id="login-step-pass-email"></b> <button type="button" class="btn-link" id="login-change-email-btn">trocar</button></div>
       <div class="field" id="login-pass-field">
         <label id="login-pass-label">Senha</label>
         <div class="pass-wrap">
-          <input type="password" id="login-pass" autocomplete="current-password">
+          <input type="password" id="login-pass" autocomplete="current-password" required>
           <button type="button" class="pass-eye" id="login-pass-eye" title="Mostrar/ocultar senha"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg></button>
         </div>
       </div>
@@ -448,9 +439,9 @@
           <button type="button" class="pass-eye" id="login-pass2-eye" title="Mostrar/ocultar senha"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg></button>
         </div>
       </div>
-      <button type="submit" class="btn-primary" id="login-pass-submit-btn">Entrar</button>
-      <div class="login-err" id="login-pass-err"></div>
-      <div class="login-msg" id="login-pass-msg"></div>
+      <button type="submit" class="btn-primary" id="login-submit-btn">Entrar</button>
+      <div class="login-err" id="login-err"></div>
+      <div class="login-msg" id="login-msg"></div>
       <div class="login-forgot" id="login-forgot-wrap"><button type="button" class="btn-link" id="forgot-pass-btn">Esqueci minha senha</button></div>
     </form>
   </div>
@@ -3469,13 +3460,12 @@ async function importLeads(){
   render();
 }
 
-// ---- login (dois passos: e-mail, depois senha / criar senha) ----------
+// ---- login (tela unica: e-mail e senha visiveis desde o inicio) -------
 // migracao parcial: o Thiago (REAL_AUTH_EMAIL) usa Firebase Auth de
 // verdade (conta criada no Console, com esqueci-minha-senha funcional);
 // o Carlos continua no sistema antigo (senha guardada no Firestore) ate
 // serem migrados tambem.
 const REAL_AUTH_EMAIL = 'tcaetano1706@gmail.com';
-let _loginEmail = '';
 let _loginBaseUser = null; // entrada correspondente em CRM_USERS
 let _loginIsNewPass = false;
 let _loginUseRealAuth = false;
@@ -3498,75 +3488,89 @@ function showApp(user){
   boot();
 }
 
-document.getElementById('login-step-email').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const errEl = document.getElementById('login-email-err');
-  errEl.textContent = '';
-  const email = document.getElementById('login-email').value.trim().toLowerCase();
-  const btn = e.target.querySelector('button[type=submit]');
-  btn.disabled = true; btn.textContent = 'Carregando...';
+let _loginResolvedEmail = '';
+
+// aplica no formulario o que ja sabemos sobre esse e-mail (auth real, primeiro
+// acesso ou login normal), sem trocar de tela: o campo de senha fica visivel
+// o tempo todo, só o rótulo/campo extra mudam.
+function _applyLoginModeUI(){
+  const passLabel = document.getElementById('login-pass-label');
+  const pass2Field = document.getElementById('login-pass2-field');
+  const submitBtn = document.getElementById('login-submit-btn');
+  const forgotWrap = document.getElementById('login-forgot-wrap');
+  if(_loginIsNewPass){
+    passLabel.textContent = 'Crie uma senha';
+    pass2Field.style.display = 'block';
+    submitBtn.textContent = 'Criar senha e entrar';
+    forgotWrap.style.display = 'none';
+  } else {
+    passLabel.textContent = 'Senha';
+    pass2Field.style.display = 'none';
+    submitBtn.textContent = 'Entrar';
+    forgotWrap.style.display = 'block';
+  }
+}
+
+// resolve o e-mail (busca o usuario, decide se e auth real ou primeiro acesso)
+// e atualiza as variaveis globais de login. Retorna o baseUser ou null.
+async function _resolveLoginEmail(email, errEl){
   try {
     await _fbInit();
   } catch(err){
-    btn.disabled = false; btn.textContent = 'Continuar';
     const code = (err && (err.code || err.message)) || 'desconhecido';
-    errEl.innerHTML = 'Não consegui conectar ao servidor.<br><span style="font-family:ui-monospace,monospace;font-size: 13.5px;color:#7c7e85;">Erro: '+escapeHtml(String(code))+'</span>';
-    return;
+    if(errEl) errEl.innerHTML = 'Não consegui conectar ao servidor.<br><span style="font-family:ui-monospace,monospace;font-size: 13.5px;color:#7c7e85;">Erro: '+escapeHtml(String(code))+'</span>';
+    return null;
   }
-  btn.disabled = false; btn.textContent = 'Continuar';
-
   const baseUser = findUserByAnyEmail(email);
-  if(!baseUser){ errEl.textContent = 'Esse e-mail não tem acesso a este CRM.'; return; }
-
-  _loginEmail = email;
+  if(!baseUser){ if(errEl) errEl.textContent = 'Esse e-mail não tem acesso a este CRM.'; return null; }
   _loginBaseUser = baseUser;
+  _loginResolvedEmail = email;
   _loginUseRealAuth = (baseUser.email === REAL_AUTH_EMAIL);
   const profile = (_fbData.profiles && _fbData.profiles[baseUser.email]) || {};
   _loginIsNewPass = !_loginUseRealAuth && !profile.pass;
+  return baseUser;
+}
 
-  document.getElementById('login-step-email').style.display = 'none';
-  document.getElementById('login-step-pass').style.display = 'block';
-  document.getElementById('login-step-pass-email').textContent = email;
-  document.getElementById('login-pass').value = '';
-  document.getElementById('login-pass2').value = '';
-  document.getElementById('login-pass-err').textContent = '';
-  document.getElementById('login-pass-msg').textContent = '';
-
-  if(_loginUseRealAuth){
-    document.getElementById('login-pass-label').textContent = 'Senha';
-    document.getElementById('login-pass2-field').style.display = 'none';
-    document.getElementById('login-pass-submit-btn').textContent = 'Entrar';
-    document.getElementById('login-forgot-wrap').style.display = 'block';
-  } else if(_loginIsNewPass){
-    document.getElementById('login-pass-label').textContent = 'Crie uma senha';
-    document.getElementById('login-pass2-field').style.display = 'block';
-    document.getElementById('login-pass-submit-btn').textContent = 'Criar senha e entrar';
-    document.getElementById('login-forgot-wrap').style.display = 'none';
-    document.getElementById('login-pass-msg').textContent = 'Primeiro acesso: escolha a senha que vai usar daqui pra frente.';
-  } else {
-    document.getElementById('login-pass-label').textContent = 'Senha';
-    document.getElementById('login-pass2-field').style.display = 'none';
-    document.getElementById('login-pass-submit-btn').textContent = 'Entrar';
-    document.getElementById('login-forgot-wrap').style.display = 'block';
-  }
-  document.getElementById('login-pass').focus();
-});
-
-document.getElementById('login-change-email-btn').addEventListener('click', () => {
-  document.getElementById('login-step-pass').style.display = 'none';
-  document.getElementById('login-step-email').style.display = 'block';
-  document.getElementById('login-email').focus();
+// resolve em segundo plano assim que o usuario sai do campo de e-mail, pra
+// já mostrar "crie uma senha" antes mesmo do primeiro clique em Entrar.
+document.getElementById('login-email').addEventListener('blur', async () => {
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  if(!email || !email.includes('@') || email === _loginResolvedEmail) return;
+  const msgEl = document.getElementById('login-msg');
+  const baseUser = await _resolveLoginEmail(email, null);
+  if(!baseUser) return; // erro só aparece no submit, pra não assustar enquanto digita
+  _applyLoginModeUI();
+  msgEl.textContent = _loginIsNewPass ? 'Primeiro acesso: escolha a senha que vai usar daqui pra frente.' : '';
 });
 
 document.getElementById('login-pass-eye').addEventListener('click', function(){ togglePassVisibility('login-pass', this); });
 document.getElementById('login-pass2-eye').addEventListener('click', function(){ togglePassVisibility('login-pass2', this); });
 
-document.getElementById('login-step-pass').addEventListener('submit', async (e) => {
+document.getElementById('login-form').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const errEl = document.getElementById('login-pass-err');
+  const errEl = document.getElementById('login-err');
+  const msgEl = document.getElementById('login-msg');
   errEl.textContent = '';
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
   const pass = document.getElementById('login-pass').value;
+  const btn = document.getElementById('login-submit-btn');
 
+  if(email !== _loginResolvedEmail){
+    const pass2WasVisible = document.getElementById('login-pass2-field').style.display !== 'none';
+    const prevLabel = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Carregando...';
+    const baseUser = await _resolveLoginEmail(email, errEl);
+    btn.disabled = false; btn.textContent = prevLabel;
+    if(!baseUser) return;
+    _applyLoginModeUI();
+    if(_loginIsNewPass && !pass2WasVisible){
+      msgEl.textContent = 'Primeiro acesso: confirme a senha abaixo e clique em Entrar de novo.';
+      document.getElementById('login-pass2').focus();
+      return;
+    }
+  }
+
+  msgEl.textContent = '';
   if(_loginUseRealAuth){
     try {
       await signInWithEmailAndPassword(_fbAuth, _loginBaseUser.email, pass);
@@ -3593,7 +3597,7 @@ document.getElementById('login-step-pass').addEventListener('submit', async (e) 
   const profile = (_fbData.profiles && _fbData.profiles[_loginBaseUser.email]) || {};
   const user = {
     baseEmail: _loginBaseUser.email,
-    loginEmail: _loginEmail,
+    loginEmail: email,
     firstName: profile.firstName || _loginBaseUser.name,
     lastName: profile.lastName || _loginBaseUser.lastName || '',
     photo: profile.photo || ''
@@ -3603,10 +3607,11 @@ document.getElementById('login-step-pass').addEventListener('submit', async (e) 
 });
 
 document.getElementById('forgot-pass-btn').addEventListener('click', async () => {
+  const errEl = document.getElementById('login-err');
+  const msgEl = document.getElementById('login-msg');
+  errEl.textContent = '';
+  if(!_loginBaseUser){ errEl.textContent = 'Informe seu e-mail antes.'; return; }
   if(_loginUseRealAuth){
-    const errEl = document.getElementById('login-pass-err');
-    const msgEl = document.getElementById('login-pass-msg');
-    errEl.textContent = '';
     try {
       await sendPasswordResetEmail(_fbAuth, _loginBaseUser.email);
       msgEl.textContent = 'Enviamos um link pra esse e-mail. Abra e cadastre uma senha nova.';
