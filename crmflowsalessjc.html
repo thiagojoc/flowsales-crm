@@ -232,6 +232,11 @@
   .field-row { display: flex; gap: 10px; }
   .field-row .field { flex: 1; min-width: 0; }
   .field { margin-bottom: 12px; }
+  .lead-modal-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; }
+  .lead-modal-col { min-width: 0; }
+  @media (max-width: 720px) {
+    .lead-modal-cols { grid-template-columns: 1fr; }
+  }
   .field label { display: block; font-size: 13.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #9a9da6; margin-bottom: 5px; }
   .field input, .field select, .field textarea { width: 100%; background: #1c1f24; border: 1px solid rgba(217,169,77,0.18); border-radius: 7px; color: #f5f3ee; padding: 9px 11px; font-size: 16px; font-family: inherit; }
   .field textarea { min-height: 55px; resize: vertical; }
@@ -832,51 +837,57 @@ Quem costuma decidir sobre investir em marketing aí no escritório?</div>
 </div>
 
 <div class="modal-bg" id="lead-modal-bg">
-  <div class="modal" style="width:640px;">
+  <div class="modal" style="width:900px;">
     <h3 class="serif" id="lead-modal-title">Novo lead</h3>
     <input type="hidden" id="lead-id"><input type="hidden" id="lead-opp-id">
-    <div class="field-row">
-      <div class="field"><label>Nome</label><input type="text" id="lead-first"></div>
-      <div class="field"><label>Sobrenome</label><input type="text" id="lead-last"></div>
-    </div>
-    <div class="field-row">
-      <div class="field"><label>Escritório</label><input type="text" id="lead-office"></div>
-      <div class="field"><label>E-mail</label><input type="text" id="lead-email"></div>
-    </div>
-    <div class="field-row">
-      <div class="field"><label>Telefone</label><input type="text" id="lead-phone" placeholder="(12) 90000-0000"></div>
-      <div class="field"><label>Instagram</label><input type="text" id="lead-instagram" placeholder="usuario, sem @"></div>
-    </div>
-    <div class="field-row">
-      <div class="field"><label>Endereço</label><input type="text" id="lead-address"></div>
-      <div class="field"><label>Criado em</label><input type="date" id="lead-created-at"></div>
-    </div>
-    <div class="field-row" id="opp-fields">
-      <div class="field"><label>Pipeline</label><select id="lead-pipeline"></select></div>
-      <div class="field"><label>Etapa</label><select id="lead-stage"></select></div>
-    </div>
-    <div class="field" id="outcome-field">
-      <label>Situação da oportunidade</label>
-      <select id="lead-outcome"><option value="aberto">Aberto</option><option value="ganho">Ganho</option><option value="perdido">Perdido</option></select>
-    </div>
-    <div class="field">
-      <label>Tags</label>
-      <div class="tag-picker-chips" id="lead-tags-chips"></div>
-      <div class="tag-picker-wrap">
-        <input type="text" id="lead-tags-input" placeholder="Buscar ou criar tag...">
-        <div class="tag-picker-dropdown" id="lead-tags-dropdown"></div>
+    <div class="lead-modal-cols">
+      <div class="lead-modal-col">
+        <div class="field-row">
+          <div class="field"><label>Nome</label><input type="text" id="lead-first"></div>
+          <div class="field"><label>Sobrenome</label><input type="text" id="lead-last"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Escritório</label><input type="text" id="lead-office"></div>
+          <div class="field"><label>E-mail</label><input type="text" id="lead-email"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Telefone</label><input type="text" id="lead-phone" placeholder="(12) 90000-0000"></div>
+          <div class="field"><label>Instagram</label><input type="text" id="lead-instagram" placeholder="usuario, sem @"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Endereço</label><input type="text" id="lead-address"></div>
+          <div class="field"><label>Criado em</label><input type="date" id="lead-created-at"></div>
+        </div>
+        <div class="field-row" id="opp-fields">
+          <div class="field"><label>Pipeline</label><select id="lead-pipeline"></select></div>
+          <div class="field"><label>Etapa</label><select id="lead-stage"></select></div>
+        </div>
+        <div class="field" id="outcome-field">
+          <label>Situação da oportunidade</label>
+          <select id="lead-outcome"><option value="aberto">Aberto</option><option value="ganho">Ganho</option><option value="perdido">Perdido</option></select>
+        </div>
       </div>
-    </div>
-    <div class="field"><label>Observação</label><textarea id="lead-note"></textarea></div>
-    <div class="field" id="lead-schedule-info" style="display:none;">
-      <label>Agendamento</label>
-      <div id="lead-schedule-text" class="schedule-badge"></div>
-    </div>
-    <div class="field" id="lead-touch-info" style="display:none;">
-      <label>Pontos de contato</label>
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <div id="lead-touch-badge" class="touch-badge"></div>
-        <button type="button" class="btn-secondary" id="lead-touch-add-btn">+ Registrar contato</button>
+      <div class="lead-modal-col">
+        <div class="field">
+          <label>Tags</label>
+          <div class="tag-picker-chips" id="lead-tags-chips"></div>
+          <div class="tag-picker-wrap">
+            <input type="text" id="lead-tags-input" placeholder="Buscar ou criar tag...">
+            <div class="tag-picker-dropdown" id="lead-tags-dropdown"></div>
+          </div>
+        </div>
+        <div class="field"><label>Observação</label><textarea id="lead-note"></textarea></div>
+        <div class="field" id="lead-schedule-info" style="display:none;">
+          <label>Agendamento</label>
+          <div id="lead-schedule-text" class="schedule-badge"></div>
+        </div>
+        <div class="field" id="lead-touch-info" style="display:none;">
+          <label>Pontos de contato</label>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div id="lead-touch-badge" class="touch-badge"></div>
+            <button type="button" class="btn-secondary" id="lead-touch-add-btn">+ Registrar contato</button>
+          </div>
+        </div>
       </div>
     </div>
     <div class="modal-actions">
