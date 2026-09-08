@@ -74,13 +74,45 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
-    // CRM de prospecção SJC (crm-flowsales-sjc.html, ferramenta separada do
-    // painel principal, mas no mesmo projeto Firebase). Documento único com
-    // contatos/pipelines/oportunidades. Quem entra é controlado na tela de
-    // login do próprio arquivo (e-mail/senha de Thiago e Carlos); aqui só
-    // exige estar autenticado (mesmo que anonimamente, via signInAnonymously).
-    match /crm_sjc/{docId} {
-      allow read, write: if request.auth != null;
+    // CRM de prospecção SJC (crmflowsalessjc.html, ferramenta separada do
+    // painel principal, mas no mesmo projeto Firebase). Cada documento é uma
+    // "conta" (workspace). "main" é a conta de sempre (Thiago/Carlos, dados
+    // de hoje) e continua liberada pra qualquer autenticado (mesmo anônimo,
+    // via signInAnonymously), pra não quebrar o login do Carlos. Qualquer
+    // outra conta (criada de dentro do app, ex.: "Escritório Hitos") só
+    // libera pra quem está no mapa invitedEmails DELA (fonte de autorização
+    // de verdade, não o índice crm_sjc_roles abaixo) -- só um admin dessa
+    // conta pode alterar esse mapa (convidar/remover/trocar papel).
+    match /crm_sjc/{workspaceId} {
+      allow read, write: if request.auth != null && (
+        workspaceId == 'main' ||
+        request.auth.token.email in resource.data.invitedEmails
+      );
+      allow create: if request.auth != null && workspaceId != 'main' &&
+        request.auth.token.email in request.resource.data.invitedEmails &&
+        request.resource.data.invitedEmails[request.auth.token.email] == 'admin';
+      allow update: if request.auth != null && (
+        workspaceId == 'main' ||
+        (
+          request.auth.token.email in resource.data.invitedEmails &&
+          (
+            request.resource.data.invitedEmails == resource.data.invitedEmails ||
+            resource.data.invitedEmails[request.auth.token.email] == 'admin'
+          )
+        )
+      );
+    }
+
+    // Índice de conveniência: pra cada e-mail convidado, em quais contas
+    // (workspaces) ele pode tentar entrar e com qual papel, mais se já criou
+    // a conta no Firebase Auth (accountCreated). NÃO é fonte de autorização
+    // (quem manda é o invitedEmails de cada crm_sjc/{workspaceId} acima) --
+    // por isso pode ficar com escrita liberada pra qualquer autenticado: na
+    // pior hipótese alguém escreve besteira no PRÓPRIO índice de outra
+    // pessoa, mas isso não dá acesso nenhum a dado de verdade.
+    match /crm_sjc_roles/{email} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
     }
 
     // App pessoal de gestão de atividades (thiagojoc/produtividade, repo

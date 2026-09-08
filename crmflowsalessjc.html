@@ -49,6 +49,8 @@
 
   header.top { display: flex; align-items: center; gap: 10px; padding: 14px 24px; background: #0a0b0d; border-bottom: 1px solid rgba(217,169,77,0.14); flex-wrap: wrap; }
   header.top span.brand { font-weight: 700; letter-spacing: .04em; font-size: 16.5px; }
+  .workspace-switcher { display: flex; align-items: center; gap: 8px; margin-right: 16px; }
+  #workspace-select { background: #1c1f24; border: 1px solid rgba(217,169,77,0.25); border-radius: 7px; color: #f5f3ee; padding: 7px 10px; font-size: 15px; font-family: inherit; max-width: 220px; }
   .header-user { display: flex; align-items: center; gap: 10px; font-size: 15px; color: #c3c5cb; }
   .header-user b { color: #f5f3ee; font-size: 16px; }
 
@@ -334,6 +336,7 @@
   .login-msg { font-size: 15px; color: #3fae81; margin-top: 8px; min-height: 16px; }
   #login-form button[type=submit] { width: 100%; margin-top: 6px; }
   .login-forgot { text-align: center; margin-top: 16px; }
+  .login-credit { text-align: center; margin-top: 22px; font-size: 14px; color: #7c7e85; }
 
   /* conteudo em tema claro (fundo branco), com cabecalho/abas/barra de
      ferramentas continuando escuros como moldura por cima. */
@@ -452,6 +455,7 @@
       <div class="login-msg" id="login-msg"></div>
       <div class="login-forgot" id="login-forgot-wrap"><button type="button" class="btn-link" id="forgot-pass-btn">Esqueci minha senha</button></div>
     </form>
+    <div class="login-credit">Criado por Thiago Caetano</div>
   </div>
 </div>
 
@@ -473,6 +477,11 @@
   </svg>
   <span class="brand">FlowSales CRM</span>
   <div class="spacer"></div>
+  <div class="workspace-switcher" id="workspace-switcher" style="display:none;">
+    <select id="workspace-select" title="Trocar de conta"></select>
+    <button class="icon-btn" id="new-workspace-btn" title="Criar nova conta" style="display:none;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+    <button class="icon-btn" id="participants-btn" title="Gerenciar participantes desta conta" style="display:none;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></button>
+  </div>
   <div class="header-user">
     <button class="icon-btn" id="profile-btn" title="Editar perfil"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
     <div class="avatar-circle avatar-sm" id="header-avatar">?</div>
@@ -1143,12 +1152,44 @@ Quem costuma decidir sobre investir em marketing aí no escritório?</div>
     <div class="field-group-title">Alterar credenciais de acesso</div>
     <div class="field" style="margin-top:10px;"><label>E-mail atual</label><div id="pf-current-email" style="font-size: 16px;color:#f5f3ee;padding:4px 0 8px;"></div></div>
     <div class="field"><label>Novo e-mail</label><input type="email" id="pf-new-email" placeholder="Deixe vazio para manter o atual"></div>
-    <div class="field"><label>Nova senha</label><div class="pass-wrap"><input type="password" id="pf-new-pass" placeholder="Deixe vazio para manter a atual"><button type="button" class="pass-eye" id="pf-new-pass-eye"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg></button></div><div class="hint">Mínimo de 6 caracteres.</div></div>
+    <div class="field"><label>Nova senha</label><div class="pass-wrap"><input type="password" id="pf-new-pass" placeholder="Deixe vazio para manter a atual"><button type="button" class="pass-eye" id="pf-new-pass-eye"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg></button></div><div class="hint">Mínimo de 8 caracteres, com letras e números.</div></div>
     <div class="field"><label>Confirmar nova senha</label><div class="pass-wrap"><input type="password" id="pf-new-pass2" placeholder="Repita a nova senha"><button type="button" class="pass-eye" id="pf-new-pass2-eye"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg></button></div></div>
     <div class="login-err" id="pf-err"></div>
     <div class="modal-actions"><div></div><div class="right">
       <button class="btn-secondary" id="pf-cancel-btn">Cancelar</button>
       <button class="btn-primary" id="pf-save-btn">Salvar</button>
+    </div></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="new-workspace-modal-bg">
+  <div class="modal">
+    <h3 class="serif">Nova conta</h3>
+    <div class="hint" style="margin-bottom:14px;">Cria uma conta separada, com seus próprios leads e pipelines. Você começa como admin dela e pode convidar outras pessoas depois.</div>
+    <div class="field"><label>Nome da conta</label><input type="text" id="nw-name" placeholder="Ex.: Escritório Hitos"></div>
+    <div class="login-err" id="nw-err"></div>
+    <div class="modal-actions"><div></div><div class="right">
+      <button class="btn-secondary" id="nw-cancel-btn">Cancelar</button>
+      <button class="btn-primary" id="nw-create-btn">Criar conta</button>
+    </div></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="participants-modal-bg">
+  <div class="modal" style="width:480px;">
+    <h3 class="serif">Participantes desta conta</h3>
+    <div class="hint" style="margin-bottom:14px;">Admin edita tudo e pode gerenciar participantes. Limitado só trabalha os leads (sem gerenciar a conta).</div>
+    <div id="participants-list" style="margin-bottom:18px;"></div>
+    <hr>
+    <div class="field-group-title">Convidar participante</div>
+    <div class="field-row" style="margin-top:10px;">
+      <div class="field" style="flex:2;"><label>E-mail</label><input type="email" id="pt-new-email" placeholder="pessoa@email.com"></div>
+      <div class="field"><label>Acesso</label><select id="pt-new-role"><option value="admin">Admin</option><option value="membro" selected>Limitado</option></select></div>
+    </div>
+    <div class="login-err" id="pt-err"></div>
+    <div class="modal-actions"><div></div><div class="right">
+      <button class="btn-secondary" id="pt-close-btn">Fechar</button>
+      <button class="btn-primary" id="pt-invite-btn">Convidar</button>
     </div></div>
   </div>
 </div>
@@ -1161,7 +1202,7 @@ Quem costuma decidir sobre investir em marketing aí no escritório?</div>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, signInAnonymously, signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, signInAnonymously, signInWithEmailAndPassword, sendPasswordResetEmail, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 /*
   Camada de dados. Sincroniza via Firestore (mesmo projeto Firebase do painel
@@ -1218,7 +1259,19 @@ const _fbConfig = {
 const _fbApp = initializeApp(_fbConfig);
 const _fbDB = getFirestore(_fbApp);
 const _fbAuth = getAuth(_fbApp);
-const CRM_DOC = doc(_fbDB, 'crm_sjc', 'main');
+// CRM_DOC aponta pro documento da "conta" (workspace) ativa. Comeca em
+// crm_sjc/main (dados de hoje, FlowSales). Quem tem acesso a mais de uma
+// conta (ver crm_sjc_roles/{email}) pode trocar pra crm_sjc/{workspaceId}
+// em qualquer momento, ver _setCrmDocForWorkspace.
+const WORKSPACE_ROLES_COLLECTION = 'crm_sjc_roles';
+let CRM_DOC = doc(_fbDB, 'crm_sjc', 'main');
+let _fbUnsubDoc = null; // cancela o listener do documento anterior ao trocar de conta
+function _setCrmDocForWorkspace(workspaceId){
+  if(_fbUnsubDoc){ _fbUnsubDoc(); _fbUnsubDoc = null; }
+  CRM_DOC = doc(_fbDB, 'crm_sjc', workspaceId);
+  _fbReady = false;
+  _fbReadyPromise = null;
+}
 
 const DEFAULT_PIPELINES = [
   { id: 'pl-sdr', name: 'SDR', stages: [
@@ -1453,7 +1506,7 @@ async function _fbInit(){
         _fbData = _seedData();
         await setDoc(CRM_DOC, _fbData);
       }
-      onSnapshot(CRM_DOC, (snap) => {
+      _fbUnsubDoc = onSnapshot(CRM_DOC, (snap) => {
         if(!snap.exists()) return;
         _fbData = snap.data();
         if(!_fbData.profiles) _fbData.profiles = {};
@@ -1529,7 +1582,20 @@ const DB = {
     _fbData.approachTexts = _fbData.approachTexts || {};
     _fbData.approachTexts[key] = text;
     await setDoc(CRM_DOC, { approachTexts: _fbData.approachTexts }, { merge: true });
-  }
+  },
+  // participantes convidados pra essa conta (workspace): { email: 'admin'|'membro' }.
+  // so quem e admin da conta ativa pode chamar isto, ver openParticipantsModal.
+  async getInvitedEmails(){ await _fbInit(); return _fbData.invitedEmails || {}; },
+  async saveInvitedEmails(map){
+    await _fbInit();
+    _fbData.invitedEmails = map;
+    await setDoc(CRM_DOC, { invitedEmails: map }, { merge: true });
+  },
+  // mensagens agendadas pro WhatsApp (envio automatico feito pela ponte
+  // wa-crm-bridge, que roda fora daqui, ver README dela). O CRM so grava a
+  // lista; quem manda de verdade e o script rodando com o numero conectado.
+  async getScheduledMessages(){ await _fbInit(); return _fbData.scheduledMessages || []; },
+  async saveScheduledMessages(list){ await _fbInit(); _fbData.scheduledMessages = list; await setDoc(CRM_DOC, { scheduledMessages: list }, { merge: true }); }
 };
 
 let contacts = [], pipelines = [], opportunities = [], activities = [], calls = [];
@@ -2241,6 +2307,14 @@ function bindStaticEvents(){
   document.getElementById('pf-new-pass-eye').addEventListener('click', function(){ togglePassVisibility('pf-new-pass', this); });
   document.getElementById('pf-new-pass2-eye').addEventListener('click', function(){ togglePassVisibility('pf-new-pass2', this); });
 
+  document.getElementById('workspace-select').addEventListener('change', (e) => switchWorkspace(e.target.value));
+  document.getElementById('new-workspace-btn').addEventListener('click', openNewWorkspaceModal);
+  document.getElementById('nw-cancel-btn').addEventListener('click', () => document.getElementById('new-workspace-modal-bg').classList.remove('show'));
+  document.getElementById('nw-create-btn').addEventListener('click', createWorkspace);
+  document.getElementById('participants-btn').addEventListener('click', openParticipantsModal);
+  document.getElementById('pt-close-btn').addEventListener('click', () => document.getElementById('participants-modal-bg').classList.remove('show'));
+  document.getElementById('pt-invite-btn').addEventListener('click', inviteParticipant);
+
   const tagsInput = document.getElementById('lead-tags-input');
   tagsInput.addEventListener('focus', renderLeadTagsDropdown);
   tagsInput.addEventListener('input', renderLeadTagsDropdown);
@@ -2355,7 +2429,10 @@ async function saveProfileModal(){
   const errEl = document.getElementById('pf-err');
   errEl.textContent = '';
   if(!firstName){ errEl.textContent = 'Informe seu nome.'; return; }
-  if(newPass && newPass.length < 6){ errEl.textContent = 'A nova senha precisa ter pelo menos 6 caracteres.'; return; }
+  if(newPass){
+    const strengthErr = _validatePasswordStrength(newPass);
+    if(strengthErr){ errEl.textContent = strengthErr; return; }
+  }
   if(newPass && newPass !== newPass2){ errEl.textContent = 'As senhas não coincidem.'; return; }
 
   const profile = await DB.getProfile(currentUser.baseEmail);
@@ -2377,6 +2454,160 @@ function updateHeaderUser(){
   document.getElementById('user-name').textContent = (currentUser.firstName+' '+(currentUser.lastName||'')).trim();
   const av = document.getElementById('header-avatar');
   av.innerHTML = currentUser.photo ? ('<img src="'+currentUser.photo+'" alt="">') : initialsOf(currentUser.firstName, currentUser.lastName);
+}
+
+// ---- contas (workspaces): trocar, criar e convidar participantes --------
+// currentUser.workspaces = { workspaceId: { role: 'admin'|'membro', name } },
+// currentUser.activeWorkspace = qual delas ta carregada agora em CRM_DOC.
+function _myRoleInActiveWorkspace(){
+  const ws = currentUser.workspaces && currentUser.workspaces[currentUser.activeWorkspace];
+  return ws ? ws.role : 'membro';
+}
+function updateWorkspaceSwitcher(){
+  const wrap = document.getElementById('workspace-switcher');
+  const workspaces = currentUser.workspaces || {};
+  const keys = Object.keys(workspaces);
+  wrap.style.display = keys.length ? 'flex' : 'none';
+  const sel = document.getElementById('workspace-select');
+  sel.innerHTML = keys.map(k => '<option value="'+escapeHtml(k)+'"'+(k===currentUser.activeWorkspace?' selected':'')+'>'+escapeHtml(workspaces[k].name||k)+'</option>').join('');
+  const isAdmin = _myRoleInActiveWorkspace() === 'admin';
+  // criar conta nova fica disponivel pra quem ja e admin de pelo menos uma
+  // (so quem tem uma conta pra administrar sabe o que esta fazendo aqui).
+  document.getElementById('new-workspace-btn').style.display = isAdmin ? 'flex' : 'none';
+  document.getElementById('participants-btn').style.display = isAdmin ? 'flex' : 'none';
+}
+async function switchWorkspace(workspaceId){
+  if(!currentUser.workspaces || !currentUser.workspaces[workspaceId] || workspaceId === currentUser.activeWorkspace) return;
+  _setCrmDocForWorkspace(workspaceId);
+  try {
+    await _fbInit();
+  } catch(err){
+    console.error('[CRM] falha ao trocar de conta:', err);
+    alert('Não deu pra trocar de conta agora. Tente de novo em instantes.');
+    updateWorkspaceSwitcher();
+    return;
+  }
+  currentUser.activeWorkspace = workspaceId;
+  localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
+  contacts = await DB.getContacts();
+  pipelines = await DB.getPipelines();
+  opportunities = await DB.getOpportunities();
+  activities = await DB.getActivities();
+  calls = await DB.getCalls();
+  currentPipelineId = pipelines[0].id;
+  applyApproachOverrides();
+  render();
+  checkScheduleReminders();
+  updateWorkspaceSwitcher();
+}
+function openNewWorkspaceModal(){
+  document.getElementById('nw-name').value = '';
+  document.getElementById('nw-err').textContent = '';
+  document.getElementById('new-workspace-modal-bg').classList.add('show');
+}
+async function createWorkspace(){
+  const name = document.getElementById('nw-name').value.trim();
+  const errEl = document.getElementById('nw-err');
+  if(!name){ errEl.textContent = 'Dê um nome pra essa conta.'; return; }
+  let slug = normalizeImportText(name).replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'conta';
+  slug = slug + '-' + Date.now().toString(36);
+  const myEmail = currentUser.baseEmail;
+  const seedDoc = {
+    name, contacts: [], pipelines: JSON.parse(JSON.stringify(DEFAULT_PIPELINES)), opportunities: [],
+    waTemplate: DEFAULT_WA_TEMPLATE, profiles: {}, activities: [], calls: [], scheduledMessages: [],
+    invitedEmails: { [myEmail]: 'admin' }
+  };
+  try {
+    await setDoc(doc(_fbDB, 'crm_sjc', slug), seedDoc);
+    const newWorkspaces = Object.assign({}, currentUser.workspaces, { [slug]: { role: 'admin', name } });
+    await setDoc(doc(_fbDB, WORKSPACE_ROLES_COLLECTION, myEmail), { workspaces: newWorkspaces, accountCreated: true }, { merge: true });
+    currentUser.workspaces = newWorkspaces;
+    document.getElementById('new-workspace-modal-bg').classList.remove('show');
+    await switchWorkspace(slug);
+  } catch(err){
+    console.error('[CRM] falha ao criar conta:', err);
+    errEl.textContent = 'Não deu pra criar a conta agora. Tente de novo em instantes.';
+  }
+}
+async function openParticipantsModal(){
+  document.getElementById('pt-new-email').value = '';
+  document.getElementById('pt-new-role').value = 'membro';
+  document.getElementById('pt-err').textContent = '';
+  await renderParticipantsList();
+  document.getElementById('participants-modal-bg').classList.add('show');
+}
+async function renderParticipantsList(){
+  const invited = await DB.getInvitedEmails();
+  const emails = Object.keys(invited);
+  const listEl = document.getElementById('participants-list');
+  if(!emails.length){
+    listEl.innerHTML = '<div class="hint">Ainda não tem participantes cadastrados nessa conta.</div>';
+    return;
+  }
+  listEl.innerHTML = emails.map(email => {
+    const role = invited[email];
+    const isMe = email === currentUser.baseEmail;
+    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(217,169,77,0.12);">'
+      + '<div style="flex:1;min-width:0;font-size:15px;color:#f5f3ee;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(email)+(isMe?' <span class="hint" style="display:inline;">(você)</span>':'')+'</div>'
+      + '<select class="pt-role-select" data-email="'+escapeHtml(email)+'" style="width:auto;padding:6px 8px;font-size:14.5px;'+(isMe?'pointer-events:none;opacity:.6;':'')+'"'+(isMe?' disabled':'')+'>'
+      +   '<option value="admin"'+(role==='admin'?' selected':'')+'>Admin</option>'
+      +   '<option value="membro"'+(role!=='admin'?' selected':'')+'>Limitado</option>'
+      + '</select>'
+      + (isMe ? '' : '<button type="button" class="card-icon-btn pt-remove-btn" data-email="'+escapeHtml(email)+'" title="Remover"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>')
+      + '</div>';
+  }).join('');
+  listEl.querySelectorAll('.pt-role-select').forEach(sel => {
+    sel.addEventListener('change', () => changeParticipantRole(sel.dataset.email, sel.value));
+  });
+  listEl.querySelectorAll('.pt-remove-btn').forEach(btn => {
+    btn.addEventListener('click', () => removeParticipant(btn.dataset.email));
+  });
+}
+// atualiza tanto o invitedEmails do workspace (fonte de autorizacao) quanto o
+// indice crm_sjc_roles/{email} dessa pessoa (so pra ela saber que essa conta
+// existe na proxima vez que fizer login) -- nunca com sintaxe de caminho
+// pontilhado, sempre substituindo o mapa inteiro, pra e-mail com ponto nao
+// virar campo aninhado sem querer.
+async function _syncParticipantRoleIndex(email, workspaceName, role){
+  try {
+    const snap = await getDoc(doc(_fbDB, WORKSPACE_ROLES_COLLECTION, email));
+    const current = snap.exists() ? (snap.data().workspaces || {}) : {};
+    const updated = Object.assign({}, current);
+    if(role === null) delete updated[currentUser.activeWorkspace];
+    else updated[currentUser.activeWorkspace] = { role, name: workspaceName };
+    await setDoc(doc(_fbDB, WORKSPACE_ROLES_COLLECTION, email), { workspaces: updated }, { merge: true });
+  } catch(err){ console.error('[CRM] falha ao atualizar indice de acesso do participante:', err); }
+}
+async function inviteParticipant(){
+  const email = document.getElementById('pt-new-email').value.trim().toLowerCase();
+  const role = document.getElementById('pt-new-role').value;
+  const errEl = document.getElementById('pt-err');
+  errEl.textContent = '';
+  if(!email || !email.includes('@')){ errEl.textContent = 'Informe um e-mail válido.'; return; }
+  const invited = await DB.getInvitedEmails();
+  if(invited[email]){ errEl.textContent = 'Esse e-mail já é participante dessa conta.'; return; }
+  const updated = Object.assign({}, invited, { [email]: role });
+  await DB.saveInvitedEmails(updated);
+  const workspaceName = (currentUser.workspaces[currentUser.activeWorkspace]||{}).name || currentUser.activeWorkspace;
+  await _syncParticipantRoleIndex(email, workspaceName, role);
+  document.getElementById('pt-new-email').value = '';
+  await renderParticipantsList();
+}
+async function changeParticipantRole(email, role){
+  const invited = await DB.getInvitedEmails();
+  const updated = Object.assign({}, invited, { [email]: role });
+  await DB.saveInvitedEmails(updated);
+  const workspaceName = (currentUser.workspaces[currentUser.activeWorkspace]||{}).name || currentUser.activeWorkspace;
+  await _syncParticipantRoleIndex(email, workspaceName, role);
+}
+async function removeParticipant(email){
+  if(!confirm('Remover '+email+' dessa conta?')) return;
+  const invited = await DB.getInvitedEmails();
+  const updated = Object.assign({}, invited);
+  delete updated[email];
+  await DB.saveInvitedEmails(updated);
+  await _syncParticipantRoleIndex(email, '', null);
+  await renderParticipantsList();
 }
 
 let editingIsOpp = true;
@@ -3520,9 +3751,34 @@ async function importLeads(){
 // o Carlos continua no sistema antigo (senha guardada no Firestore) ate
 // serem migrados tambem.
 const REAL_AUTH_EMAIL = 'tcaetano1706@gmail.com';
-let _loginBaseUser = null; // entrada correspondente em CRM_USERS
+let _loginBaseUser = null; // entrada correspondente em CRM_USERS, ou conta convidada
 let _loginIsNewPass = false;
 let _loginUseRealAuth = false;
+let _loginWorkspaces = {}; // { workspaceId: { role, name } } que esse e-mail pode acessar
+
+// minimo de protecao de senha: 8+ caracteres, com letra e numero misturados
+// (nao e so o "6 caracteres" antigo). Usado sempre que uma senha nova e
+// criada (conta convidada no primeiro acesso, e no perfil).
+function _validatePasswordStrength(pass){
+  if(!pass || pass.length < 8) return 'A senha precisa ter pelo menos 8 caracteres.';
+  if(!/[a-zA-Z]/.test(pass) || !/[0-9]/.test(pass)) return 'A senha precisa ter letras e números.';
+  return null;
+}
+
+// le crm_sjc_roles/{email}: indice de conveniencia (nao e a fonte de
+// autorizacao, isso quem manda e o invitedEmails de cada workspace) que diz
+// quais contas esse e-mail pode tentar acessar, e se ja criou a conta no
+// Firebase Auth (accountCreated) ou ainda esta no primeiro acesso.
+async function _getRolesDoc(email){
+  try {
+    const snap = await getDoc(doc(_fbDB, WORKSPACE_ROLES_COLLECTION, email));
+    if(snap.exists()){
+      const d = snap.data();
+      return { workspaces: d.workspaces || {}, accountCreated: !!d.accountCreated };
+    }
+  } catch(err){ console.error('[CRM] falha ao ler crm_sjc_roles:', err); }
+  return { workspaces: {}, accountCreated: false };
+}
 
 function findUserByAnyEmail(email){
   // acha o usuario base cujo e-mail original OU e-mail trocado no perfil bate
@@ -3539,6 +3795,7 @@ function showApp(user){
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app-root').style.display = 'block';
   updateHeaderUser();
+  updateWorkspaceSwitcher();
   boot();
 }
 
@@ -3576,13 +3833,35 @@ async function _resolveLoginEmail(email, errEl){
     return null;
   }
   const baseUser = findUserByAnyEmail(email);
-  if(!baseUser){ if(errEl) errEl.textContent = 'Esse e-mail não tem acesso a este CRM.'; return null; }
-  _loginBaseUser = baseUser;
+  if(baseUser){
+    _loginBaseUser = baseUser;
+    _loginResolvedEmail = email;
+    _loginUseRealAuth = (baseUser.email === REAL_AUTH_EMAIL);
+    const profile = (_fbData.profiles && _fbData.profiles[baseUser.email]) || {};
+    _loginIsNewPass = !_loginUseRealAuth && !profile.pass;
+    // Thiago e Carlos sempre tem acesso a conta "FlowSales" (main), mesmo que
+    // ainda nao exista crm_sjc_roles pra eles; outras contas que participem
+    // (criadas de dentro do app) vem por cima disso.
+    const rolesInfo = await _getRolesDoc(baseUser.email);
+    _loginWorkspaces = Object.assign({ main: { role: 'admin', name: 'FlowSales' } }, rolesInfo.workspaces);
+    return baseUser;
+  }
+  // nao e um dos e-mails pre-cadastrados: so entra se algum admin ja tiver
+  // convidado esse e-mail pra alguma conta (crm_sjc_roles/{email}). Nao
+  // existe cadastro aberto: "nao e qualquer um que pode chegar e criar
+  // conta", quem cria e o admin, convidando por e-mail dentro do app.
+  const rolesInfo = await _getRolesDoc(email);
+  if(!Object.keys(rolesInfo.workspaces).length){
+    if(errEl) errEl.textContent = 'Esse e-mail não tem acesso a este CRM. Peça para o administrador da conta te convidar primeiro.';
+    return null;
+  }
+  const invitedUser = { email, name: email.split('@')[0], lastName: '', isInvited: true };
+  _loginBaseUser = invitedUser;
   _loginResolvedEmail = email;
-  _loginUseRealAuth = (baseUser.email === REAL_AUTH_EMAIL);
-  const profile = (_fbData.profiles && _fbData.profiles[baseUser.email]) || {};
-  _loginIsNewPass = !_loginUseRealAuth && !profile.pass;
-  return baseUser;
+  _loginUseRealAuth = true;
+  _loginIsNewPass = !rolesInfo.accountCreated;
+  _loginWorkspaces = rolesInfo.workspaces;
+  return invitedUser;
 }
 
 // resolve em segundo plano assim que o usuario sai do campo de e-mail, pra
@@ -3625,14 +3904,33 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
   }
 
   msgEl.textContent = '';
-  if(_loginUseRealAuth){
+  if(_loginUseRealAuth && _loginBaseUser.isInvited && _loginIsNewPass){
+    // primeiro acesso de uma conta convidada: cria a conta de verdade no
+    // Firebase Auth (nao existe senha padrao pra decorar, ela escolhe agora).
+    const pass2 = document.getElementById('login-pass2').value;
+    const strengthErr = _validatePasswordStrength(pass);
+    if(strengthErr){ errEl.textContent = strengthErr; return; }
+    if(pass !== pass2){ errEl.textContent = 'As senhas não coincidem.'; return; }
+    try {
+      await createUserWithEmailAndPassword(_fbAuth, _loginBaseUser.email, pass);
+      await setDoc(doc(_fbDB, WORKSPACE_ROLES_COLLECTION, _loginBaseUser.email), { accountCreated: true }, { merge: true });
+    } catch(err){
+      console.error('[CRM] falha ao criar conta convidada:', err);
+      if(err && err.code === 'auth/email-already-in-use'){
+        errEl.textContent = 'Essa conta já foi criada antes. Clique em "Esqueci minha senha" se não lembra a senha.';
+      } else {
+        errEl.textContent = 'Não deu pra criar sua conta agora. Tente de novo em instantes.';
+      }
+      return;
+    }
+  } else if(_loginUseRealAuth){
     try {
       await signInWithEmailAndPassword(_fbAuth, _loginBaseUser.email, pass);
     } catch(err){
       console.error('[CRM] falha no login com Firebase Auth:', err);
       const code = err && err.code;
       if(code === 'auth/user-not-found' || code === 'auth/invalid-credential' || code === 'auth/wrong-password'){
-        errEl.textContent = 'E-mail ou senha incorretos. Se essa conta ainda não foi criada no Firebase, crie ela no Console (Authentication) antes de entrar.';
+        errEl.textContent = 'E-mail ou senha incorretos.';
       } else {
         errEl.textContent = 'Não deu pra entrar agora. Tente de novo em instantes.';
       }
@@ -3640,12 +3938,24 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     }
   } else if(_loginIsNewPass){
     const pass2 = document.getElementById('login-pass2').value;
-    if(pass.length < 6){ errEl.textContent = 'A senha precisa ter pelo menos 6 caracteres.'; return; }
+    const strengthErr = _validatePasswordStrength(pass);
+    if(strengthErr){ errEl.textContent = strengthErr; return; }
     if(pass !== pass2){ errEl.textContent = 'As senhas não coincidem.'; return; }
     await DB.saveProfile(_loginBaseUser.email, { pass });
   } else {
     const profile = (_fbData.profiles && _fbData.profiles[_loginBaseUser.email]) || {};
     if(profile.pass !== pass){ errEl.textContent = 'Senha incorreta.'; return; }
+  }
+
+  // escolhe a conta (workspace) ativa: a ultima usada por esse e-mail, se
+  // ainda tiver acesso a ela, senao a primeira disponivel.
+  let savedPrev = null;
+  try { savedPrev = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch(e){}
+  const wsKeys = Object.keys(_loginWorkspaces);
+  let activeWorkspace = (savedPrev && savedPrev.baseEmail === _loginBaseUser.email && _loginWorkspaces[savedPrev.activeWorkspace]) ? savedPrev.activeWorkspace : (wsKeys[0] || 'main');
+  if(activeWorkspace !== 'main'){
+    _setCrmDocForWorkspace(activeWorkspace);
+    await _fbInit();
   }
 
   const profile = (_fbData.profiles && _fbData.profiles[_loginBaseUser.email]) || {};
@@ -3654,7 +3964,10 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     loginEmail: email,
     firstName: profile.firstName || _loginBaseUser.name,
     lastName: profile.lastName || _loginBaseUser.lastName || '',
-    photo: profile.photo || ''
+    photo: profile.photo || '',
+    isInvited: _loginBaseUser.isInvited || undefined,
+    workspaces: _loginWorkspaces,
+    activeWorkspace
   };
   localStorage.setItem(SESSION_KEY, JSON.stringify(user));
   showApp(user);
@@ -3682,7 +3995,13 @@ document.getElementById('forgot-close-btn').addEventListener('click', () => docu
 (async function initSession(){
   try {
     const saved = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
-    if(saved && CRM_USERS.find(u => u.email === saved.baseEmail)){
+    const isCrmUser = saved && CRM_USERS.find(u => u.email === saved.baseEmail);
+    if(saved && (isCrmUser || saved.isInvited)){
+      // a sessao do Firebase Auth (conta propria ou convidada) fica salva
+      // sozinha pelo proprio SDK, nao precisa pedir senha de novo. So
+      // precisa apontar pro documento da conta (workspace) que estava ativa.
+      const ws = saved.activeWorkspace || 'main';
+      if(ws !== 'main') _setCrmDocForWorkspace(ws);
       await _fbInit();
       showApp(saved);
       return;
