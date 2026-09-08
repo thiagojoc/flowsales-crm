@@ -482,6 +482,7 @@
     <button class="icon-btn" id="new-workspace-btn" title="Criar nova conta" style="display:none;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
     <button class="icon-btn" id="participants-btn" title="Gerenciar participantes desta conta" style="display:none;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></button>
   </div>
+  <button class="icon-btn" id="scheduled-messages-btn" title="Mensagens agendadas no WhatsApp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></button>
   <div class="header-user">
     <button class="icon-btn" id="profile-btn" title="Editar perfil"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
     <div class="avatar-circle avatar-sm" id="header-avatar">?</div>
@@ -1052,6 +1053,31 @@ Quem costuma decidir sobre investir em marketing aí no escritório?</div>
   </div>
 </div>
 
+<div class="modal-bg" id="schedule-send-modal-bg">
+  <div class="modal">
+    <h3 class="serif">Agendar envio automático</h3>
+    <div class="hint" style="margin-bottom:14px;">A mensagem é enviada sozinha na data marcada, pela ponte WhatsApp (wa-crm-bridge) rodando no seu computador ou servidor. Precisa dela ligada na hora do envio.</div>
+    <div class="field"><label>Para</label><div id="ss-contact-name" style="font-size:16px;color:#f5f3ee;padding:4px 0 8px;"></div></div>
+    <div class="field"><label>Mensagem</label><textarea id="ss-text" style="min-height:90px;"></textarea><div class="hint">Use {{nome}} para o primeiro nome do lead entrar automaticamente.</div></div>
+    <div class="field"><label>Enviar em</label><input type="datetime-local" id="ss-datetime"></div>
+    <div class="login-err" id="ss-err"></div>
+    <div class="modal-actions"><div></div><div class="right">
+      <button class="btn-secondary" id="ss-cancel-btn">Cancelar</button>
+      <button class="btn-primary" id="ss-save-btn">Agendar</button>
+    </div></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="scheduled-messages-modal-bg">
+  <div class="modal" style="width:560px;">
+    <h3 class="serif">Mensagens agendadas</h3>
+    <div id="scheduled-messages-list"></div>
+    <div class="modal-actions"><div></div><div class="right">
+      <button class="btn-primary" id="sm-close-btn">Fechar</button>
+    </div></div>
+  </div>
+</div>
+
 <div class="modal-bg" id="schedule-reminder-tpl-modal-bg">
   <div class="modal">
     <h3 class="serif">Cadência de lembretes de agendamento</h3>
@@ -1236,6 +1262,9 @@ const EYE_OFF_ICON = '<path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11
 
 // icones das acoes rapidas do card (whatsapp, instagram, agendar)
 const CALENDAR_ICON_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
+// relogio: agendar envio automatico da mensagem (nao e o mesmo botao do
+// WhatsApp manual, que so abre o wa.me com o texto pronto).
+const SCHEDULE_SEND_ICON_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
 const WHATSAPP_ICON_SVG = '<svg width="15" height="15" viewBox="0 0 448 512" fill="currentColor"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/></svg>';
 const INSTAGRAM_ICON_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>';
 const TOUCHPOINT_ICON_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>';
@@ -1878,6 +1907,7 @@ function renderOpp(){
         touchpointBadgeHtml(c.id) +
         '<div class="row-actions">' +
           (wa ? '<a class="card-icon-btn wa" title="WhatsApp" data-wa="'+c.id+'" href="#">'+WHATSAPP_ICON_SVG+'</a>' : '') +
+          (wa ? '<button class="card-icon-btn schedule-send-btn" title="Agendar envio automático" data-schedule-send="'+c.id+'">'+SCHEDULE_SEND_ICON_SVG+'</button>' : '') +
           (c.instagram ? '<a class="card-icon-btn" title="Instagram" target="_blank" href="https://instagram.com/'+encodeURIComponent(c.instagram)+'">'+INSTAGRAM_ICON_SVG+'</a>' : '') +
           '<button class="card-icon-btn cal schedule-btn" title="Agendar" data-id="'+c.id+'">'+CALENDAR_ICON_SVG+'</button>' +
         '</div>';
@@ -1899,6 +1929,7 @@ function renderOpp(){
     const msg = template.replace(/\{\{nome\}\}/g, c.firstName || '');
     window.open('https://wa.me/'+waLink(c)+'?text='+encodeURIComponent(msg), '_blank');
   }));
+  board.querySelectorAll('[data-schedule-send]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); openScheduleSendModal(btn.dataset.scheduleSend); }));
 
   board.querySelectorAll('.card-select').forEach(chk => chk.addEventListener('change', () => {
     if(chk.checked) selectedOppIds.add(chk.dataset.id); else selectedOppIds.delete(chk.dataset.id);
@@ -1962,6 +1993,7 @@ function renderContacts(){
       '<td>'+formatDate(c.createdAt)+'</td>' +
       '<td><div class="row-actions">' +
         (wa ? '<a class="card-icon-btn wa" title="WhatsApp" data-wa="'+c.id+'" href="#">'+WHATSAPP_ICON_SVG+'</a>' : '') +
+        (wa ? '<button class="card-icon-btn schedule-send-btn" title="Agendar envio automático" data-schedule-send="'+c.id+'">'+SCHEDULE_SEND_ICON_SVG+'</button>' : '') +
         '<button class="card-icon-btn cal schedule-btn" title="Agendar" data-id="'+c.id+'">'+CALENDAR_ICON_SVG+'</button>' +
       '</div></td>' +
     '</tr>';
@@ -1978,6 +2010,7 @@ function renderContacts(){
     const msg = template.replace(/\{\{nome\}\}/g, c.firstName || '');
     window.open('https://wa.me/'+waLink(c)+'?text='+encodeURIComponent(msg), '_blank');
   }));
+  tbody.querySelectorAll('[data-schedule-send]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); openScheduleSendModal(btn.dataset.scheduleSend); }));
 }
 
 async function renameStage(stageId, newLabel){
@@ -2314,6 +2347,11 @@ function bindStaticEvents(){
   document.getElementById('participants-btn').addEventListener('click', openParticipantsModal);
   document.getElementById('pt-close-btn').addEventListener('click', () => document.getElementById('participants-modal-bg').classList.remove('show'));
   document.getElementById('pt-invite-btn').addEventListener('click', inviteParticipant);
+
+  document.getElementById('ss-cancel-btn').addEventListener('click', () => document.getElementById('schedule-send-modal-bg').classList.remove('show'));
+  document.getElementById('ss-save-btn').addEventListener('click', saveScheduleSend);
+  document.getElementById('scheduled-messages-btn').addEventListener('click', openScheduledMessagesModal);
+  document.getElementById('sm-close-btn').addEventListener('click', () => document.getElementById('scheduled-messages-modal-bg').classList.remove('show'));
 
   const tagsInput = document.getElementById('lead-tags-input');
   tagsInput.addEventListener('focus', renderLeadTagsDropdown);
@@ -2846,6 +2884,82 @@ async function applyBulkEdit(){
 }
 
 function gcalDateFmt(d){ return d.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z'; }
+
+// ---- mensagens agendadas no WhatsApp (envio automatico) ------------------
+// O CRM so guarda a lista (scheduledMessages, no documento da conta ativa).
+// Quem manda de verdade e a ponte wa-crm-bridge, rodando fora daqui num
+// numero de WhatsApp conectado (ver README dela): ela fica checando essa
+// lista e manda quando chega a hora, marcando como enviada.
+let _scheduleSendContactId = null;
+async function openScheduleSendModal(contactId){
+  const c = contactById(contactId);
+  if(!c) return;
+  _scheduleSendContactId = contactId;
+  document.getElementById('ss-contact-name').textContent = (c.firstName+' '+c.lastName).trim() + ' ('+(c.phone||'')+')';
+  const template = await DB.getWaTemplate();
+  document.getElementById('ss-text').value = template.replace(/\{\{nome\}\}/g, c.firstName || '');
+  const start = new Date();
+  start.setMinutes(0,0,0);
+  start.setHours(start.getHours()+1);
+  // formato exigido pelo input datetime-local: YYYY-MM-DDTHH:mm, no horario local
+  const pad = n => String(n).padStart(2,'0');
+  document.getElementById('ss-datetime').value = start.getFullYear()+'-'+pad(start.getMonth()+1)+'-'+pad(start.getDate())+'T'+pad(start.getHours())+':00';
+  document.getElementById('ss-err').textContent = '';
+  document.getElementById('schedule-send-modal-bg').classList.add('show');
+}
+async function saveScheduleSend(){
+  const errEl = document.getElementById('ss-err');
+  const c = contactById(_scheduleSendContactId);
+  const text = document.getElementById('ss-text').value.trim();
+  const when = document.getElementById('ss-datetime').value;
+  if(!text){ errEl.textContent = 'Escreva a mensagem.'; return; }
+  if(!when){ errEl.textContent = 'Escolha a data e hora do envio.'; return; }
+  const sendAt = new Date(when);
+  if(isNaN(sendAt.getTime()) || sendAt.getTime() <= Date.now()){ errEl.textContent = 'Escolha um horário no futuro.'; return; }
+  const list = await DB.getScheduledMessages();
+  list.push({
+    id: uid('sm'), contactId: c.id, waNumber: c.waNumber || waNumberFromPhone(c.phone),
+    text, sendAt: sendAt.toISOString(), sent: false,
+    createdAt: new Date().toISOString(), createdBy: currentUser.baseEmail
+  });
+  await DB.saveScheduledMessages(list);
+  document.getElementById('schedule-send-modal-bg').classList.remove('show');
+}
+async function openScheduledMessagesModal(){
+  await renderScheduledMessagesList();
+  document.getElementById('scheduled-messages-modal-bg').classList.add('show');
+}
+async function renderScheduledMessagesList(){
+  const list = await DB.getScheduledMessages();
+  const listEl = document.getElementById('scheduled-messages-list');
+  if(!list.length){
+    listEl.innerHTML = '<div class="hint">Nenhuma mensagem agendada nessa conta.</div>';
+    return;
+  }
+  const sorted = list.slice().sort((a,b) => new Date(a.sendAt) - new Date(b.sendAt));
+  listEl.innerHTML = sorted.map(m => {
+    const c = contactById(m.contactId);
+    const nome = c ? (c.firstName+' '+(c.lastName||'')).trim() : (m.waNumber || '(contato removido)');
+    const when = new Date(m.sendAt).toLocaleString('pt-BR');
+    const status = m.sent ? '<span style="color:#3fae81;">Enviada</span>' : (new Date(m.sendAt) < new Date() ? '<span style="color:#d9614a;">Atrasada</span>' : '<span style="color:#d9a94d;">Pendente</span>');
+    return '<div style="padding:10px 0;border-bottom:1px solid rgba(217,169,77,0.12);">'
+      + '<div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;">'
+      +   '<b style="font-size:15px;color:#f5f3ee;">'+escapeHtml(nome)+'</b>'
+      +   '<span class="hint">'+when+' · '+status+'</span>'
+      + '</div>'
+      + '<div class="hint" style="margin-top:4px;white-space:pre-wrap;">'+escapeHtml(m.text)+'</div>'
+      + (m.sent ? '' : '<button type="button" class="btn-link" data-cancel-sm="'+m.id+'" style="margin-top:6px;font-size:14.5px;">Cancelar envio</button>')
+      + '</div>';
+  }).join('');
+  listEl.querySelectorAll('[data-cancel-sm]').forEach(btn => {
+    btn.addEventListener('click', () => cancelScheduledMessage(btn.dataset.cancelSm));
+  });
+}
+async function cancelScheduledMessage(id){
+  const list = await DB.getScheduledMessages();
+  await DB.saveScheduledMessages(list.filter(m => m.id !== id));
+  await renderScheduledMessagesList();
+}
 
 function openScheduleModal(contactId){
   const c = contactById(contactId);
