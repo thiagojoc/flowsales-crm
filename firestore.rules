@@ -149,6 +149,20 @@ service cloud.firestore {
       );
     }
 
+    // Link curto do formulario publico de coleta de dados: em vez de botar
+    // workspace/contato/nome/lista de documentos direto na URL (ficava
+    // gigante na mensagem de WhatsApp), o CRM grava um documento aqui com um
+    // codigo aleatorio pequeno e a URL publica so leva esse codigo. So quem
+    // esta logado no CRM cria (ao clicar em "Enviar link"); leitura e
+    // publica porque e exatamente essa informacao (nada mais sensivel do
+    // que ja estaria visivel numa URL) que a pagina publica precisa antes
+    // de qualquer login.
+    match /crm_sjc_intake_links/{code} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if false;
+    }
+
     // App pessoal de gestão de atividades (thiagojoc/produtividade, repo
     // separado, mesmo projeto Firebase). Documento único com colunas/
     // tarefas. Login com e-mail e senha (Firebase Auth de verdade): só

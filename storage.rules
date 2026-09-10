@@ -20,7 +20,7 @@ service firebase.storage {
     // lead); ler ou apagar depois exige ser convidado da conta (workspace)
     // dona daquele lead, igual o registro em crm_sjc_intake no Firestore.
     match /crm_sjc_intake/{workspaceId}/{contactId}/{submissionId}/{fileName} {
-      allow create: if request.auth != null && request.resource.size < 20 * 1024 * 1024;
+      allow create: if request.auth != null && request.resource.size < 50 * 1024 * 1024;
       allow read, delete: if request.auth != null && (
         workspaceId == 'main' ||
         request.auth.token.email in firestore.get(/databases/(default)/documents/crm_sjc/$(workspaceId)).data.invitedEmails
