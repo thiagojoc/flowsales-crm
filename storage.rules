@@ -13,6 +13,21 @@ service firebase.storage {
       );
     }
 
+    // Documentos anexados pelo formulario publico de preenchimento do CRM
+    // (crmflowsalessjc, preencher.html): o lead recebe um link, sem
+    // precisar de conta, e sobe os arquivos dele aqui. So permite CRIAR
+    // (nunca sobrescrever um arquivo que ja existe nem ler os de outro
+    // lead); ler ou apagar depois exige ser convidado da conta (workspace)
+    // dona daquele lead, igual o registro em crm_sjc_intake no Firestore.
+    match /crm_sjc_intake/{workspaceId}/{contactId}/{submissionId}/{fileName} {
+      allow create: if request.auth != null && request.resource.size < 20 * 1024 * 1024;
+      allow read, delete: if request.auth != null && (
+        workspaceId == 'main' ||
+        request.auth.token.email in firestore.get(/databases/(default)/documents/crm_sjc/$(workspaceId)).data.invitedEmails
+      );
+      allow update: if false;
+    }
+
     // Qualquer outro caminho fora do previsto acima: negado por padrão.
     match /{allPaths=**} {
       allow read, write: if false;

@@ -115,6 +115,40 @@ service cloud.firestore {
       allow write: if request.auth != null;
     }
 
+    // Envios do formulario publico de preenchimento (o lead recebe um link,
+    // sem precisar de conta, preenche dados e anexa documento; ver
+    // preencher.html). So CRIA um registro novo (nunca le nem sobrescreve
+    // os outros, nem os dados normais do CRM), entao vale liberar pra
+    // qualquer autenticado (mesmo anonimo, e o lead nunca teria como
+    // logar de verdade). Ler ou excluir um envio ja recebido exige ser
+    // convidado da conta (workspace) dona daquele lead.
+    match /crm_sjc_intake/{submissionId} {
+      allow create: if request.auth != null;
+      allow read, delete: if request.auth != null && (
+        resource.data.workspaceId == 'main' ||
+        request.auth.token.email in get(/databases/$(database)/documents/crm_sjc/$(resource.data.workspaceId)).data.invitedEmails
+      );
+      allow update: if false;
+    }
+
+    // Marca pública de cada conta (workspace): nome de exibição, logo e
+    // paleta de cores, usados na tela pública de preenchimento
+    // (preencher.html) pra ficar com a cara do escritório do lead (ex.:
+    // Hitos Siqueira), não da FlowSales. Nada sensível aqui (só visual),
+    // então leitura é liberada pra qualquer um, mesmo sem login -- é
+    // exatamente isso que o link público precisa. Só admin da conta
+    // consegue alterar.
+    match /crm_sjc_public/{workspaceId} {
+      allow read: if true;
+      allow write: if request.auth != null && (
+        workspaceId == 'main' ||
+        (
+          request.auth.token.email in get(/databases/$(database)/documents/crm_sjc/$(workspaceId)).data.invitedEmails &&
+          get(/databases/$(database)/documents/crm_sjc/$(workspaceId)).data.invitedEmails[request.auth.token.email] == 'admin'
+        )
+      );
+    }
+
     // App pessoal de gestão de atividades (thiagojoc/produtividade, repo
     // separado, mesmo projeto Firebase). Documento único com colunas/
     // tarefas. Login com e-mail e senha (Firebase Auth de verdade): só
