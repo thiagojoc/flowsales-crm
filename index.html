@@ -782,6 +782,10 @@ window._fbAuthReady = new Promise(res=>{
             <div class="funnel-wrap" id="kpi-funnel"></div>
           </div>
 
+          <div class="card" id="meta-kpis-card" style="display:none">
+            <div class="ch"><div class="ct ct-glow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>Dados em tempo real - Meta ads</div><button class="ca" id="meta-sync-btn" onclick="syncMeta()">Sincronizar</button></div>
+            <div id="meta-kpis-content"><div class="empty">Clique em Sincronizar para buscar dados da Meta.</div></div>
+          </div>
           <div class="card">
             <div class="ch"><div class="ct ct-glow">Métricas do Tráfego Pago</div></div>
             <div id="kpi-traf"></div>
@@ -797,10 +801,6 @@ window._fbAuthReady = new Promise(res=>{
           <div class="card" id="ghl-kpis-card">
             <div class="ch"><div class="ct ct-glow">Conversões</div></div>
             <div id="ghl-kpis-content"><div class="empty">Sem dados suficientes ainda.</div></div>
-          </div>
-          <div class="card" id="meta-kpis-card" style="display:none">
-            <div class="ch"><div class="ct ct-glow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>Dados em tempo real - Meta ads</div><button class="ca" id="meta-sync-btn" onclick="syncMeta()">Sincronizar</button></div>
-            <div id="meta-kpis-content"><div class="empty">Clique em Sincronizar para buscar dados da Meta.</div></div>
           </div>
         </div>
 
@@ -2343,6 +2343,65 @@ function _periodDays(){
   return days;
 }
 function _dayKey(dt){return dt.toISOString().split('T')[0];}
+// Discriminacao de vendas paginada: so 5 por pagina, com scroll proprio
+// dentro do card (nao rola a pagina toda) e botoes de pagina pra ver o resto.
+function _renderVendasBreakdown(vendasItems){
+  const vbEl=document.getElementById('kpi-vendas-breakdown');if(!vbEl)return;
+  if(!vendasItems.length){vbEl.innerHTML='<div class="empty">Nenhum registro ainda.</div>';return;}
+  var totalFat=vendasItems.reduce(function(s,vi){return s+(+vi.val||0);},0);
+  var sorted=vendasItems.slice().sort(function(a,b){return(b.date||'')>(a.date||'')?1:-1;});
+  var PAGE_SIZE=5;
+  var totalPages=Math.max(1,Math.ceil(sorted.length/PAGE_SIZE));
+  if(!S.vendasPage||S.vendasPage<0)S.vendasPage=0;
+  if(S.vendasPage>totalPages-1)S.vendasPage=totalPages-1;
+  var pageItems=sorted.slice(S.vendasPage*PAGE_SIZE,(S.vendasPage+1)*PAGE_SIZE);
+  var rows=pageItems.map(function(vi){
+    var valStr=vi.val>0?'R$ '+Number(vi.val).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'';
+    var canEdit=true;
+    return '<div style="border:0.5px solid var(--bdr);border-radius:8px;padding:11px 13px;margin-bottom:8px">'
+      +'<div style="display:flex;align-items:flex-start;gap:8px">'
+      +'<div style="flex:1;min-width:0">'
+      +'<div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px">'+vi.cli+'</div>'
+      +'<div style="font-size:14px;color:var(--t2);margin-bottom:4px">'+vi.tipo+'</div>'
+      +(function(){
+        var _field=function(lbl,val){return val?'<div><div style="font-size:14px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1px">'+lbl+'</div><div style="font-size:14px;color:var(--text)">'+val+'</div></div>':'';};
+        var _fields=_field('Data da venda',vi.date?vi.date.split('-').reverse().join('/'):'')
+          +_field('Origem da venda',vi.orig||'')
+          +_field('E-mail',vi.email||'')
+          +_field('Telefone',vi.phone||'')
+          +_field('Proprietário',vi.seller||'');
+        if(!_fields)return'';
+        var _parcLbl=vi.parcelado?(vi.numParcelas>1?vi.numParcelas+'x parcelado':'Recebimento previsto: '+((vi.parcelas&&vi.parcelas[0]&&vi.parcelas[0].date)?vi.parcelas[0].date.split('-').reverse().join('/'):'')):'';
+        return '<div style="margin-top:2px"><div style="font-size:14px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">Dados do lead</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:6px 12px">'+_fields+'</div>'+(_parcLbl?'<div style="margin-top:6px;font-size:14px;color:var(--gold);font-weight:600">'+_parcLbl+'</div>':'')+'</div>';
+      })()
+      +(vi.fileName?'<div style="margin-top:5px;display:flex;align-items:center;gap:6px;font-size:14px"><span style="color:var(--blue)">📎 '+vi.fileName+'</span><button type="button" onclick="viewVendaFile(\''+vi.id+'\')" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:14px;text-decoration:underline;padding:0">Ver</button><button type="button" onclick="downloadVendaFile(\''+vi.id+'\',\''+(vi.fileName||'').replace(/\'/g,'')+'\')" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:14px;text-decoration:underline;padding:0">Baixar</button></div>':'')
+      +'</div>'
+      +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">'
+      +(valStr?'<span style="font-size:14px;font-weight:700;color:var(--green)">'+valStr+'</span>':'')
+      +(canEdit?'<div style="display:flex;gap:5px">'
+        +'<button class="ib" data-vid="'+vi.id+'" onclick="edVenda(this.dataset.vid)" title="Editar" style="color:var(--t2)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
+        +'<button class="ib del" data-vid="'+vi.id+'" onclick="delVendasItem(this.dataset.vid)" title="Excluir"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>'
+        +'</div>':'')
+      +'</div>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+  var total_row='<div style="display:flex;justify-content:space-between;font-size:14px;font-weight:600;padding:8px 2px;border-top:0.5px solid var(--bdr);margin-top:4px"><span>Total ('+vendasItems.length+' venda'+(vendasItems.length!==1?'s':'')+')</span><span style="color:var(--green)">R$ '+totalFat.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'</span></div>';
+  var pager='';
+  if(totalPages>1){
+    var btns='';
+    for(var i=0;i<totalPages;i++){
+      var _on=i===S.vendasPage;
+      btns+='<button class="ca" style="min-width:30px;padding:4px 0;'+(_on?'background:var(--gb);color:var(--gold);border-color:var(--gbr)':'')+'" onclick="_gotoVendasPage('+i+')">'+(i+1)+'</button>';
+    }
+    pager='<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px">'+btns+'</div>';
+  }
+  vbEl.innerHTML='<div style="max-height:480px;overflow-y:auto;padding-right:4px">'+rows+'</div>'+total_row+pager;
+}
+function _gotoVendasPage(i){
+  S.vendasPage=i;
+  _renderVendasBreakdown((_kpiData().vendasItems||[]).filter(_vendaMatchesActiveOrig));
+}
 function _renderVendasOrigem(vendasItems){
   const el=document.getElementById('kpi-vendas-origem');
   if(!el)return;
@@ -2402,49 +2461,9 @@ function rKpis(d){
   // respeitam o FUNIL selecionado, mostrando só o que casa com a(s) origem(ns)
   // marcada(s) em vez de sempre exibir tudo.
   const vendasItems=(d.vendasItems||[]).filter(_vendaMatchesActiveOrig);
-  const vbEl=document.getElementById('kpi-vendas-breakdown');
   const vbBtn=document.getElementById('vendas-add-btn');
   if(vbBtn){vbBtn.innerHTML='<button class="ca" onclick="openAddVenda()">+ Adicionar venda</button>';}
-  if(vbEl){
-    if(!vendasItems.length){vbEl.innerHTML='<div class="empty">Nenhum registro ainda.</div>';}
-    else{
-      // Individual entries
-      var totalFat=vendasItems.reduce(function(s,vi){return s+(+vi.val||0);},0);
-      var rows=vendasItems.slice().sort(function(a,b){return(b.date||'')>(a.date||'')?1:-1;}).map(function(vi){
-        var valStr=vi.val>0?'R$ '+Number(vi.val).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'';
-        var canEdit=true;
-        return '<div style="border:0.5px solid var(--bdr);border-radius:8px;padding:11px 13px;margin-bottom:8px">'
-          +'<div style="display:flex;align-items:flex-start;gap:8px">'
-          +'<div style="flex:1;min-width:0">'
-          +'<div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px">'+vi.cli+'</div>'
-          +'<div style="font-size:14px;color:var(--t2);margin-bottom:4px">'+vi.tipo+'</div>'
-          +(function(){
-            var _field=function(lbl,val){return val?'<div><div style="font-size:14px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1px">'+lbl+'</div><div style="font-size:14px;color:var(--text)">'+val+'</div></div>':'';};
-            var _fields=_field('Data da venda',vi.date?vi.date.split('-').reverse().join('/'):'')
-              +_field('Origem da venda',vi.orig||'')
-              +_field('E-mail',vi.email||'')
-              +_field('Telefone',vi.phone||'')
-              +_field('Proprietário',vi.seller||'');
-            if(!_fields)return'';
-            var _parcLbl=vi.parcelado?(vi.numParcelas>1?vi.numParcelas+'x parcelado':'Recebimento previsto: '+((vi.parcelas&&vi.parcelas[0]&&vi.parcelas[0].date)?vi.parcelas[0].date.split('-').reverse().join('/'):'')):'';
-            return '<div style="margin-top:2px"><div style="font-size:14px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">Dados do lead</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:6px 12px">'+_fields+'</div>'+(_parcLbl?'<div style="margin-top:6px;font-size:14px;color:var(--gold);font-weight:600">'+_parcLbl+'</div>':'')+'</div>';
-          })()
-          +(vi.fileName?'<div style="margin-top:5px;display:flex;align-items:center;gap:6px;font-size:14px"><span style="color:var(--blue)">📎 '+vi.fileName+'</span><button type="button" onclick="viewVendaFile(\''+vi.id+'\')" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:14px;text-decoration:underline;padding:0">Ver</button><button type="button" onclick="downloadVendaFile(\''+vi.id+'\',\''+(vi.fileName||'').replace(/\'/g,'')+'\')" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:14px;text-decoration:underline;padding:0">Baixar</button></div>':'')
-          +'</div>'
-          +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">'
-          +(valStr?'<span style="font-size:14px;font-weight:700;color:var(--green)">'+valStr+'</span>':'')
-          +(canEdit?'<div style="display:flex;gap:5px">'
-            +'<button class="ib" data-vid="'+vi.id+'" onclick="edVenda(this.dataset.vid)" title="Editar" style="color:var(--t2)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
-            +'<button class="ib del" data-vid="'+vi.id+'" onclick="delVendasItem(this.dataset.vid)" title="Excluir"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>'
-            +'</div>':'')
-          +'</div>'
-          +'</div>'
-          +'</div>';
-      }).join('');
-      var total_row='<div style="display:flex;justify-content:space-between;font-size:14px;font-weight:600;padding:8px 2px;border-top:0.5px solid var(--bdr);margin-top:4px"><span>Total ('+vendasItems.length+' venda'+( vendasItems.length!==1?'s':'')+')</span><span style="color:var(--green)">R$ '+totalFat.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'</span></div>';
-      vbEl.innerHTML=rows+total_row;
-    }
-  }
+  _renderVendasBreakdown(vendasItems);
   _renderVendasOrigem(vendasItems);
   document.getElementById('kpi-g6').innerHTML=metrics.map(i=>{
     if(i.bar===false)return`<div class="kpi-mc"><div class="kpi-lbl">${i.l}</div><div class="kpi-val">${i.v}</div><div class="kpi-sub kpi-nt">${i.sub}</div></div>`;
@@ -5924,10 +5943,12 @@ window.addEventListener('DOMContentLoaded',()=>{
     // firm dropdown
     const fd=document.getElementById('firm-drop');
     if(fd&&!document.getElementById('sfirm')?.contains(e.target))fd.classList.remove('on');
-    // calendar panel
+    // calendar panel (o botao dentro do card da Meta tambem abre o mesmo
+    // painel e tambem tem a classe "cal-btn", por isso o closest aqui, senao
+    // esse clique conta como "fora" e fecha o painel no mesmo clique que abriu)
     const cp=document.getElementById('cal-panel');
     const ct=document.getElementById('cal-toggle');
-    if(cp&&cp.classList.contains('on')&&!cp.contains(e.target)&&!ct?.contains(e.target))closeCal();
+    if(cp&&cp.classList.contains('on')&&!cp.contains(e.target)&&!ct?.contains(e.target)&&!e.target.closest('.cal-btn'))closeCal();
     // notifications panel
     const np=document.getElementById('np');
     const nb=document.querySelector('.notifbtn');
