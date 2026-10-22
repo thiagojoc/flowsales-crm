@@ -1839,18 +1839,45 @@ async function doLogin(){
 function doLogout(){if(_fbUnsub){_fbUnsub();_fbUnsub=null;}localStorage.removeItem('fs_sess');S.trainSel=null;document.getElementById('login').style.display='flex';document.getElementById('app').style.display='none';}
 function forgotPass(){
   const old=document.getElementById('forgot-modal');if(old)old.remove();
+  const _prefill=(document.getElementById('le')&&document.getElementById('le').value||'').trim();
   const m=document.createElement('div');
   m.id='forgot-modal';
   m.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:20px';
   m.innerHTML=`<div style="background:#1E2024;border:0.5px solid rgba(217,169,77,0.3);border-radius:14px;padding:28px 24px;max-width:360px;width:100%;text-align:center">
     <div style="font-size:28px;margin-bottom:12px">🔐</div>
     <div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:8px">Redefinir senha</div>
-    <div style="font-size:14px;color:rgba(255,255,255,0.65);line-height:1.6;margin-bottom:20px">Entre em contato com o administrador:<br><strong style="color:#D9A94D">Thiago Caetano</strong><br>E-mail: comercialflowsales@gmail.com</div>
+    <div style="font-size:14px;color:rgba(255,255,255,0.65);line-height:1.6;margin-bottom:16px">Informe o e-mail usado pra entrar no portal. Se tiver uma conta cadastrada, mandamos um link pra você criar uma senha nova.</div>
+    <div style="text-align:left;margin-bottom:14px"><input class="fi" id="forgot-email" type="email" value="${_prefill.replace(/"/g,'&quot;')}" placeholder="seu@email.com" style="width:100%;box-sizing:border-box"></div>
+    <button id="forgot-send-btn" onclick="_sendForgotReset()" style="display:block;width:100%;background:#D9A94D;color:#000;border:none;border-radius:8px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:10px;font-family:inherit">Enviar link de redefinição</button>
+    <div id="forgot-msg" style="font-size:14px;line-height:1.5;margin-bottom:14px;min-height:0"></div>
+    <div style="font-size:14px;color:rgba(255,255,255,0.5);border-top:0.5px solid rgba(255,255,255,0.1);padding-top:14px;margin-bottom:10px">Prefere falar direto com o administrador?<br><strong style="color:#D9A94D">Thiago Caetano</strong> · comercialflowsales@gmail.com</div>
     <a href="https://wa.me/5512991636548?text=Olá%2C%20preciso%20redefinir%20minha%20senha%20no%20portal%20FlowSales" target="_blank" style="display:block;background:#25D366;color:#fff;border-radius:8px;padding:10px;font-size:14px;font-weight:600;text-decoration:none;margin-bottom:10px">💬 Falar no WhatsApp</a>
     <button onclick="document.getElementById('forgot-modal').remove()" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);border:none;border-radius:8px;padding:9px;width:100%;font-size:14px;cursor:pointer;font-family:inherit">Fechar</button>
   </div>`;
   document.body.appendChild(m);
   m.addEventListener('click',e=>{if(e.target===m)m.remove();});
+}
+async function _sendForgotReset(){
+  const emEl=document.getElementById('forgot-email');
+  const msgEl=document.getElementById('forgot-msg');
+  const btn=document.getElementById('forgot-send-btn');
+  const email=(emEl&&emEl.value||'').trim().toLowerCase();
+  if(!email){msgEl.style.color='#ff8a8a';msgEl.textContent='Informe o e-mail de acesso.';return;}
+  if(btn){btn.disabled=true;btn.textContent='Enviando...';}
+  let _invalidEmail=false;
+  try{
+    await _waitFB();
+    await window._fbSendPasswordReset(email);
+  }catch(e){
+    if(e&&e.code==='auth/invalid-email')_invalidEmail=true;
+    // qualquer outro erro (conta nao existe, etc.) fica em silencio de proposito:
+    // nao da pra revelar se aquele e-mail tem conta ou nao (mesma logica do
+    // proprio Firebase), senao vira uma forma de descobrir e-mails cadastrados.
+  }
+  if(btn){btn.disabled=false;btn.textContent='Enviar link de redefinição';}
+  if(_invalidEmail){msgEl.style.color='#ff8a8a';msgEl.textContent='Esse e-mail não parece válido. Confira e tente de novo.';return;}
+  msgEl.style.color='#8ddfa8';
+  msgEl.textContent='Se esse e-mail tiver uma conta cadastrada, você vai receber um link para redefinir a senha. Confira sua caixa de entrada (e o spam).';
 }
 async function checkSess(){
   const s=localStorage.getItem('fs_sess');if(!s)return;
