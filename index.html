@@ -3349,7 +3349,7 @@ function rClientesJur(d){
         <span style="font-size:14px;font-weight:700;color:var(--green);margin-left:auto">R$ ${(+c.valContrato||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
       </div>
       <div class="fm">${subParts.join(' · ')}</div>
-      <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:6px" onclick="event.stopPropagation()">
+      <div style="display:flex;justify-content:flex-start;gap:6px;margin-top:6px" onclick="event.stopPropagation()">
         <button class="fdl" style="color:var(--t2)" title="Editar" onclick="edClientJur('${c.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="fdl" style="color:var(--red)" title="Excluir" onclick="delClientJur('${c.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
       </div>
     </div>`;
@@ -5431,7 +5431,7 @@ function rFirms(){
       +'</div>'
       +cBar+hBar
       +(f.driveUrl?'<div style="margin-top:8px"><a href="'+f.driveUrl+'" target="_blank" style="display:inline-flex;align-items:center;gap:5px;font-size:14px;color:var(--blue);padding:4px 10px;border:0.5px solid var(--blue)33;border-radius:5px;background:var(--blue)11;text-decoration:none"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Pasta no Drive</a></div>':'')
-      +'<div style="display:flex;justify-content:flex-end;gap:6px;margin-top:10px">'
+      +'<div style="display:flex;justify-content:flex-start;gap:6px;margin-top:10px">'
       +'<button class="ca" data-fid2="'+f.id+'" style="background:var(--gb);color:var(--text);border:0.5px solid var(--bdr);font-size:14px;padding:3px 8px" onclick="edFirm(this.dataset.fid2)">Editar</button>'
       +'<button class="bda" data-fid3="'+f.id+'" style="font-size:14px;padding:3px 8px" onclick="removeFirm(this.dataset.fid3)">Excluir</button>'
       +'</div></div>';
