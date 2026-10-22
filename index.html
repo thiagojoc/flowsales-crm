@@ -51,6 +51,15 @@
   --fs-body:16px;--lh-body:24px;
   --fs-caption:14px;--lh-caption:20px;
 }
+/* modo escuro do dashboard (login continua sempre com o visual proprio dele,
+   definido em #login mais abaixo, que ja fixa essas mesmas variaveis). */
+html[data-theme="dark"]{
+  --bg:#0a0b0d;--s1:#14161a;--s2:#1c1f24;--s3:#22262c;
+  --bdr:rgba(45,45,74,0.55);--bdr2:rgba(45,45,74,0.9);
+  --text:#E8E8F0;--t2:#A0A3B1;--t3:#7c7e85;
+  --gold:#2952E2;--gb:rgba(41,82,226,0.14);--gbr:rgba(41,82,226,0.35);
+  --green:#22C55E;--red:#EF4444;--blue:#2952E2;
+}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-sans);font-size:15px;line-height:1.5;overflow:hidden;}
 input,button,select,textarea{font-family:inherit;}
 h1{font-size:var(--fs-display);line-height:var(--lh-display);font-weight:600;letter-spacing:-0.01em;}
@@ -110,8 +119,8 @@ input[type="date"].fi::-webkit-calendar-picker-indicator:hover{opacity:0.85;}
 .lbtn:hover{opacity:.88;}
 .lerr{font-size:var(--fs-caption);color:var(--red);margin-top:12px;text-align:center;min-height:18px;}
 
-/* APP SHELL (fundo branco, design system TIEE) */
-#app{position:fixed;inset:0;display:none;background:#FFFFFF;}
+/* APP SHELL (design system TIEE, segue claro/escuro via --bg) */
+#app{position:fixed;inset:0;display:none;background:var(--bg);}
 .shell{display:flex;height:100%;}
 
 /* SIDEBAR (modo claro, igual ao resto do dashboard) */
@@ -644,6 +653,7 @@ window._fbAuthReady = new Promise(res=>{
       <div class="ni client-nav" onclick="nav('dem')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Entregas<span class="nb g" id="bdgd" style="display:none">0</span></div>
       <div class="sb-sec" id="sbsec-clientesjur" style="display:none">Jurídico</div>
       <div class="ni client-nav" id="ni-clientesjur" onclick="nav('clientesjur')" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>Clientes</div>
+      <div class="ni client-nav" id="ni-cjgestao" onclick="nav('cjgestao')" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Indicadores</div>
       <div class="sb-sec">Gestão</div>
       <div class="ni client-nav" id="ni-perfil" onclick="nav('perfil')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Perfil do cliente</div>
       <div class="ni admin-only" id="ni-firms" onclick="nav('firms')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Escritórios</div>
@@ -667,6 +677,10 @@ window._fbAuthReady = new Promise(res=>{
         </button>
         
         <span id="sync-dot" title="Sincronizando..." style="width:7px;height:7px;border-radius:50%;background:var(--t3);display:inline-block;flex-shrink:0;transition:background .3s;cursor:default;"></span>
+        <button class="notifbtn" id="theme-toggle" onclick="toggleTheme()" title="Mudar para modo escuro">
+          <svg id="theme-icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <svg id="theme-icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
         <button class="notifbtn" onclick="toggleNotif()"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="ndot" id="ndot" style="display:none"></span></button>
       </div>
 
@@ -873,6 +887,19 @@ window._fbAuthReady = new Promise(res=>{
             <button class="ca" onclick="openM('clientjur')">+ Novo cliente</button>
           </div>
           <div id="cj-list"></div>
+        </div>
+
+        <!-- GESTAO DE CLIENTES (JURIDICO) -->
+        <div class="sec" id="s-cjgestao">
+          <div class="kpi-g6" id="cjg-kpis" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))"></div>
+          <div class="card"><div class="ch"><div class="ct ct-glow">Clientes por status</div></div><div id="cjg-status"></div></div>
+          <div class="card"><div class="ch"><div class="ct ct-glow">Clientes a vencer (próximos 30 dias)</div></div><div id="cjg-avencer"></div></div>
+          <div class="card"><div class="ch"><div class="ct ct-glow">Clientes por origem do lead</div></div><div id="cjg-origem"></div></div>
+          <div class="card"><div class="ch"><div class="ct ct-glow">Clientes por vendedor</div></div><div id="cjg-vendedor"></div></div>
+          <div class="card"><div class="ch"><div class="ct ct-glow">Clientes por serviço</div></div><div id="cjg-servico"></div></div>
+          <div class="card"><div class="ch"><div class="ct ct-glow">Clientes por responsável</div></div><div id="cjg-responsavel"></div></div>
+          <div class="card"><div class="ch"><div class="ct ct-glow">Clientes por forma de pagamento</div></div><div id="cjg-formapagto"></div></div>
+          <div class="card"><div class="ch"><div class="ct ct-glow">Clientes por parcelamento</div></div><div id="cjg-parcelamento"></div></div>
         </div>
 
         <!-- JORNADA -->
@@ -1967,9 +1994,11 @@ function loadFirm(){
   const _fCj=isFS?null:FIRMS.find(x=>x.id===S.eid);
   const _cjOn=!isFS&&S.role!=='colab'&&!!(_fCj&&_fCj.modClientesJur);
   const niCj=document.getElementById('ni-clientesjur');const secCj=document.getElementById('sbsec-clientesjur');
+  const niCjg=document.getElementById('ni-cjgestao');
   if(niCj) niCj.style.display=_cjOn?'flex':'none';
+  if(niCjg) niCjg.style.display=_cjOn?'flex':'none';
   if(secCj) secCj.style.display=_cjOn?'block':'none';
-  if(!_cjOn&&S.sec==='clientesjur')nav('ov');
+  if(!_cjOn&&(S.sec==='clientesjur'||S.sec==='cjgestao'))nav('ov');
   // Update partner photo after firm data is loaded from Firebase
   if(S.role==='client'){
     try{
@@ -2012,7 +2041,7 @@ function loadFirm(){
 function populateWkFilter(){const sel=document.getElementById('wk-sel');if(!sel)return;const d=ld();const weeks=[...new Set(d.tasks.map(t=>t.week))].sort((a,b)=>a-b);sel.innerHTML='<option value="all">Todas</option>'+weeks.map(w=>`<option value="${w}">Semana ${w}</option>`).join('');}
 
 // ── NAV ───────────────────────────────────────────────────────
-const TITLES={ov:'Overview',kpis:'KPIs',metas:'Metas',tasks:'Demandas',meet:'Reuniões',arq:'Arquivos',fin:'Financeiro',chat:'Chat',dem:'Entregas',perfil:'Perfil do cliente',flow:'Painel Flow Sales',firms:'Escritórios',timeline:'Jornada',trein:'Treinamentos',clientesjur:'Clientes'};
+const TITLES={ov:'Overview',kpis:'KPIs',metas:'Metas',tasks:'Demandas',meet:'Reuniões',arq:'Arquivos',fin:'Financeiro',chat:'Chat',dem:'Entregas',perfil:'Perfil do cliente',flow:'Painel Flow Sales',firms:'Escritórios',timeline:'Jornada',trein:'Treinamentos',clientesjur:'Clientes',cjgestao:'Indicadores'};
 
 function nav(id){
   S.sec=id;
@@ -2039,6 +2068,21 @@ function nav(id){
 }
 function toggleSb(){document.getElementById('sb').classList.toggle('on');}
 function closeSb(){document.getElementById('sb').classList.remove('on');}
+function applyTheme(theme){
+  document.documentElement.setAttribute('data-theme',theme);
+  const sun=document.getElementById('theme-icon-sun');const moon=document.getElementById('theme-icon-moon');
+  const btn=document.getElementById('theme-toggle');
+  if(sun)sun.style.display=theme==='dark'?'none':'';
+  if(moon)moon.style.display=theme==='dark'?'':'none';
+  if(btn)btn.title=theme==='dark'?'Mudar para modo claro':'Mudar para modo escuro';
+}
+function toggleTheme(){
+  const cur=localStorage.getItem('fs_theme')==='dark'?'dark':'light';
+  const next=cur==='dark'?'light':'dark';
+  localStorage.setItem('fs_theme',next);
+  applyTheme(next);
+}
+applyTheme(localStorage.getItem('fs_theme')==='dark'?'dark':'light');
 
 // ── RENDER ALL ────────────────────────────────────────────────
 function _clickupTask(t){
@@ -2101,7 +2145,7 @@ function _renderKpiFirmSelector(){
     sel.value=S.kpiViewEid||S.eid;
   }
 }
-function renderAll(){const d=ld();const _td=_localDate();d.tasks.forEach(t=>{if(t.status==='pending'&&t.due&&t.due<_td)t.status='late';});const _kd=_kpiData();rOv(d);_renderKpiFirmSelector();rKpis(_kd);rConversoes(_kd);rMetaKpis(_kd);rScore(_kd);rMetas(d);rTasks(d);rMeet(d);rFiles(d);rChat(d);rDem(d);rTimeline(d);rPerfil(d);rNotif(d);rBadges(d);rFlow();rFirms();rFinanceiro(d);rTrein(d);rClientesJur(d);}
+function renderAll(){const d=ld();const _td=_localDate();d.tasks.forEach(t=>{if(t.status==='pending'&&t.due&&t.due<_td)t.status='late';});const _kd=_kpiData();rOv(d);_renderKpiFirmSelector();rKpis(_kd);rConversoes(_kd);rMetaKpis(_kd);rScore(_kd);rMetas(d);rTasks(d);rMeet(d);rFiles(d);rChat(d);rDem(d);rTimeline(d);rPerfil(d);rNotif(d);rBadges(d);rFlow();rFirms();rFinanceiro(d);rTrein(d);rClientesJur(d);rClientesGestao(d);}
 
 function _entregaCardHtml(e){
   const catClr={GHL:'var(--blue)',IA:'#a78bfa',Website:'var(--green)',Campanha:'var(--gold)',Reunião:'var(--t2)',Outro:'var(--t2)'};
@@ -3213,7 +3257,7 @@ function _cjSave(existingId){
     c.createdAt=new Date().toISOString();
     d.clientesJuridicos.push(c);
   }
-  sv(d);rClientesJur(d);cModal(null,1);_showToast(existingId?'Cliente atualizado ✅':'Cliente cadastrado ✅','var(--green)');
+  sv(d);rClientesJur(d);rClientesGestao(d);cModal(null,1);_showToast(existingId?'Cliente atualizado ✅':'Cliente cadastrado ✅','var(--green)');
 }
 function rClientesJur(d){
   const el=document.getElementById('cj-list');if(!el)return;
@@ -3255,7 +3299,83 @@ function edClientJur(id){
 }
 function delClientJur(id){
   if(!confirm('Excluir este cliente?'))return;
-  const d=ld();d.clientesJuridicos=(d.clientesJuridicos||[]).filter(x=>x.id!==id);sv(d);rClientesJur(d);
+  const d=ld();d.clientesJuridicos=(d.clientesJuridicos||[]).filter(x=>x.id!==id);sv(d);rClientesJur(d);rClientesGestao(d);
+}
+// ── GESTAO DE CLIENTES (JURIDICO): KPIs e graficos a partir dos cadastros ────
+function _cjBreakdown(list,field,labelFn){
+  const counts={};
+  list.forEach(c=>{
+    const raw=labelFn?labelFn(c[field]):(c[field]||'').trim();
+    const k=raw||'Não informado';
+    counts[k]=(counts[k]||0)+1;
+  });
+  const entries=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  if(!entries.length)return '<div class="empty">Nenhum registro ainda.</div>';
+  const max=Math.max(...entries.map(e=>e[1]),1);
+  return entries.map(([k,v])=>{
+    const pct=Math.round(v/max*100);
+    return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:9px"><div style="width:160px;flex-shrink:0;font-size:14px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+k+'">'+k+'</div><div style="flex:1;background:var(--s3);border-radius:5px;height:10px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:var(--gold);border-radius:5px"></div></div><div style="width:30px;text-align:right;font-size:14px;font-weight:700;color:var(--text)">'+v+'</div></div>';
+  }).join('');
+}
+function rClientesGestao(d){
+  const root=document.getElementById('s-cjgestao');if(!root)return;
+  const list=d.clientesJuridicos||[];
+  const totalClientes=list.length;
+  const faturTotal=list.reduce((s,c)=>s+(+c.valContrato||0),0);
+  const ticketMedio=totalClientes?faturTotal/totalClientes:0;
+  const byStatus={emdia:0,vencido:0,cancelou:0,concluido:0};
+  list.forEach(c=>{const s=c.statusCliente||'emdia';byStatus[s]=(byStatus[s]||0)+1;});
+  const entreguesCount=list.filter(c=>c.entregue).length;
+  const pagou1Count=list.filter(c=>c.pagou1).length;
+  const audienciaCount=list.filter(c=>c.audiencia).length;
+  const periciaCount=list.filter(c=>c.pericia).length;
+  const today=new Date();today.setHours(0,0,0,0);
+  const in30=new Date(today.getTime()+30*86400000);
+  const aVencer=list.filter(c=>{
+    if(!c.vencimento||c.statusCliente==='cancelou'||c.statusCliente==='concluido')return false;
+    const dt=new Date(c.vencimento+'T00:00:00');
+    return dt>=today&&dt<=in30;
+  }).sort((a,b)=>(a.vencimento||'').localeCompare(b.vencimento||''));
+  const pct=(n)=>totalClientes?Math.round(n/totalClientes*100)+'%':'--';
+  const metrics=[
+    {l:'Total de clientes',v:totalClientes,c:'var(--text)'},
+    {l:'Faturamento (contratos)',v:'R$ '+faturTotal.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),c:'var(--green)'},
+    {l:'Ticket médio',v:'R$ '+ticketMedio.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),c:'var(--gold)'},
+    {l:'A vencer (próx. 30 dias)',v:aVencer.length,c:'var(--gold)'},
+    {l:'Em dia',v:byStatus.emdia||0,c:'var(--green)'},
+    {l:'Vencidos',v:byStatus.vencido||0,c:'var(--red)'},
+    {l:'Cancelados',v:byStatus.cancelou||0,c:'var(--t2)'},
+    {l:'Concluídos',v:byStatus.concluido||0,c:'var(--blue)'},
+    {l:'Serviço entregue',v:pct(entreguesCount),c:'var(--green)'},
+    {l:'1ª parcela paga',v:pct(pagou1Count),c:'var(--green)'},
+    {l:'Audiência marcada',v:audienciaCount,c:'var(--blue)'},
+    {l:'Perícia marcada',v:periciaCount,c:'var(--blue)'},
+  ];
+  const kpisEl=document.getElementById('cjg-kpis');
+  if(kpisEl)kpisEl.innerHTML=metrics.map(i=>'<div class="kpi-mc"><div class="kpi-lbl">'+i.l+'</div><div class="kpi-val" style="color:'+i.c+'">'+i.v+'</div></div>').join('');
+  const statusOrder=['emdia','vencido','cancelou','concluido'];
+  const maxStatus=Math.max(...statusOrder.map(s=>byStatus[s]||0),1);
+  const statusEl=document.getElementById('cjg-status');
+  if(statusEl){
+    statusEl.innerHTML=totalClientes?statusOrder.map(s=>{
+      const v=byStatus[s]||0;const p=Math.round(v/maxStatus*100);
+      return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:9px"><div style="width:160px;flex-shrink:0;font-size:14px;color:var(--text)">'+CJ_STATUS_LABEL[s]+'</div><div style="flex:1;background:var(--s3);border-radius:5px;height:10px;overflow:hidden"><div style="height:100%;width:'+p+'%;background:'+CJ_STATUS_COLOR[s]+';border-radius:5px"></div></div><div style="width:30px;text-align:right;font-size:14px;font-weight:700;color:var(--text)">'+v+'</div></div>';
+    }).join(''):'<div class="empty">Nenhum registro ainda.</div>';
+  }
+  const avEl=document.getElementById('cjg-avencer');
+  if(avEl){
+    avEl.innerHTML=!aVencer.length?'<div class="empty">Nenhum cliente a vencer nos próximos 30 dias.</div>':aVencer.map(c=>{
+      const dt=c.vencimento?c.vencimento.split('-').reverse().join('/'):'';
+      const val=c.valContrato?'R$ '+Number(c.valContrato).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'';
+      return '<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:0.5px solid var(--bdr);padding:8px 2px"><div><div style="font-size:14px;font-weight:600;color:var(--text)">'+(c.nome||'(sem nome)')+'</div><div style="font-size:14px;color:var(--t2)">'+(c.servico||'')+'</div></div><div style="text-align:right"><div style="font-size:14px;font-weight:700;color:var(--gold)">'+dt+'</div><div style="font-size:14px;color:var(--t2)">'+val+'</div></div></div>';
+    }).join('');
+  }
+  const origEl=document.getElementById('cjg-origem');if(origEl)origEl.innerHTML=_cjBreakdown(list,'origem');
+  const vendEl=document.getElementById('cjg-vendedor');if(vendEl)vendEl.innerHTML=_cjBreakdown(list,'vendedor');
+  const servEl=document.getElementById('cjg-servico');if(servEl)servEl.innerHTML=_cjBreakdown(list,'servico');
+  const respEl=document.getElementById('cjg-responsavel');if(respEl)respEl.innerHTML=_cjBreakdown(list,'responsavel');
+  const fpEl=document.getElementById('cjg-formapagto');if(fpEl)fpEl.innerHTML=_cjBreakdown(list,'formaPagamento',v=>CJ_PAGTO_LABEL[v]||'');
+  const parcEl=document.getElementById('cjg-parcelamento');if(parcEl)parcEl.innerHTML=_cjBreakdown(list,'parcelamento',v=>v==='avista'?'À vista':(v||''));
 }
 // ── TREINAMENTOS ─────────────────────────────────────────────────────────────
 function _trEmbedUrl(url){
