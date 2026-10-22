@@ -247,8 +247,6 @@ input[type="date"].fi::-webkit-calendar-picker-indicator:hover{opacity:0.85;}
    recuo/desalinhada tanto editando quanto na visualização final. */
 ul{margin:4px 0 4px 18px;padding:0;}
 li{margin:2px 0;}
-.ct-glow{position:relative;z-index:0;}
-.ct-glow::before{content:'';position:absolute;left:-14px;right:-14px;top:-9px;bottom:-9px;background:radial-gradient(ellipse at center,var(--gbr) 0%,transparent 72%);filter:blur(7px);z-index:-1;border-radius:50%;pointer-events:none;}
 .daily-card{border:1px solid var(--gold);background:linear-gradient(135deg,var(--gb) 0%,var(--s1) 55%);box-shadow:0 0 0 1px var(--gbr),0 0 26px var(--gbr),0 8px 22px -14px rgba(0,0,0,0.55);position:relative;}
 .entrega-card summary::-webkit-details-marker{display:none;}
 .entrega-card summary::marker{content:'';}
@@ -3146,17 +3144,24 @@ function _cjParcelaOptions(sel){
   for(let i=2;i<=12;i++){const val=i+'x';html+='<option value="'+val+'"'+(sel===val?' selected':'')+'>'+val+'</option>';}
   return html;
 }
+const CJ_VENDEDOR_OPTIONS=['Kênia','Alinne','Letícia'];
+function _cjVendedorOptions(sel){
+  let html='<option value=""'+(!sel?' selected':'')+'>Selecionar...</option>';
+  CJ_VENDEDOR_OPTIONS.forEach(o=>{html+='<option value="'+o+'"'+(sel===o?' selected':'')+'>'+o+'</option>';});
+  if(sel&&!CJ_VENDEDOR_OPTIONS.includes(sel))html+='<option value="'+sel+'" selected>'+sel+'</option>';
+  return html;
+}
 function _cjFieldsHtml(data){
   const addr=data||{};
   return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
     <div class="fg"><label>Nome</label><input class="fi" id="cj-nome" value="${data?data.nome||'':''}" placeholder="Nome completo"></div>
     <div class="fg"><label>E-mail</label><input class="fi" id="cj-email" type="email" value="${data?data.email||'':''}"></div>
-    <div class="fg"><label>Telefone</label><input class="fi" id="cj-tel" value="${data?data.tel||'':''}" placeholder="(12) 99999-9999"></div>
-    <div class="fg"><label>CPF</label><input class="fi" id="cj-cpf" value="${data?data.cpf||'':''}" placeholder="000.000.000-00"></div>
+    <div class="fg"><label>Telefone</label><input class="fi" id="cj-tel" maxlength="16" value="${data?data.tel||'':''}" placeholder="(12) 99999-9999" oninput="_cjTelMask(this)"></div>
+    <div class="fg"><label>CPF</label><input class="fi" id="cj-cpf" maxlength="14" value="${data?data.cpf||'':''}" placeholder="000.000.000-00" oninput="_cjCpfMask(this)"></div>
     <div class="fg"><label>RG</label><input class="fi" id="cj-rg" value="${data?data.rg||'':''}"></div>
     <div class="fg"><label>Nome do serviço adquirido</label><input class="fi" id="cj-servico" value="${data?data.servico||'':''}"></div>
     <div class="fg"><label>Origem do lead</label><input class="fi" id="cj-origem" value="${data?data.origem||'':''}" placeholder="Instagram, indicação..."></div>
-    <div class="fg"><label>Quem vendeu</label><input class="fi" id="cj-vendedor" value="${data?data.vendedor||'':''}"></div>
+    <div class="fg"><label>Quem vendeu</label><select class="fi" id="cj-vendedor">${_cjVendedorOptions(data?data.vendedor||'':'')}</select></div>
   </div>
   <div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--bdr)">
     <div style="font-size:14px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Endereço</div>
@@ -3196,7 +3201,6 @@ function _cjFieldsHtml(data){
     </select></div>
   </div>
   <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:10px">
-    <div class="fg" style="display:flex;align-items:center;gap:8px;margin:0"><input type="checkbox" class="tck-cb" id="cj-pagou1" ${data&&data.pagou1?'checked':''}><label style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--text)">Pagou a 1ª parcela</label></div>
     <div class="fg" style="display:flex;align-items:center;gap:8px;margin:0"><input type="checkbox" class="tck-cb" id="cj-entregue" ${data&&data.entregue?'checked':''}><label style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--text)">Serviço entregue</label></div>
     <div class="fg" style="display:flex;align-items:center;gap:8px;margin:0"><input type="checkbox" class="tck-cb" id="cj-audiencia" ${data&&data.audiencia?'checked':''}><label style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--text)">Tem audiência marcada</label></div>
     <div class="fg" style="display:flex;align-items:center;gap:8px;margin:0"><input type="checkbox" class="tck-cb" id="cj-pericia" ${data&&data.pericia?'checked':''}><label style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--text)">Tem perícia marcada</label></div>
@@ -3209,6 +3213,24 @@ function _cjCepMask(inp){
   if(v.length>5)v=v.slice(0,5)+'-'+v.slice(5);
   inp.value=v;
   if(v.replace('-','').length===8)_cjLookupCep();
+}
+// Telefone BR: limita a 11 digitos (DDD + 9 digitos do celular) e formata
+// (XX) XXXXX-XXXX enquanto digita, aceitando tambem fixo de 8 digitos.
+function _cjTelMask(inp){
+  let v=inp.value.replace(/\D/g,'').slice(0,11);
+  if(v.length>10)v=v.replace(/^(\d{2})(\d{5})(\d{0,4}).*/,'($1) $2-$3');
+  else if(v.length>6)v=v.replace(/^(\d{2})(\d{4})(\d{0,4}).*/,'($1) $2-$3');
+  else if(v.length>2)v=v.replace(/^(\d{2})(\d{0,5}).*/,'($1) $2');
+  else if(v.length>0)v=v.replace(/^(\d*)/,'($1');
+  inp.value=v;
+}
+// CPF: limita a 11 digitos e formata 000.000.000-00.
+function _cjCpfMask(inp){
+  let v=inp.value.replace(/\D/g,'').slice(0,11);
+  v=v.replace(/(\d{3})(\d)/,'$1.$2');
+  v=v.replace(/(\d{3})(\d)/,'$1.$2');
+  v=v.replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+  inp.value=v;
 }
 // ViaCEP: gratuito, sem autenticacao, com CORS liberado pra chamada direta
 // do navegador (por isso da pra usar sem passar por um backend proprio).
@@ -3243,7 +3265,7 @@ function _cjSave(existingId){
     inss:v('cj-inss'), procadm:v('cj-procadm').trim(), procjud:v('cj-procjud').trim(), vendedor:v('cj-vendedor').trim(),
     valContrato:_cjParseMoney(v('cj-valcontrato')),
     formaPagamento:v('cj-formapagto'), vencimento:v('cj-vencimento'),
-    pagou1:document.getElementById('cj-pagou1').checked, parcelamento:v('cj-parcelamento'),
+    parcelamento:v('cj-parcelamento'),
     entregue:document.getElementById('cj-entregue').checked,
     audiencia:document.getElementById('cj-audiencia').checked, pericia:document.getElementById('cj-pericia').checked,
     statusCliente:v('cj-statuscliente'),
@@ -3273,23 +3295,22 @@ function rClientesJur(d){
     if(c.audiencia)badges.push('<span style="font-size:13px;background:var(--s3);padding:2px 9px;border-radius:20px;color:var(--gold)">Audiência marcada</span>');
     if(c.pericia)badges.push('<span style="font-size:13px;background:var(--s3);padding:2px 9px;border-radius:20px;color:var(--gold)">Perícia marcada</span>');
     if(c.entregue)badges.push('<span style="font-size:13px;background:var(--s3);padding:2px 9px;border-radius:20px;color:var(--green)">Serviço entregue</span>');
-    badges.push(c.pagou1?'<span style="font-size:13px;background:var(--s3);padding:2px 9px;border-radius:20px;color:var(--green)">1ª parcela paga</span>':'<span style="font-size:13px;background:var(--s3);padding:2px 9px;border-radius:20px;color:var(--red)">1ª parcela pendente</span>');
     if(c.statusCliente)badges.push('<span style="font-size:13px;background:var(--s3);padding:2px 9px;border-radius:20px;color:'+(CJ_STATUS_COLOR[c.statusCliente]||'var(--t2)')+'">'+(CJ_STATUS_LABEL[c.statusCliente]||c.statusCliente)+'</span>');
     const subParts=[c.servico||'-'];
     if(c.tel)subParts.push(c.tel);
     if(c.formaPagamento)subParts.push(CJ_PAGTO_LABEL[c.formaPagamento]||c.formaPagamento);
     if(c.parcelamento)subParts.push(c.parcelamento==='avista'?'À vista':c.parcelamento);
     if(c.responsavel)subParts.push('Responsável: '+c.responsavel);
-    return `<div class="fi2">
-      <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <div class="fn2">${c.nome||'(sem nome)'}</div>
-          ${badges.join('')}
-          <span style="font-size:14px;font-weight:700;color:var(--green);margin-left:auto">R$ ${(+c.valContrato||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
-        </div>
-        <div class="fm">${subParts.join(' · ')}</div>
+    return `<div class="fi2" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="edClientJur('${c.id}')">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div class="fn2">${c.nome||'(sem nome)'}</div>
+        ${badges.join('')}
+        <span style="font-size:14px;font-weight:700;color:var(--green);margin-left:auto">R$ ${(+c.valContrato||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
       </div>
-      <button class="fdl" style="color:var(--t2);margin-right:2px" onclick="edClientJur('${c.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="fdl" style="color:var(--red)" onclick="delClientJur('${c.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
+      <div class="fm">${subParts.join(' · ')}</div>
+      <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:6px" onclick="event.stopPropagation()">
+        <button class="fdl" style="color:var(--t2)" title="Editar" onclick="edClientJur('${c.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="fdl" style="color:var(--red)" title="Excluir" onclick="delClientJur('${c.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -3317,6 +3338,12 @@ function _cjBreakdown(list,field,labelFn){
     return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:9px"><div style="width:160px;flex-shrink:0;font-size:14px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+k+'">'+k+'</div><div style="flex:1;background:var(--s3);border-radius:5px;height:10px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:var(--gold);border-radius:5px"></div></div><div style="width:30px;text-align:right;font-size:14px;font-weight:700;color:var(--text)">'+v+'</div></div>';
   }).join('');
 }
+// Numero de parcelas do codigo salvo em "parcelamento" (avista = 1, "3x" = 3 etc).
+function _cjNumParcelas(parcelamento){
+  if(!parcelamento||parcelamento==='avista')return 1;
+  const n=parseInt(parcelamento,10);
+  return n>0?n:1;
+}
 function rClientesGestao(d){
   const root=document.getElementById('s-cjgestao');if(!root)return;
   const list=d.clientesJuridicos||[];
@@ -3325,8 +3352,12 @@ function rClientesGestao(d){
   const ticketMedio=totalClientes?faturTotal/totalClientes:0;
   const byStatus={emdia:0,vencido:0,cancelou:0,concluido:0};
   list.forEach(c=>{const s=c.statusCliente||'emdia';byStatus[s]=(byStatus[s]||0)+1;});
+  // Faturamento do mes: soma do valor da parcela (contrato / nº de parcelas) de
+  // cada cliente que esta em dia, isto e, o que entra todo mes enquanto esses
+  // clientes seguem pagando as parcelas do contrato deles.
+  const faturMes=list.filter(c=>(c.statusCliente||'emdia')==='emdia').reduce((s,c)=>s+((+c.valContrato||0)/_cjNumParcelas(c.parcelamento)),0);
+  const mesAtualLabel=new Date().toLocaleString('pt-BR',{month:'long'});
   const entreguesCount=list.filter(c=>c.entregue).length;
-  const pagou1Count=list.filter(c=>c.pagou1).length;
   const audienciaCount=list.filter(c=>c.audiencia).length;
   const periciaCount=list.filter(c=>c.pericia).length;
   const today=new Date();today.setHours(0,0,0,0);
@@ -3340,6 +3371,7 @@ function rClientesGestao(d){
   const metrics=[
     {l:'Total de clientes',v:totalClientes,c:'var(--text)'},
     {l:'Faturamento (contratos)',v:'R$ '+faturTotal.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),c:'var(--green)'},
+    {l:'Faturamento de '+mesAtualLabel+' (clientes em dia)',v:'R$ '+faturMes.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),c:'var(--green)'},
     {l:'Ticket médio',v:'R$ '+ticketMedio.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),c:'var(--gold)'},
     {l:'A vencer (próx. 30 dias)',v:aVencer.length,c:'var(--gold)'},
     {l:'Em dia',v:byStatus.emdia||0,c:'var(--green)'},
@@ -3347,7 +3379,6 @@ function rClientesGestao(d){
     {l:'Cancelados',v:byStatus.cancelou||0,c:'var(--t2)'},
     {l:'Concluídos',v:byStatus.concluido||0,c:'var(--blue)'},
     {l:'Serviço entregue',v:pct(entreguesCount),c:'var(--green)'},
-    {l:'1ª parcela paga',v:pct(pagou1Count),c:'var(--green)'},
     {l:'Audiência marcada',v:audienciaCount,c:'var(--blue)'},
     {l:'Perícia marcada',v:periciaCount,c:'var(--blue)'},
   ];
