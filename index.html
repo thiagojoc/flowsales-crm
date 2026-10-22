@@ -673,7 +673,8 @@ window._fbAuthReady = new Promise(res=>{
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           <span id="cal-lbl">Todo o período</span>
         </button>
-        
+        <span id="cal-toggle-home"></span>
+
         <span id="sync-dot" title="Sincronizando..." style="width:7px;height:7px;border-radius:50%;background:var(--t3);display:inline-block;flex-shrink:0;transition:background .3s;cursor:default;"></span>
         <button class="notifbtn" id="theme-toggle" onclick="toggleTheme()" title="Mudar para modo escuro">
           <svg id="theme-icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -763,6 +764,7 @@ window._fbAuthReady = new Promise(res=>{
                 <label class="camp-opt"><input type="checkbox" class="kpi-orig-cb" value="externo" onchange="toggleKpiOrigSel('externo',this.checked)"/> Externo</label>
               </div>
             </div>
+            <span id="kpi-cal-slot" style="flex-shrink:0"></span>
           </div>
           <div class="kpi-hero" id="kpi-hero"></div>
           <div class="kpi-g6" id="kpi-g6"></div>
@@ -2061,6 +2063,13 @@ function nav(id){
   }
   if(id==='flow')rFlow();if(id==='firms')rFirms();if(id==='fin'){const _fd=ld();rFinanceiro(_fd);}
   const _ctg=document.getElementById('cal-toggle');if(_ctg)_ctg.style.display=['chat','perfil','arq','fin'].includes(id)?'none':'';
+  // Na aba KPIs, o seletor de periodo sai do canto superior direito e fica ao
+  // lado do seletor de Funil (mais perto do que ele realmente filtra).
+  const _kpiCalSlot=document.getElementById('kpi-cal-slot');const _ctgHome=document.getElementById('cal-toggle-home');
+  if(_ctg&&_kpiCalSlot&&_ctgHome){
+    if(id==='kpis')_kpiCalSlot.appendChild(_ctg);
+    else if(_ctgHome.parentNode)_ctgHome.parentNode.insertBefore(_ctg,_ctgHome);
+  }
   closeSb();closeCal();
   if(id==='arq'&&S.ff==='link'){document.getElementById('link-add').style.display='block';}else{const la=document.getElementById('link-add');if(la)la.style.display='none';}
 }
@@ -2757,7 +2766,11 @@ function rMetaKpis(d){
   const selIds=S.metaCampaignIds||[];
   const summaryText=!selIds.length?'Todas as campanhas':selIds.length===1?((campaigns.find(c=>c.id===selIds[0])||{}).name||'1 campanha selecionada'):selIds.length+' campanhas selecionadas';
   const campSel=campaigns.length?`<div class="fg" style="margin-bottom:12px"><label>Campanha</label><div class="camp-dd-wrap"><button type="button" class="fi camp-dd-btn" onclick="toggleCampDropdown(event)">${summaryText} ▾</button><div class="camp-dropdown" id="camp-dropdown"><label class="camp-opt"><input type="checkbox" id="camp-all-cb" ${!selIds.length?'checked':''} onchange="toggleAllCampaigns(this.checked)"/> Todas as campanhas</label>${campaigns.map(c=>`<label class="camp-opt"><input type="checkbox" class="camp-cb" value="${c.id}" ${selIds.includes(c.id)?'checked':''} onchange="toggleCampaignSel('${c.id}',this.checked)"/> ${c.name}${c.status&&c.status!=='ACTIVE'?' ('+c.status+')':''}</label>`).join('')}</div></div></div>`:'';
-  if(!m){el.innerHTML=campSel+'<div class="empty">Clique em Sincronizar para buscar dados da Meta.</div>';return;}
+  if(!m){
+    const _periodoVazio=(document.getElementById('cal-lbl')||{}).textContent||'Todo o período';
+    el.innerHTML=campSel+'<div style="font-size:14px;color:var(--t2);margin-bottom:8px">Período: '+_periodoVazio+'</div><div class="empty">Clique em Sincronizar para buscar dados da Meta.</div>';
+    return;
+  }
   const syncDate=new Date(m.syncedAt).toLocaleString('pt-BR');
   const ctr=m.impressions?((m.clicks/m.impressions)*100).toFixed(2):'0.00';
   // m.leads vem das "actions" da própria Meta (lead forms/pixel e conversas de
@@ -2769,7 +2782,8 @@ function rMetaKpis(d){
   const cpl=adLeads?Math.round(m.spend/adLeads):0;
   const campCount=(m.campaignIds||[]).length;
   const campLbl=campCount===0?'todas as campanhas':campCount===1?'1 campanha selecionada':campCount+' campanhas selecionadas';
-  el.innerHTML=campSel+`<div style="font-size:14px;color:var(--t2);margin-bottom:12px">Última sincronização: ${syncDate} · ${campLbl}</div><div class="kpi-g6" style="margin-bottom:14px"><div class="kpi-mc"><div class="kpi-lbl">Investimento</div><div class="kpi-val" style="color:var(--gold)">R$ ${(m.spend||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">no período selecionado</div></div><div class="kpi-mc"><div class="kpi-lbl">Impressões</div><div class="kpi-val" style="color:var(--blue)">${(m.impressions||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${(m.reach||0).toLocaleString('pt-BR')} pessoas alcançadas</div></div><div class="kpi-mc"><div class="kpi-lbl">Cliques</div><div class="kpi-val" style="color:var(--green)">${(m.clicks||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${ctr}% CTR</div></div><div class="kpi-mc"><div class="kpi-lbl">Leads gerados</div><div class="kpi-val" style="color:var(--green)">${adLeads}</div><div class="kpi-sub kpi-nt">R$ ${cpl.toLocaleString('pt-BR')} custo por lead</div></div></div>`;
+  const _periodoLbl=(document.getElementById('cal-lbl')||{}).textContent||'Todo o período';
+  el.innerHTML=campSel+`<div style="font-size:14px;color:var(--t2);margin-bottom:12px">Período: ${_periodoLbl} · Última sincronização: ${syncDate} · ${campLbl}</div><div class="kpi-g6" style="margin-bottom:14px"><div class="kpi-mc"><div class="kpi-lbl">Investimento</div><div class="kpi-val" style="color:var(--gold)">R$ ${(m.spend||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">no período selecionado</div></div><div class="kpi-mc"><div class="kpi-lbl">Impressões</div><div class="kpi-val" style="color:var(--blue)">${(m.impressions||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${(m.reach||0).toLocaleString('pt-BR')} pessoas alcançadas</div></div><div class="kpi-mc"><div class="kpi-lbl">Cliques</div><div class="kpi-val" style="color:var(--green)">${(m.clicks||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${ctr}% CTR</div></div><div class="kpi-mc"><div class="kpi-lbl">Leads gerados</div><div class="kpi-val" style="color:var(--green)">${adLeads}</div><div class="kpi-sub kpi-nt">R$ ${cpl.toLocaleString('pt-BR')} custo por lead</div></div></div>`;
 }
 function toggleCampDropdown(e){if(e)e.stopPropagation();const el=document.getElementById('camp-dropdown');if(el)el.classList.toggle('on');}
 function _scheduleCampSync(){
@@ -2817,8 +2831,14 @@ async function syncMeta(silent){
     if(!cj.error&&cj.data)d.metaCampaigns=cj.data.map(c=>({id:c.id,name:c.name,status:c.status}));
     const row=(j.data&&j.data[0])||{};
     const actions=row.actions||[];
+    // Lista exata + uma rede de seguranca (qualquer action_type com "lead" ou
+    // "messaging" no nome). Quando se filtra por UMA campanha especifica, o
+    // tipo de evento que ela reporta pode nao bater com nenhum nome exato
+    // daqui (varia com o objetivo do anuncio: formulario nativo, pixel, clique
+    // pra WhatsApp etc.), e sem essa rede de seguranca o card mostrava
+    // "Leads gerados: 0" mesmo com investimento/cliques corretos.
     const leadTypes=['lead','onsite_conversion.lead_grouped','leadgen_grouping','offsite_conversion.fb_pixel_lead','onsite_conversion.messaging_conversation_started_7d'];
-    const leads=actions.filter(a=>leadTypes.includes(a.action_type)).reduce((s,a)=>s+(+a.value||0),0);
+    const leads=actions.filter(a=>leadTypes.includes(a.action_type)||/lead|messaging/i.test(a.action_type||'')).reduce((s,a)=>s+(+a.value||0),0);
     d.metaKpis={syncedAt:new Date().toISOString(),spend:+row.spend||0,impressions:+row.impressions||0,clicks:+row.clicks||0,reach:+row.reach||0,leads,cpc:+row.cpc||0,cpm:+row.cpm||0,campaignIds:campIds};
     if(!d.kpis)d.kpis={};
     // Selecionar uma campanha também atualiza os KPIs gerais (funil, ROI, hero) —
