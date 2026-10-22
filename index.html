@@ -2822,23 +2822,44 @@ async function syncMeta(silent){
   const campIds=(S.metaCampaignIds||[]).filter(Boolean);
   const filtering=campIds.length?encodeURIComponent(JSON.stringify([{field:'campaign.id',operator:'IN',value:campIds}])):'';
   const url=`https://graph.facebook.com/v19.0/${accId}/insights?fields=${fields}${timeParam}${filtering?'&filtering='+filtering:''}&access_token=${encodeURIComponent(token)}`;
-  const campaignsUrl=`https://graph.facebook.com/v19.0/${accId}/campaigns?fields=name,status&limit=200&access_token=${encodeURIComponent(token)}`;
+  const campaignsUrl=`https://graph.facebook.com/v19.0/${accId}/campaigns?fields=name,status,objective&limit=200&access_token=${encodeURIComponent(token)}`;
   try{
     const [r,cr]=await Promise.all([fetch(url),fetch(campaignsUrl)]);
     const j=await r.json();
     if(j.error)throw new Error(j.error.message||'Erro na API da Meta');
     const cj=await cr.json().catch(()=>({}));
-    if(!cj.error&&cj.data)d.metaCampaigns=cj.data.map(c=>({id:c.id,name:c.name,status:c.status}));
+    if(!cj.error&&cj.data)d.metaCampaigns=cj.data.map(c=>({id:c.id,name:c.name,status:c.status,objective:c.objective}));
     const row=(j.data&&j.data[0])||{};
     const actions=row.actions||[];
-    // Lista exata + uma rede de seguranca (qualquer action_type com "lead" ou
-    // "messaging" no nome). Quando se filtra por UMA campanha especifica, o
-    // tipo de evento que ela reporta pode nao bater com nenhum nome exato
-    // daqui (varia com o objetivo do anuncio: formulario nativo, pixel, clique
-    // pra WhatsApp etc.), e sem essa rede de seguranca o card mostrava
-    // "Leads gerados: 0" mesmo com investimento/cliques corretos.
-    const leadTypes=['lead','onsite_conversion.lead_grouped','leadgen_grouping','offsite_conversion.fb_pixel_lead','onsite_conversion.messaging_conversation_started_7d'];
-    const leads=actions.filter(a=>leadTypes.includes(a.action_type)||/lead|messaging/i.test(a.action_type||'')).reduce((s,a)=>s+(+a.value||0),0);
+    // O campo "actions" da Meta devolve TODO tipo de evento rastreado (lead,
+    // conversa de WhatsApp iniciada, etc.), nao so o que a coluna "Resultados"
+    // do próprio Gerenciador de Anúncios mostra. Somar varios desses tipos
+    // juntos (como a versao anterior fazia, incluindo mensagens do Whatsapp)
+    // inflava bastante o numero: uma campanha que mostra 58 na BM aparecia com
+    // 392 aqui, porque estavamos somando leads + conversas iniciadas + etc.
+    // "Resultados" na BM = só o action_type que bate com o OBJETIVO daquela
+    // campanha especifica, entao com UMA campanha selecionada usamos so esse
+    // tipo exato (sem somar os outros).
+    const OBJ_RESULT_ACTION={
+      'OUTCOME_LEADS':'lead','LEAD_GENERATION':'lead',
+      'OUTCOME_ENGAGEMENT':'onsite_conversion.messaging_conversation_started_7d',
+      'MESSAGES':'onsite_conversion.messaging_conversation_started_7d',
+      'CONVERSATIONS':'onsite_conversion.messaging_conversation_started_7d',
+      'OUTCOME_SALES':'offsite_conversion.fb_pixel_lead',
+      'CONVERSIONS':'offsite_conversion.fb_pixel_lead',
+    };
+    let leads=0;
+    if(campIds.length===1){
+      const _camp=(d.metaCampaigns||[]).find(c=>c.id===campIds[0]);
+      const _actionKey=(_camp&&OBJ_RESULT_ACTION[_camp.objective])||'lead';
+      leads=actions.filter(a=>a.action_type===_actionKey).reduce((s,a)=>s+(+a.value||0),0);
+    }else{
+      // Visao agregada ("todas as campanhas" ou varias ao mesmo tempo, que
+      // podem ter objetivos diferentes entre si): soma só os tipos que
+      // representam lead de fato, sem incluir conversa de WhatsApp iniciada.
+      const leadTypes=['lead','onsite_conversion.lead_grouped','leadgen_grouping','offsite_conversion.fb_pixel_lead'];
+      leads=actions.filter(a=>leadTypes.includes(a.action_type)).reduce((s,a)=>s+(+a.value||0),0);
+    }
     d.metaKpis={syncedAt:new Date().toISOString(),spend:+row.spend||0,impressions:+row.impressions||0,clicks:+row.clicks||0,reach:+row.reach||0,leads,cpc:+row.cpc||0,cpm:+row.cpm||0,campaignIds:campIds};
     if(!d.kpis)d.kpis={};
     // Selecionar uma campanha também atualiza os KPIs gerais (funil, ROI, hero) —
