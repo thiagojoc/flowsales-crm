@@ -4941,7 +4941,7 @@ setTimeout(()=>window.open(gcalUrl(m),'gcal_popup','width=900,height=680,left=20
           _td.entregas=_td.entregas||[];
           const e={id:data?data.id:'en'+Date.now(),title:ttl,category:v('en-cat')||'Outro',desc:vHtml('en-dsc')||'',link:v('en-link')||'',files:[...existing,...newFiles],date:v('en-date')||new Date().toISOString().split('T')[0]};
           if(data){const i=_td.entregas.findIndex(x=>x.id===data.id);if(i>=0)_td.entregas[i]=e;else _td.entregas.push(e);}
-          else{_td.entregas.push(e);_td.notifs=_td.notifs||[];const _nid='nent_'+e.id;if(!_td.notifs.find(n=>n.id===_nid)){_td.notifs.unshift({id:_nid,title:'🎁 Nova entrega de valor',sub:e.title,read:false});}}
+          else{_td.entregas.push(e);_td.notifs=_td.notifs||[];const _nid='nent_'+e.id;if(!_td.notifs.find(n=>n.id===_nid)){_td.notifs.unshift({id:_nid,title:'🎁 Nova entrega de valor',sub:e.title,read:false});}activ(_td,'Nova entrega: '+e.title,'var(--gold)');}
           if(_tFid){localStorage.setItem('fs_'+_tFid,JSON.stringify(_td));}else{sv(_td);}
           renderAll();cModal(null,1);
         };
