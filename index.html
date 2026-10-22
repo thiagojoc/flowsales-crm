@@ -57,8 +57,14 @@ html[data-theme="dark"]{
   --bg:#0a0b0d;--s1:#14161a;--s2:#1c1f24;--s3:#22262c;
   --bdr:rgba(45,45,74,0.55);--bdr2:rgba(45,45,74,0.9);
   --text:#E8E8F0;--t2:#A0A3B1;--t3:#7c7e85;
-  --gold:#2952E2;--gb:rgba(41,82,226,0.14);--gbr:rgba(41,82,226,0.35);
-  --green:#22C55E;--red:#EF4444;--blue:#2952E2;
+  /* O azul escuro do modo claro (#2952E2) usado como TEXTO (nome do escritorio
+     na sidebar, item de menu ativo, valores de KPI etc.) fica com contraste
+     baixo demais sobre fundo escuro, dificil de ler. Aqui no escuro troca pra
+     um azul mais claro (ainda dentro da familia azul do design system, só
+     clareado pra manter leitura confortavel), igual o proprio design system
+     já previa pro acento em modo escuro. */
+  --gold:#60A5FA;--gb:rgba(96,165,250,0.14);--gbr:rgba(96,165,250,0.35);
+  --green:#22C55E;--red:#EF4444;--blue:#60A5FA;
 }
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-sans);font-size:15px;line-height:1.5;overflow:hidden;}
 input,button,select,textarea{font-family:inherit;}
@@ -2768,7 +2774,7 @@ function rMetaKpis(d){
   const campSel=campaigns.length?`<div class="fg" style="margin-bottom:12px"><label>Campanha</label><div class="camp-dd-wrap"><button type="button" class="fi camp-dd-btn" onclick="toggleCampDropdown(event)">${summaryText} ▾</button><div class="camp-dropdown" id="camp-dropdown"><label class="camp-opt"><input type="checkbox" id="camp-all-cb" ${!selIds.length?'checked':''} onchange="toggleAllCampaigns(this.checked)"/> Todas as campanhas</label>${campaigns.map(c=>`<label class="camp-opt"><input type="checkbox" class="camp-cb" value="${c.id}" ${selIds.includes(c.id)?'checked':''} onchange="toggleCampaignSel('${c.id}',this.checked)"/> ${c.name}${c.status&&c.status!=='ACTIVE'?' ('+c.status+')':''}</label>`).join('')}</div></div></div>`:'';
   if(!m){
     const _periodoVazio=(document.getElementById('cal-lbl')||{}).textContent||'Todo o período';
-    el.innerHTML=campSel+'<div style="font-size:14px;color:var(--t2);margin-bottom:8px">Período: '+_periodoVazio+'</div><div class="empty">Clique em Sincronizar para buscar dados da Meta.</div>';
+    el.innerHTML=campSel+'<button type="button" class="cal-btn" onclick="toggleCal()" style="margin-bottom:8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'+_periodoVazio+'</button><div class="empty">Clique em Sincronizar para buscar dados da Meta.</div>';
     return;
   }
   const syncDate=new Date(m.syncedAt).toLocaleString('pt-BR');
@@ -2783,7 +2789,7 @@ function rMetaKpis(d){
   const campCount=(m.campaignIds||[]).length;
   const campLbl=campCount===0?'todas as campanhas':campCount===1?'1 campanha selecionada':campCount+' campanhas selecionadas';
   const _periodoLbl=(document.getElementById('cal-lbl')||{}).textContent||'Todo o período';
-  el.innerHTML=campSel+`<div style="font-size:14px;color:var(--t2);margin-bottom:12px">Período: ${_periodoLbl} · Última sincronização: ${syncDate} · ${campLbl}</div><div class="kpi-g6" style="margin-bottom:14px"><div class="kpi-mc"><div class="kpi-lbl">Investimento</div><div class="kpi-val" style="color:var(--gold)">R$ ${(m.spend||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">no período selecionado</div></div><div class="kpi-mc"><div class="kpi-lbl">Impressões</div><div class="kpi-val" style="color:var(--blue)">${(m.impressions||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${(m.reach||0).toLocaleString('pt-BR')} pessoas alcançadas</div></div><div class="kpi-mc"><div class="kpi-lbl">Cliques</div><div class="kpi-val" style="color:var(--green)">${(m.clicks||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${ctr}% CTR</div></div><div class="kpi-mc"><div class="kpi-lbl">Leads gerados</div><div class="kpi-val" style="color:var(--green)">${adLeads}</div><div class="kpi-sub kpi-nt">R$ ${cpl.toLocaleString('pt-BR')} custo por lead</div></div></div>`;
+  el.innerHTML=campSel+`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px"><button type="button" class="cal-btn" onclick="toggleCal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${_periodoLbl}</button><span style="font-size:14px;color:var(--t2)">Última sincronização: ${syncDate} · ${campLbl}</span></div><div class="kpi-g6" style="margin-bottom:14px"><div class="kpi-mc"><div class="kpi-lbl">Investimento</div><div class="kpi-val" style="color:var(--gold)">R$ ${(m.spend||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">no período selecionado</div></div><div class="kpi-mc"><div class="kpi-lbl">Impressões</div><div class="kpi-val" style="color:var(--blue)">${(m.impressions||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${(m.reach||0).toLocaleString('pt-BR')} pessoas alcançadas</div></div><div class="kpi-mc"><div class="kpi-lbl">Cliques</div><div class="kpi-val" style="color:var(--green)">${(m.clicks||0).toLocaleString('pt-BR')}</div><div class="kpi-sub kpi-nt">${ctr}% CTR</div></div><div class="kpi-mc"><div class="kpi-lbl">Leads gerados</div><div class="kpi-val" style="color:var(--green)">${adLeads}</div><div class="kpi-sub kpi-nt">R$ ${cpl.toLocaleString('pt-BR')} custo por lead</div></div></div>`;
 }
 function toggleCampDropdown(e){if(e)e.stopPropagation();const el=document.getElementById('camp-dropdown');if(el)el.classList.toggle('on');}
 function _scheduleCampSync(){
@@ -3242,7 +3248,7 @@ function _cjFieldsHtml(data){
     </select></div>
   </div>
   <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:10px">
-    <div class="fg" style="display:flex;align-items:center;gap:8px;margin:0"><input type="checkbox" class="tck-cb" id="cj-entregue" ${data&&data.entregue?'checked':''}><label style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--text)">Serviço entregue</label></div>
+    <div class="fg" style="display:flex;align-items:center;gap:8px;margin:0"><input type="checkbox" class="tck-cb" id="cj-entregue" ${data&&data.entregue?'checked':''} onchange="if(this.checked)document.getElementById('cj-statuscliente').value='concluido'"><label style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--text)">Serviço entregue</label></div>
     <div class="fg" style="display:flex;align-items:center;gap:8px;margin:0"><input type="checkbox" class="tck-cb" id="cj-audiencia" ${data&&data.audiencia?'checked':''}><label style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--text)">Tem audiência marcada</label></div>
     <div class="fg" style="display:flex;align-items:center;gap:8px;margin:0"><input type="checkbox" class="tck-cb" id="cj-pericia" ${data&&data.pericia?'checked':''}><label style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--text)">Tem perícia marcada</label></div>
   </div>`;
@@ -3309,7 +3315,7 @@ function _cjSave(existingId){
     parcelamento:v('cj-parcelamento'),
     entregue:document.getElementById('cj-entregue').checked,
     audiencia:document.getElementById('cj-audiencia').checked, pericia:document.getElementById('cj-pericia').checked,
-    statusCliente:v('cj-statuscliente'),
+    statusCliente:document.getElementById('cj-entregue').checked?'concluido':v('cj-statuscliente'),
     responsavel:v('cj-responsavel').trim()
   };
   const d=ld();d.clientesJuridicos=d.clientesJuridicos||[];
