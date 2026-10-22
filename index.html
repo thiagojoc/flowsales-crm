@@ -3087,7 +3087,13 @@ function rFinanceiro(d){
   </div>`).join('');
 }
 // ── CLIENTES (JURIDICO, tipo Astrea) ──────────────────────────────────────
+function _cjParcelaOptions(sel){
+  let html='<option value="avista"'+(sel==='avista'?' selected':'')+'>À vista</option>';
+  for(let i=2;i<=12;i++){const val=i+'x';html+='<option value="'+val+'"'+(sel===val?' selected':'')+'>'+val+'</option>';}
+  return html;
+}
 function _cjFieldsHtml(data){
+  const addr=data||{};
   return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
     <div class="fg"><label>Nome</label><input class="fi" id="cj-nome" value="${data?data.nome||'':''}" placeholder="Nome completo"></div>
     <div class="fg"><label>E-mail</label><input class="fi" id="cj-email" type="email" value="${data?data.email||'':''}"></div>
@@ -3098,34 +3104,95 @@ function _cjFieldsHtml(data){
     <div class="fg"><label>Origem do lead</label><input class="fi" id="cj-origem" value="${data?data.origem||'':''}" placeholder="Instagram, indicação..."></div>
     <div class="fg"><label>Quem vendeu</label><input class="fi" id="cj-vendedor" value="${data?data.vendedor||'':''}"></div>
   </div>
-  <div class="fg"><label>Endereço</label><input class="fi" id="cj-addr" value="${data?data.addr||'':''}"></div>
-  <div class="fg"><label>Senha do INSS</label><div class="pass-wrap"><input class="fi" id="cj-inss" type="password" value="${data?data.inss||'':''}" autocomplete="new-password" placeholder="Senha de acesso ao gov.br/INSS"><button type="button" class="pass-eye" onclick="togglePassVisibility('cj-inss',this)" title="Mostrar/ocultar senha"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${EYE_ICON}</svg></button></div></div>
+  <div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--bdr)">
+    <div style="font-size:14px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Endereço</div>
+    <div style="display:grid;grid-template-columns:160px 1fr;gap:10px">
+      <div class="fg"><label>CEP</label><input class="fi" id="cj-cep" maxlength="9" value="${addr.cep||''}" placeholder="00000-000" oninput="_cjCepMask(this)" onblur="_cjLookupCep()"></div>
+      <div class="fg"><label>Rua</label><input class="fi" id="cj-rua" value="${addr.rua||addr.addr||''}"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:140px 1fr 1fr;gap:10px;margin-top:10px">
+      <div class="fg"><label>Número</label><input class="fi" id="cj-numero" value="${addr.numero||''}"></div>
+      <div class="fg"><label>Complemento</label><input class="fi" id="cj-complemento" value="${addr.complemento||''}"></div>
+      <div class="fg"><label>Bairro</label><input class="fi" id="cj-bairro" value="${addr.bairro||''}"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 90px;gap:10px;margin-top:10px">
+      <div class="fg"><label>Cidade</label><input class="fi" id="cj-cidade" value="${addr.cidade||''}"></div>
+      <div class="fg"><label>UF</label><input class="fi" id="cj-uf" maxlength="2" style="text-transform:uppercase" value="${addr.uf||''}"></div>
+    </div>
+  </div>
+  <div class="fg" style="margin-top:10px"><label>Senha do INSS</label><div class="pass-wrap"><input class="fi" id="cj-inss" type="password" value="${data?data.inss||'':''}" autocomplete="new-password" placeholder="Senha de acesso ao gov.br/INSS"><button type="button" class="pass-eye" onclick="togglePassVisibility('cj-inss',this)" title="Mostrar/ocultar senha"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${EYE_ICON}</svg></button></div></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
     <div class="fg"><label>Número do processo administrativo</label><input class="fi" id="cj-procadm" value="${data?data.procadm||'':''}"></div>
     <div class="fg"><label>Número do processo judicial</label><input class="fi" id="cj-procjud" value="${data?data.procjud||'':''}"></div>
-    <div class="fg"><label>Valor da venda (R$)</label><input class="fi" id="cj-valvenda" type="text" inputmode="numeric" value="${data&&data.valVenda?('R$ '+(+data.valVenda).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})):''}" placeholder="R$ 0,00" oninput="fmtFinVal(this)"></div>
     <div class="fg"><label>Valor do contrato (R$)</label><input class="fi" id="cj-valcontrato" type="text" inputmode="numeric" value="${data&&data.valContrato?('R$ '+(+data.valContrato).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})):''}" placeholder="R$ 0,00" oninput="fmtFinVal(this)"></div>
-    <div class="fg"><label>Qual foi o parcelamento</label><input class="fi" id="cj-parcelamento" value="${data?data.parcelamento||'':''}" placeholder="Ex: 3x de R$ 500"></div>
     <div class="fg"><label>Responsável pelo cliente</label><input class="fi" id="cj-responsavel" value="${data?data.responsavel||'':''}"></div>
+    <div class="fg"><label>Forma de pagamento</label><select class="fi" id="cj-formapagto">
+      <option value=""${!data||!data.formaPagamento?' selected':''}>Selecionar...</option>
+      <option value="cartao"${data&&data.formaPagamento==='cartao'?' selected':''}>Cartão de crédito</option>
+      <option value="boleto"${data&&data.formaPagamento==='boleto'?' selected':''}>Boleto</option>
+      <option value="pix"${data&&data.formaPagamento==='pix'?' selected':''}>Pix</option>
+    </select></div>
+    <div class="fg"><label>Vencimento</label><input class="fi" id="cj-vencimento" type="date" value="${data?data.vencimento||'':''}"></div>
+    <div class="fg"><label>Parcelamento</label><select class="fi" id="cj-parcelamento">${_cjParcelaOptions(data?data.parcelamento:'')}</select></div>
+    <div class="fg"><label>Status do cliente</label><select class="fi" id="cj-statuscliente">
+      <option value="emdia"${!data||!data.statusCliente||data.statusCliente==='emdia'?' selected':''}>Em dia</option>
+      <option value="vencido"${data&&data.statusCliente==='vencido'?' selected':''}>Vencido</option>
+      <option value="cancelou"${data&&data.statusCliente==='cancelou'?' selected':''}>Cancelou</option>
+      <option value="concluido"${data&&data.statusCliente==='concluido'?' selected':''}>Concluído</option>
+    </select></div>
   </div>
   <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:10px">
     <div class="fg" style="display:flex;align-items:center;gap:8px;margin:0"><input type="checkbox" class="tck-cb" id="cj-pagou1" ${data&&data.pagou1?'checked':''}><label style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--text)">Pagou a 1ª parcela</label></div>
+    <div class="fg" style="display:flex;align-items:center;gap:8px;margin:0"><input type="checkbox" class="tck-cb" id="cj-entregue" ${data&&data.entregue?'checked':''}><label style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--text)">Serviço entregue</label></div>
     <div class="fg" style="display:flex;align-items:center;gap:8px;margin:0"><input type="checkbox" class="tck-cb" id="cj-audiencia" ${data&&data.audiencia?'checked':''}><label style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--text)">Tem audiência marcada</label></div>
     <div class="fg" style="display:flex;align-items:center;gap:8px;margin:0"><input type="checkbox" class="tck-cb" id="cj-pericia" ${data&&data.pericia?'checked':''}><label style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--text)">Tem perícia marcada</label></div>
   </div>`;
 }
+// mascara "00000-000" enquanto digita, e dispara a busca assim que os 8
+// digitos do CEP estiverem completos (sem precisar sair do campo).
+function _cjCepMask(inp){
+  let v=inp.value.replace(/\D/g,'').slice(0,8);
+  if(v.length>5)v=v.slice(0,5)+'-'+v.slice(5);
+  inp.value=v;
+  if(v.replace('-','').length===8)_cjLookupCep();
+}
+// ViaCEP: gratuito, sem autenticacao, com CORS liberado pra chamada direta
+// do navegador (por isso da pra usar sem passar por um backend proprio).
+async function _cjLookupCep(){
+  const cepEl=document.getElementById('cj-cep');if(!cepEl)return;
+  const cep=cepEl.value.replace(/\D/g,'');
+  if(cep.length!==8)return;
+  try{
+    const res=await fetch('https://viacep.com.br/ws/'+cep+'/json/');
+    const data=await res.json();
+    if(data.erro)return;
+    const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||'';};
+    set('cj-rua',data.logradouro);
+    set('cj-bairro',data.bairro);
+    set('cj-cidade',data.localidade);
+    set('cj-uf',data.uf);
+    const numEl=document.getElementById('cj-numero');if(numEl&&!numEl.value)numEl.focus();
+  }catch(e){console.warn('[CRM] falha ao buscar CEP:',e);}
+}
 function _cjParseMoney(s){const n=(s||'').replace(/[^\d,]/g,'').replace(',','.');return n?parseFloat(n):0;}
+const CJ_PAGTO_LABEL={cartao:'Cartão de crédito',boleto:'Boleto',pix:'Pix'};
+const CJ_STATUS_LABEL={emdia:'Em dia',vencido:'Vencido',cancelou:'Cancelou',concluido:'Concluído'};
+const CJ_STATUS_COLOR={emdia:'var(--green)',vencido:'var(--red)',cancelou:'var(--t2)',concluido:'var(--blue)'};
 function _cjSave(existingId){
   const nome=v('cj-nome').trim();
   if(!nome){_showToast('Informe o nome do cliente','var(--red)');return;}
   const c={
     id:existingId||('cj'+Date.now()),
-    nome, email:v('cj-email').trim(), addr:v('cj-addr').trim(), tel:v('cj-tel').trim(),
+    nome, email:v('cj-email').trim(), tel:v('cj-tel').trim(),
+    cep:v('cj-cep').trim(), rua:v('cj-rua').trim(), numero:v('cj-numero').trim(), complemento:v('cj-complemento').trim(), bairro:v('cj-bairro').trim(), cidade:v('cj-cidade').trim(), uf:v('cj-uf').trim().toUpperCase(),
     cpf:v('cj-cpf').trim(), rg:v('cj-rg').trim(), servico:v('cj-servico').trim(), origem:v('cj-origem').trim(),
     inss:v('cj-inss'), procadm:v('cj-procadm').trim(), procjud:v('cj-procjud').trim(), vendedor:v('cj-vendedor').trim(),
-    valVenda:_cjParseMoney(v('cj-valvenda')), valContrato:_cjParseMoney(v('cj-valcontrato')),
-    pagou1:document.getElementById('cj-pagou1').checked, parcelamento:v('cj-parcelamento').trim(),
+    valContrato:_cjParseMoney(v('cj-valcontrato')),
+    formaPagamento:v('cj-formapagto'), vencimento:v('cj-vencimento'),
+    pagou1:document.getElementById('cj-pagou1').checked, parcelamento:v('cj-parcelamento'),
+    entregue:document.getElementById('cj-entregue').checked,
     audiencia:document.getElementById('cj-audiencia').checked, pericia:document.getElementById('cj-pericia').checked,
+    statusCliente:v('cj-statuscliente'),
     responsavel:v('cj-responsavel').trim()
   };
   const d=ld();d.clientesJuridicos=d.clientesJuridicos||[];
@@ -3151,7 +3218,14 @@ function rClientesJur(d){
     const badges=[];
     if(c.audiencia)badges.push('<span style="font-size:13px;background:var(--s3);padding:2px 9px;border-radius:20px;color:var(--gold)">Audiência marcada</span>');
     if(c.pericia)badges.push('<span style="font-size:13px;background:var(--s3);padding:2px 9px;border-radius:20px;color:var(--gold)">Perícia marcada</span>');
+    if(c.entregue)badges.push('<span style="font-size:13px;background:var(--s3);padding:2px 9px;border-radius:20px;color:var(--green)">Serviço entregue</span>');
     badges.push(c.pagou1?'<span style="font-size:13px;background:var(--s3);padding:2px 9px;border-radius:20px;color:var(--green)">1ª parcela paga</span>':'<span style="font-size:13px;background:var(--s3);padding:2px 9px;border-radius:20px;color:var(--red)">1ª parcela pendente</span>');
+    if(c.statusCliente)badges.push('<span style="font-size:13px;background:var(--s3);padding:2px 9px;border-radius:20px;color:'+(CJ_STATUS_COLOR[c.statusCliente]||'var(--t2)')+'">'+(CJ_STATUS_LABEL[c.statusCliente]||c.statusCliente)+'</span>');
+    const subParts=[c.servico||'-'];
+    if(c.tel)subParts.push(c.tel);
+    if(c.formaPagamento)subParts.push(CJ_PAGTO_LABEL[c.formaPagamento]||c.formaPagamento);
+    if(c.parcelamento)subParts.push(c.parcelamento==='avista'?'À vista':c.parcelamento);
+    if(c.responsavel)subParts.push('Responsável: '+c.responsavel);
     return `<div class="fi2">
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -3159,7 +3233,7 @@ function rClientesJur(d){
           ${badges.join('')}
           <span style="font-size:14px;font-weight:700;color:var(--green);margin-left:auto">R$ ${(+c.valContrato||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
         </div>
-        <div class="fm">${c.servico||'-'}${c.tel?' · '+c.tel:''}${c.responsavel?' · Responsável: '+c.responsavel:''}</div>
+        <div class="fm">${subParts.join(' · ')}</div>
       </div>
       <button class="fdl" style="color:var(--t2);margin-right:2px" onclick="edClientJur('${c.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="fdl" style="color:var(--red)" onclick="delClientJur('${c.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
     </div>`;
